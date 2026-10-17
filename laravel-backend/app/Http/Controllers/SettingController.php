@@ -10,7 +10,7 @@ class SettingController extends Controller
 {
     public function getSettings(): JsonResponse
     {
-        $abaPayLink = Setting::get('aba_pay_link', 'https://link.payway.com.kh/ABAPAY9s540501U');
+        $abaPayLink = Setting::get('aba_pay_link', '');
         $announcementText = Setting::get('announcement_text', 'Synapse Omni-LLM 4.5 & VideoGen 4D are now live! Get 20% OFF all annual subscriptions with code NEURON20');
         $maintenanceMode = Setting::get('maintenance_mode', false);
         $systemStatus = Setting::get('system_status', 'All AI Clusters Operational (99.99% SLA)');

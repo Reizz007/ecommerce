@@ -300,7 +300,7 @@ class DatabaseSeeder extends Seeder
         }
 
         // 4. Default Settings
-        Setting::set('aba_pay_link', 'https://link.payway.com.kh/ABAPAY9s540501U');
+        Setting::set('aba_pay_link', '');
         Setting::set('announcement_text', 'Synapse Omni-LLM 4.5 & VideoGen 4D are now live! Get 20% OFF all annual subscriptions with code NEURON20');
         Setting::set('system_status', 'All AI Clusters Operational (99.99% SLA)');
         Setting::set('maintenance_mode', false);
@@ -319,7 +319,7 @@ class DatabaseSeeder extends Seeder
                 'items' => ['Pro AI Suite (Annual Subscription)'],
                 'amount' => 588,
                 'payment_method' => 'ABA PAY / PayWay',
-                'aba_link' => 'https://link.payway.com.kh/ABAPAY9s540501U',
+                'aba_link' => '',
                 'status' => 'Verified',
                 'api_key' => 'sk_synapse_live_98a7f1c90e2b45398ab7102e88a',
             ],
@@ -331,7 +331,7 @@ class DatabaseSeeder extends Seeder
                 'items' => ['Visionary Diffusion X', 'VideoGen 4D Kinematic'],
                 'amount' => 548,
                 'payment_method' => 'ABA PAY / PayWay',
-                'aba_link' => 'https://link.payway.com.kh/ABAPAY9s540501U',
+                'aba_link' => '',
                 'status' => 'Verified',
                 'api_key' => 'sk_synapse_live_4b7019cf882141aa9e71239cd01',
             ],

@@ -44,7 +44,7 @@ class OrderController extends Controller
             'items' => is_array($validated['items'] ?? null) ? $validated['items'] : [$validated['items'] ?? 'Pro AI Suite'],
             'amount' => $validated['amount'],
             'payment_method' => $validated['paymentMethod'] ?? 'ABA PAY / PayWay',
-            'aba_link' => $validated['abaLink'] ?? 'https://link.payway.com.kh/ABAPAY9s540501U',
+            'aba_link' => $validated['abaLink'] ?? '',
             'status' => $validated['status'] ?? 'Verified',
             'api_key' => $apiKey,
         ]);

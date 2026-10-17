@@ -48,7 +48,7 @@ The Admin Panel is protected and hidden from the public navigation. It is only a
 - `users`: `id`, `name`, `email`, `password`, `role`
 
 ### 4. ABA PayWay Gateway Integration
-- **Direct PayWay Payment Link**: Configured in database as `https://link.payway.com.kh/ABAPAY9s540501U`.
+- **Direct PayWay Payment Link**: Configurable dynamically in database and Admin Settings tab.
 - **Checkout Modal**:
   - Primary button: `Pay Now via ABA PAY ($588) ↗` opens PayWay directly.
   - Scannable QR code & clickable direct link with copy button.

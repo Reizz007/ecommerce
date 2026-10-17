@@ -1,6 +1,6 @@
 {
   "settings": {
-    "abaPayLink": "https://link.payway.com.kh/ABAPAY9s540501U",
+    "abaPayLink": "",
     "announcementText": "Synapse Omni-LLM 4.5 & VideoGen 4D are now live! Get 20% OFF all annual subscriptions with code NEURON20",
     "promoCodes": [
       {
@@ -206,7 +206,7 @@
       "payment_method": "ABA PayWay",
       "paymentMethod": "ABA PayWay",
       "merchant_name": "BUNTHOEUN CHETRA",
-      "abaLink": "https://link.payway.com.kh/ABAPAY9s540501U",
+      "abaLink": "",
       "status": "Pending Payment",
       "date": "2026-10-16 15:25",
       "apiKey": "sk_synapse_live_51d36d1520330cda0aeee7c16ab2"
@@ -221,7 +221,7 @@
       ],
       "amount": 588,
       "paymentMethod": "Crypto",
-      "abaLink": "https://link.payway.com.kh/ABAPAY9s540501U",
+      "abaLink": "",
       "status": "Verified",
       "date": "2026-10-16 06:59",
       "apiKey": "sk_synapse_live_49d5ff1140ed895fc18b70c9998d"
@@ -236,7 +236,7 @@
       ],
       "amount": 588,
       "paymentMethod": "ABA PAY / PayWay",
-      "abaLink": "https://link.payway.com.kh/ABAPAY9s540501U",
+      "abaLink": "",
       "status": "Verified",
       "date": "2026-10-16 06:58",
       "apiKey": "sk_synapse_live_e659c99e4bb249d9e1a6fc0a8d85"
@@ -251,7 +251,7 @@
       ],
       "amount": 588,
       "paymentMethod": "ABA PAY / PayWay",
-      "abaLink": "https://link.payway.com.kh/ABAPAY9s540501U",
+      "abaLink": "",
       "status": "Verified",
       "date": "2026-10-16 06:57",
       "apiKey": "sk_synapse_live_5180057b8184f47fa4c02bfe9525"
@@ -266,7 +266,7 @@
       ],
       "amount": 588,
       "paymentMethod": "ABA PAY / PayWay",
-      "abaLink": "https://link.payway.com.kh/ABAPAY9s540501U",
+      "abaLink": "",
       "status": "Verified",
       "date": "2026-10-16 06:40",
       "apiKey": "sk_synapse_live_cc87ae1f51603cde714ac5a8818b"
@@ -281,7 +281,7 @@
       ],
       "amount": 588,
       "paymentMethod": "ABA PAY / PayWay",
-      "abaLink": "https://link.payway.com.kh/ABAPAY9s540501U",
+      "abaLink": "",
       "status": "Verified",
       "date": "2026-10-16 11:24",
       "apiKey": "sk_synapse_live_77c10f882e01b3490aa18843c01"
@@ -296,7 +296,7 @@
       ],
       "amount": 179,
       "paymentMethod": "ABA PAY / PayWay",
-      "abaLink": "https://link.payway.com.kh/ABAPAY9s540501U",
+      "abaLink": "",
       "status": "Verified",
       "date": "2026-10-16 09:15",
       "apiKey": "sk_synapse_live_4490ab81ef9090123cb990012e8"
@@ -326,7 +326,7 @@
       ],
       "amount": 569,
       "paymentMethod": "ABA PAY / PayWay",
-      "abaLink": "https://link.payway.com.kh/ABAPAY9s540501U",
+      "abaLink": "",
       "status": "Verified",
       "date": "2026-10-15 14:12",
       "apiKey": "sk_synapse_live_99812a0fec900192bc8001a48c9"

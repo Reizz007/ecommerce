@@ -85,7 +85,7 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
   const [orders, setOrders] = useState([]);
   const [subscribers, setSubscribers] = useState([]);
   const [settings, setSettings] = useState({
-    abaPayLink: 'https://link.payway.com.kh/ABAPAY9s540501U',
+    abaPayLink: '',
     khqrGatewayUrl: 'https://khqr.cc/api/payment/requestv2/tW6PHjgPyzISFi3KK22hKZ57rag1cWHS',
     khqrProfileId: 'tW6PHjgPyzISFi3KK22hKZ57rag1cWHS',
     khqrSecretKey: 'zsFq7SWHV4gYFSAdfg2ud8WV747tBOei',

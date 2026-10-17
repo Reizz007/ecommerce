@@ -250,7 +250,7 @@ app.post('/api/orders', (req, res) => {
     items: req.body.items || ['Pro AI Suite'],
     amount: Number(req.body.amount) || 49,
     paymentMethod: req.body.paymentMethod || 'ABA PAY / PayWay',
-    abaLink: db.settings?.abaPayLink || 'https://link.payway.com.kh/ABAPAY9s540501U',
+    abaLink: db.settings?.abaPayLink || '',
     status: 'Verified',
     date: new Date().toISOString().replace('T', ' ').slice(0, 16),
     apiKey: apiKey
@@ -375,7 +375,7 @@ app.post('/api/payment/khqr/generate', (req, res) => {
 
   const profileId = db.settings?.khqrProfileId || 'tW6PHjgPyzISFi3KK22hKZ57rag1cWHS';
   const secretKey = db.settings?.khqrSecretKey || 'zsFq7SWHV4gYFSAdfg2ud8WV747tBOei';
-  const paywayLink = db.settings?.abaPayLink || 'https://link.payway.com.kh/ABAPAY9s540501U';
+  const paywayLink = db.settings?.abaPayLink || '';
 
   const formattedAmount = Number(amount).toFixed(2);
   const rawHashString = `${secretKey}${transactionId}${formattedAmount}${remark}`;
@@ -465,5 +465,4 @@ if (fs.existsSync(DIST_DIR)) {
 const HOST = '0.0.0.0';
 app.listen(PORT, HOST, () => {
   console.log(`🚀 Synapse Backend Server running on http://${HOST}:${PORT}`);
-  console.log(`💳 ABA PAY Link configured: ${readDB().settings?.abaPayLink}`);
 });
