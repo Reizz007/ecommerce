@@ -27,15 +27,48 @@ function MainContent() {
   const [currentUser, setCurrentUser] = useState(() => {
     try {
       const saved = localStorage.getItem('synapse_user');
-      return saved ? JSON.parse(saved) : null;
+      if (!saved) return null;
+      const user = JSON.parse(saved);
+      if (user && (user.email === 'chetranicky@gmail.com' || user.email === 'admin@synapse.ai')) {
+        user.role = 'admin';
+        localStorage.setItem('synapse_user', JSON.stringify(user));
+      }
+      return user;
     } catch {
       return null;
     }
   });
 
   const [isLoginOpen, setIsLoginOpen] = useState(false);
-  const [isAdminOpen, setIsAdminOpen] = useState(false);
+  const [isAdminOpen, setIsAdminOpen] = useState(() => {
+    try {
+      const saved = localStorage.getItem('synapse_user');
+      const user = saved ? JSON.parse(saved) : null;
+      const wasActive = localStorage.getItem('synapse_admin_active') === 'true';
+      const hash = typeof window !== 'undefined' ? window.location.hash : '';
+      const path = typeof window !== 'undefined' ? window.location.pathname : '';
+      const isAdmin = user && (user.role === 'admin' || user.email === 'chetranicky@gmail.com' || user.email === 'admin@synapse.ai');
+      return Boolean(isAdmin && (wasActive || hash === '#admin' || path === '/admin'));
+    } catch {
+      return false;
+    }
+  });
   const searchInputRef = useRef(null);
+
+  // Sync admin state to localStorage and URL hash
+  useEffect(() => {
+    if (isAdminOpen) {
+      localStorage.setItem('synapse_admin_active', 'true');
+      if (window.location.hash !== '#admin') {
+        window.history.replaceState(null, '', '#admin');
+      }
+    } else {
+      localStorage.removeItem('synapse_admin_active');
+      if (window.location.hash === '#admin') {
+        window.history.replaceState(null, '', window.location.pathname);
+      }
+    }
+  }, [isAdminOpen]);
 
   // Check URL pathname or hash for /login or #login or #admin
   useEffect(() => {
@@ -43,12 +76,17 @@ function MainContent() {
       const path = window.location.pathname;
       const hash = window.location.hash;
 
+      const isAdmin = currentUser && (currentUser.role === 'admin' || currentUser.email === 'chetranicky@gmail.com' || currentUser.email === 'admin@synapse.ai');
+
       if (path === '/login' || hash === '#login') {
-        setIsLoginOpen(true);
+        if (!isAdmin) {
+          setIsLoginOpen(true);
+        }
       } else if (path === '/admin' || hash === '#admin') {
-        if (currentUser?.role === 'admin') {
+        if (isAdmin) {
           setIsAdminOpen(true);
-        } else {
+          setIsLoginOpen(false);
+        } else if (!currentUser) {
           setIsLoginOpen(true);
           addToast('Please sign in as Administrator to access Admin Control Center', 'info');
         }
@@ -75,23 +113,35 @@ function MainContent() {
   };
 
   const handleLoginSuccess = (user, shouldOpenAdmin) => {
+    if (user && (user.email === 'chetranicky@gmail.com' || user.email === 'admin@synapse.ai')) {
+      user.role = 'admin';
+    }
     setCurrentUser(user);
-    if (user.role === 'admin' && shouldOpenAdmin) {
+    const isAdmin = user && (user.role === 'admin' || user.email === 'chetranicky@gmail.com' || user.email === 'admin@synapse.ai');
+    if (isAdmin && shouldOpenAdmin) {
       setIsAdminOpen(true);
+      setIsLoginOpen(false);
     }
   };
 
   const handleLogout = () => {
     localStorage.removeItem('synapse_user');
     localStorage.removeItem('synapse_token');
+    localStorage.removeItem('synapse_admin_active');
     setCurrentUser(null);
     setIsAdminOpen(false);
+    setIsLoginOpen(false);
+    if (window.location.hash === '#admin') {
+      window.history.replaceState(null, '', window.location.pathname);
+    }
     addToast('Signed out successfully', 'info');
   };
 
   const handleOpenAdmin = () => {
-    if (currentUser?.role === 'admin') {
+    const isAdmin = currentUser && (currentUser.role === 'admin' || currentUser.email === 'chetranicky@gmail.com' || currentUser.email === 'admin@synapse.ai');
+    if (isAdmin) {
       setIsAdminOpen(true);
+      setIsLoginOpen(false);
     } else {
       setIsLoginOpen(true);
       addToast('Administrator login required', 'info');
@@ -109,8 +159,8 @@ function MainContent() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  // If Admin Panel is open AND user has role === 'admin', render dedicated control center
-  if (isAdminOpen && currentUser?.role === 'admin') {
+  // If Admin Panel is open AND user has role === 'admin' or admin email, render dedicated control center
+  if (isAdminOpen && (currentUser?.role === 'admin' || currentUser?.email === 'chetranicky@gmail.com' || currentUser?.email === 'admin@synapse.ai')) {
     return (
       <div className="admin-root-container">
         <AdminPanel 
