@@ -24,6 +24,7 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }) {
   const [previewOtp, setPreviewOtp] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [deliveryNotice, setDeliveryNotice] = useState('');
   const [resendCooldown, setResendCooldown] = useState(0);
 
   // Cooldown countdown timer
@@ -68,7 +69,12 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }) {
         if (data.otp_preview) {
           setPreviewOtp(data.otp_preview);
         }
-        addToast(`📨 Verification code sent to ${cleanEmail}`, 'success');
+        if (data.mail_delivered === false || data.mail_error) {
+          setDeliveryNotice('Google SMTP password needs update (BadCredentials). Use the Auto-Fill code below to sign in:');
+        } else {
+          setDeliveryNotice('');
+        }
+        addToast(`📨 Verification code generated for ${cleanEmail}`, 'success');
       } else {
         setErrorMessage(data.message || 'Failed to send verification code. Please try again.');
       }
@@ -313,6 +319,23 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }) {
                   />
                 </div>
               </div>
+
+              {deliveryNotice && (
+                <div 
+                  style={{
+                    padding: '8px 12px',
+                    borderRadius: '8px',
+                    background: 'rgba(234, 179, 8, 0.12)',
+                    border: '1px solid rgba(234, 179, 8, 0.35)',
+                    marginBottom: '0.85rem',
+                    color: '#fde047',
+                    fontSize: '0.78rem',
+                    lineHeight: 1.45
+                  }}
+                >
+                  ⚠️ <strong>Notice:</strong> {deliveryNotice}
+                </div>
+              )}
 
               {previewOtp && (
                 <div 
