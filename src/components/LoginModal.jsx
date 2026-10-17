@@ -138,37 +138,11 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }) {
               </div>
             </div>
 
-            <div style={{
-              marginTop: '0.75rem',
-              marginBottom: '1rem',
-              padding: '0.65rem 0.85rem',
-              borderRadius: '8px',
-              background: 'rgba(99, 102, 241, 0.08)',
-              border: '1px solid rgba(99, 102, 241, 0.25)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: '0.5rem'
-            }}>
+            <div >
               <div>
-                <div style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--color-primary-light, #a5b4fc)' }}>
-                  👑 Master Admin Demo
-                </div>
-                <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
-                  admin@synapse.ai / admin123
-                </div>
+                
               </div>
-              <button
-                type="button"
-                className="btn btn-secondary btn-sm"
-                style={{ padding: '4px 10px', fontSize: '0.75rem', height: 'auto', whiteSpace: 'nowrap' }}
-                onClick={() => {
-                  setEmail('admin@synapse.ai');
-                  setPassword('admin123');
-                }}
-              >
-                Autofill
-              </button>
+             
             </div>
 
             <button
