@@ -10,7 +10,7 @@ A premier full-stack platform for selling AI tools and subscriptions, integrated
 - **Backend**: Laravel 12 API (`http://127.0.0.1:8000/`)
 - **Database**: SQLite (`laravel-backend/database/database.sqlite`) & fully compatible with MySQL via `.env`
 - **Authentication**: Laravel Sanctum with Role-Based Access Control (`admin` / `user`)
-- **Payment Gateway**: ABA PayWay & KHQR Direct Link (`https://link.payway.com.kh/ABAPAY9s540501U`)
+-
 
 ---
 
@@ -20,8 +20,7 @@ The Admin Panel is protected and hidden from the public navigation. It is only a
 
 1. Click **Sign In** in the header or visit `/login` (or `#login`).
 2. Log in with the default admin account:
-   - **Email**: `admin@synapse.ai`
-   - **Password**: `admin123`
+  
 3. The **Admin Panel** unlocks with real-time controls for **Products**, **Categories**, **Orders**, **Subscribers**, and **Settings**.
 
 ---
