@@ -1,0 +1,16 @@
+# Render Blueprint Configuration
+# Deploy the entire full-stack platform (React Frontend + API Server) as ONE Web Service on Render
+
+services:
+  - type: web
+    name: synapse-ai
+    runtime: node
+    plan: free
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      # Leave VITE_API_BASE_URL empty because frontend and API share the exact same domain on Render!
+      - key: VITE_API_BASE_URL
+        value: ""
