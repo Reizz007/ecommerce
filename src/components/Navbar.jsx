@@ -139,15 +139,14 @@ export default function Navbar({ onOpenSearch, onOpenAdmin, currentUser, onOpenL
                 </button>
               </div>
             ) : (
-              // <button 
-              //   className="btn-signin-nav"
-              //   onClick={onOpenLogin}
-              //   title="Sign in / Login"
-              // >
-              //   <LogIn size={15} />
-              //   <span>Sign In</span>
-              // </button>
-              <div></div>
+              <button 
+                className="btn-signin-nav"
+                onClick={onOpenLogin}
+                title="Sign in / Login"
+              >
+                <LogIn size={15} />
+                <span>Sign In</span>
+              </button>
             )}
 
             {/* Cart Button */}
