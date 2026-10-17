@@ -7,6 +7,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
@@ -14,7 +15,7 @@ use Illuminate\Support\Str;
 class AuthController extends Controller
 {
     /**
-     * Send OTP Verification Code to Email using configured SMTP
+     * Send OTP Verification Code to Email using configured SMTP or Resend HTTPS
      */
     public function sendOtp(Request $request): JsonResponse
     {
@@ -33,39 +34,57 @@ class AuthController extends Controller
         $mailSent = false;
         $mailError = null;
 
-        try {
-            // Send OTP email using Gmail SMTP from .env
-            Mail::html("
-                <div style='font-family: -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, sans-serif; max-width: 520px; margin: 0 auto; padding: 32px 24px; background: #0b0f19; color: #f1f5f9; border-radius: 16px; border: 1px solid #1e293b;'>
-                    <div style='text-align: center; margin-bottom: 24px;'>
-                        <div style='display: inline-block; padding: 10px 18px; border-radius: 999px; background: rgba(56, 189, 248, 0.1); border: 1px solid rgba(56, 189, 248, 0.25); color: #38bdf8; font-weight: 700; font-size: 13px; letter-spacing: 1px;'>
-                            SYNAPSE.AI AUTH
-                        </div>
-                        <h2 style='color: #f8fafc; margin: 16px 0 6px; font-size: 22px; font-weight: 700;'>Login Verification Code</h2>
-                        <p style='color: #94a3b8; font-size: 14px; margin: 0;'>Use the code below to complete your sign in</p>
+        $htmlContent = "
+            <div style='font-family: -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, sans-serif; max-width: 520px; margin: 0 auto; padding: 32px 24px; background: #0b0f19; color: #f1f5f9; border-radius: 16px; border: 1px solid #1e293b;'>
+                <div style='text-align: center; margin-bottom: 24px;'>
+                    <div style='display: inline-block; padding: 10px 18px; border-radius: 999px; background: rgba(56, 189, 248, 0.1); border: 1px solid rgba(56, 189, 248, 0.25); color: #38bdf8; font-weight: 700; font-size: 13px; letter-spacing: 1px;'>
+                        SYNAPSE.AI AUTH
                     </div>
-
-                    <div style='background: #131b2e; padding: 24px; border-radius: 12px; text-align: center; margin-bottom: 24px; border: 1px solid #1e293b;'>
-                        <p style='color: #94a3b8; font-size: 13px; margin: 0 0 12px; text-transform: uppercase; letter-spacing: 1px;'>Your 6-Digit One-Time Code</p>
-                        <div style='font-size: 36px; font-weight: 800; letter-spacing: 8px; color: #38bdf8; padding: 12px 20px; background: #070a12; border-radius: 10px; display: inline-block; font-family: monospace; border: 1px solid rgba(56, 189, 248, 0.3);'>
-                            {$otp}
-                        </div>
-                        <p style='color: #64748b; font-size: 12px; margin: 14px 0 0;'>⏱️ Valid for 1 minute. Do not share this code.</p>
-                    </div>
-
-                    <div style='border-top: 1px solid #1e293b; padding-top: 18px; text-align: center;'>
-                        <p style='color: #64748b; font-size: 12px; margin: 0; line-height: 1.5;'>
-                            This email was sent to <strong>{$email}</strong>.<br />
-                            If you did not request this login code, you can safely disregard this email.
-                        </p>
-                    </div>
+                    <h2 style='color: #f8fafc; margin: 16px 0 6px; font-size: 22px; font-weight: 700;'>Login Verification Code</h2>
+                    <p style='color: #94a3b8; font-size: 14px; margin: 0;'>Use the code below to complete your sign in</p>
                 </div>
-            ", function ($message) use ($email, $otp) {
-                $message->to($email)
-                        ->subject("{$otp} is your Synapse AI Verification Code");
-            });
 
-            $mailSent = true;
+                <div style='background: #131b2e; padding: 24px; border-radius: 12px; text-align: center; margin-bottom: 24px; border: 1px solid #1e293b;'>
+                    <p style='color: #94a3b8; font-size: 13px; margin: 0 0 12px; text-transform: uppercase; letter-spacing: 1px;'>Your 6-Digit One-Time Code</p>
+                    <div style='font-size: 36px; font-weight: 800; letter-spacing: 8px; color: #38bdf8; padding: 12px 20px; background: #070a12; border-radius: 10px; display: inline-block; font-family: monospace; border: 1px solid rgba(56, 189, 248, 0.3);'>
+                        {$otp}
+                    </div>
+                    <p style='color: #64748b; font-size: 12px; margin: 14px 0 0;'>⏱️ Valid for 1 minute. Do not share this code.</p>
+                </div>
+
+                <div style='border-top: 1px solid #1e293b; padding-top: 18px; text-align: center;'>
+                    <p style='color: #64748b; font-size: 12px; margin: 0; line-height: 1.5;'>
+                        This email was sent to <strong>{$email}</strong>.<br />
+                        If you did not request this login code, you can safely disregard this email.
+                    </p>
+                </div>
+            </div>
+        ";
+
+        try {
+            $resendKey = env('RESEND_API_KEY');
+            if (!empty($resendKey)) {
+                $fromAddress = env('MAIL_FROM_ADDRESS', 'onboarding@resend.dev');
+                $fromName = env('MAIL_FROM_NAME', 'Admin OTP');
+                $res = Http::withToken($resendKey)->post('https://api.resend.com/emails', [
+                    'from' => "{$fromName} <{$fromAddress}>",
+                    'to' => [$email],
+                    'subject' => "{$otp} is your Synapse AI Verification Code",
+                    'html' => $htmlContent,
+                ]);
+
+                if ($res->successful()) {
+                    $mailSent = true;
+                } else {
+                    throw new \Exception('Resend HTTPS API error: ' . $res->body());
+                }
+            } else {
+                Mail::html($htmlContent, function ($message) use ($email, $otp) {
+                    $message->to($email)
+                            ->subject("{$otp} is your Synapse AI Verification Code");
+                });
+                $mailSent = true;
+            }
         } catch (\Throwable $e) {
             $mailError = $e->getMessage();
             Log::error('OTP Mail delivery notice: ' . $mailError);
