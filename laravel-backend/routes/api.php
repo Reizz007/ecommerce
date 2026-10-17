@@ -22,6 +22,8 @@ Route::get('/health', function () {
 });
 
 // Authentication
+Route::post('/auth/send-otp', [AuthController::class, 'sendOtp']);
+Route::post('/auth/verify-otp', [AuthController::class, 'verifyOtp']);
 Route::post('/auth/login', [AuthController::class, 'login']);
 Route::get('/auth/me', [AuthController::class, 'me'])->middleware('auth:sanctum');
 
@@ -60,3 +62,44 @@ Route::put('/settings', [SettingController::class, 'updateSettings']);
 
 // Dashboard Stats
 Route::get('/stats', [StatsController::class, 'index']);
+
+// Database Seeding & Provisioning Endpoint
+Route::match(['get', 'post'], '/setup/seed', function () {
+    try {
+        \Illuminate\Support\Facades\Artisan::call('db:seed', ['--force' => true]);
+        return response()->json([
+            'success' => true,
+            'message' => 'Database seeded successfully',
+            'output' => \Illuminate\Support\Facades\Artisan::output(),
+        ]);
+    } catch (\Throwable $e) {
+        return response()->json([
+            'success' => false,
+            'error' => $e->getMessage(),
+        ], 500);
+    }
+});
+
+// Outbound Connectivity Diagnostics Endpoint
+Route::get('/diagnostics/mail', function () {
+    $ports = [587, 465, 2525, 80, 443];
+    $results = [];
+    foreach ($ports as $port) {
+        $t1 = microtime(true);
+        $fp = @fsockopen('smtp.gmail.com', $port, $errno, $errstr, 2);
+        $time = round((microtime(true) - $t1) * 1000);
+        if ($fp) {
+            $results[$port] = "OPEN ({$time}ms)";
+            fclose($fp);
+        } else {
+            $results[$port] = "BLOCKED ($errstr)";
+        }
+    }
+    return response()->json([
+        'environment' => app()->environment(),
+        'mail_mailer' => config('mail.default'),
+        'mail_host' => config('mail.mailers.smtp.host'),
+        'mail_port' => config('mail.mailers.smtp.port'),
+        'port_tests' => $results,
+    ]);
+});
