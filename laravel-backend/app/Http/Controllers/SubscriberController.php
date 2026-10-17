@@ -39,4 +39,40 @@ class SubscriberController extends Controller
             'subscriber' => $sub,
         ]);
     }
+
+    public function destroy($id): JsonResponse
+    {
+        $subscriber = Subscriber::where('id', $id)
+            ->orWhere('email', $id)
+            ->first();
+
+        if (!$subscriber) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Subscriber not found',
+            ], 404);
+        }
+
+        $subscriber->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Subscriber deleted successfully',
+        ]);
+    }
+
+    public function bulkDestroy(Request $request): JsonResponse
+    {
+        $ids = $request->input('ids', []);
+        if (!empty($ids) && is_array($ids)) {
+            Subscriber::whereIn('id', $ids)->delete();
+        } elseif ($request->input('all') === true) {
+            Subscriber::query()->delete();
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Subscribers deleted successfully',
+        ]);
+    }
 }

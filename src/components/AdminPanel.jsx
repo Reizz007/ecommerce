@@ -74,14 +74,16 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
     } catch {}
     return [];
   });
-  const [categories, setCategories] = useState([
-    { id: 1, name: 'LLM & Reasoning', slug: 'llm', color: '#8b5cf6', badge: 'Flagship' },
-    { id: 2, name: 'Code & Dev', slug: 'code', color: '#06b6d4', badge: 'Autopilot' },
-    { id: 3, name: 'Vision & Art', slug: 'vision', color: '#ec4899', badge: 'Generative' },
-    { id: 4, name: 'Video & 3D', slug: 'video', color: '#f59e0b', badge: 'Spatial' },
-    { id: 5, name: 'Audio & Voice', slug: 'audio', color: '#10b981', badge: 'Studio' },
-    { id: 6, name: 'AI Agents & Automation', slug: 'agents', color: '#6366f1', badge: 'Autonomous' }
-  ]);
+  const [categories, setCategories] = useState(() => {
+    try {
+      const saved = localStorage.getItem('synapse_custom_categories');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) return parsed;
+      }
+    } catch {}
+    return [];
+  });
   const [orders, setOrders] = useState([]);
   const [subscribers, setSubscribers] = useState([]);
   const [settings, setSettings] = useState({
@@ -178,7 +180,7 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
         try {
           deleted = JSON.parse(localStorage.getItem('synapse_deleted_tools') || '[]');
         } catch {}
-        const filtered = list.filter(t => !deleted.includes(t.id) && !deleted.includes(t.slug) && !deleted.includes(t.product_id));
+        const filtered = list.filter(t => !deleted.some(d => String(d) === String(t.id) || (t.slug && String(d) === String(t.slug)) || (t.product_id && String(d) === String(t.product_id))));
         setTools(filtered);
         localStorage.setItem('synapse_custom_tools', JSON.stringify(filtered));
       }
@@ -328,15 +330,25 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
     if (!window.confirm(`Are you sure you want to delete category "${name}"? Associated products will become uncategorized.`)) return;
     try {
       const res = await fetch(apiUrl(`/api/categories/${id}`), { method: 'DELETE' });
-      const data = await res.json();
-      if (data.success) {
-        setCategories(prev => prev.filter(c => c.id !== id));
-        loadBackendData();
-        if (refreshCategories) refreshCategories();
-        addToast(`Category "${name}" deleted from database`, 'info');
-      }
+      setCategories(prev => {
+        const updated = prev.filter(c => String(c.id) !== String(id) && c.slug !== id);
+        try {
+          localStorage.setItem('synapse_custom_categories', JSON.stringify(updated));
+        } catch {}
+        return updated;
+      });
+      loadBackendData();
+      if (refreshCategories) refreshCategories();
+      addToast(`Category "${name}" deleted from database`, 'info');
     } catch (err) {
-      addToast('Error deleting category', 'error');
+      setCategories(prev => {
+        const updated = prev.filter(c => String(c.id) !== String(id) && c.slug !== id);
+        try {
+          localStorage.setItem('synapse_custom_categories', JSON.stringify(updated));
+        } catch {}
+        return updated;
+      });
+      addToast(`Category "${name}" removed from view`, 'info');
     }
   };
 
@@ -427,7 +439,7 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
         localStorage.setItem('synapse_deleted_tools', JSON.stringify(deleted));
       }
       setTools(prev => {
-        const updated = prev.filter(t => t.id !== id);
+        const updated = prev.filter(t => String(t.id) !== String(id) && t.slug !== id && t.product_id !== id);
         try {
           localStorage.setItem('synapse_custom_tools', JSON.stringify(updated));
         } catch {}
@@ -437,6 +449,67 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
       addToast(`Deleted "${name}" from database`, 'info');
     } catch (err) {
       addToast('Error deleting product', 'error');
+    }
+  };
+
+  // Delete Order
+  const handleDeleteOrder = async (orderId, orderNum) => {
+    const label = orderNum || orderId;
+    if (!window.confirm(`Are you sure you want to delete order "${label}" from database?`)) return;
+    try {
+      await fetch(apiUrl(`/api/orders/${orderId}`), { method: 'DELETE' });
+      setOrders(prev => prev.filter(o => String(o.id) !== String(orderId) && String(o.order_number) !== String(orderId)));
+      addToast(`Deleted order "${label}"`, 'info');
+    } catch (err) {
+      setOrders(prev => prev.filter(o => String(o.id) !== String(orderId) && String(o.order_number) !== String(orderId)));
+      addToast(`Removed order "${label}"`, 'info');
+    }
+  };
+
+  // Delete Subscriber
+  const handleDeleteSubscriber = async (subId, email) => {
+    if (!window.confirm(`Are you sure you want to remove subscriber "${email || subId}"?`)) return;
+    try {
+      await fetch(apiUrl(`/api/subscribers/${subId}`), { method: 'DELETE' });
+      setSubscribers(prev => prev.filter(s => String(s.id) !== String(subId) && s.email !== email));
+      addToast('Subscriber removed from database', 'info');
+    } catch (err) {
+      setSubscribers(prev => prev.filter(s => String(s.id) !== String(subId) && s.email !== email));
+      addToast('Subscriber removed from view', 'info');
+    }
+  };
+
+  // Bulk Clear Orders
+  const handleClearAllOrders = async () => {
+    if (!window.confirm(`Are you sure you want to delete ALL ${orders.length} orders from the database? This cannot be undone.`)) return;
+    try {
+      await fetch(apiUrl('/api/orders/bulk'), {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ all: true })
+      });
+      setOrders([]);
+      addToast('All orders cleared from database', 'info');
+    } catch (err) {
+      setOrders([]);
+      addToast('Orders cleared from view', 'info');
+    }
+  };
+
+  // Bulk Clear Subscribers
+  const handleClearAllSubscribers = async () => {
+    if (!window.confirm(`Are you sure you want to remove ALL ${subscribers.length} subscribers from the database?`)) return;
+    try {
+      await fetch(apiUrl('/api/subscribers/bulk'), {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ all: true })
+      });
+      setSubscribers([]);
+      addToast('All subscribers cleared from database', 'info');
+    } catch (err) {
+      setSubscribers([]);
+      addToast('Subscribers cleared from view', 'info');
     }
   };
 
@@ -1111,6 +1184,16 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
                     <h2>Customer Orders & Transactions</h2>
                     <p>Inspect issued API keys, verify payments, and monitor ABA PayWay gateway settlements.</p>
                   </div>
+                  {orders.length > 0 && (
+                    <button
+                      type="button"
+                      className="btn btn-outline-danger btn-sm"
+                      onClick={handleClearAllOrders}
+                      title="Clear all orders in database"
+                    >
+                      <Trash2 size={14} className="mr-1" /> Clear All Orders ({orders.length})
+                    </button>
+                  )}
                 </div>
 
                 <div className="admin-table-responsive">
@@ -1210,6 +1293,14 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
                                 <option value="Pending PayWay Checkout">Pending PayWay</option>
                                 <option value="Refunded">Refunded</option>
                               </select>
+                              <button
+                                type="button"
+                                className="btn-table-action delete"
+                                onClick={() => handleDeleteOrder(o.id, o.order_number)}
+                                title="Delete Order"
+                              >
+                                <Trash2 size={14} />
+                              </button>
                             </div>
                           </td>
                         </tr>
@@ -1228,6 +1319,16 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
                     <h2>Active Subscribers</h2>
                     <p>Manage membership tiers, quota limits, and renewal dates.</p>
                   </div>
+                  {subscribers.length > 0 && (
+                    <button
+                      type="button"
+                      className="btn btn-outline-danger btn-sm"
+                      onClick={handleClearAllSubscribers}
+                      title="Remove all subscribers from database"
+                    >
+                      <Trash2 size={14} className="mr-1" /> Remove All ({subscribers.length})
+                    </button>
+                  )}
                 </div>
 
                 <div className="admin-table-responsive">
@@ -1240,6 +1341,7 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
                         <th>Renewal Date</th>
                         <th>Payment Gateway</th>
                         <th>Status</th>
+                        <th>Actions</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -1263,6 +1365,18 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
                           </td>
                           <td>
                             <span className="status-pill verified">{sub.status}</span>
+                          </td>
+                          <td>
+                            <div className="table-actions-group">
+                              <button
+                                type="button"
+                                className="btn-table-action delete"
+                                onClick={() => handleDeleteSubscriber(sub.id, sub.email)}
+                                title="Remove Subscriber"
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       ))}

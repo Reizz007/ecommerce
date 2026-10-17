@@ -132,4 +132,46 @@ class OrderController extends Controller
             'order' => $order,
         ]);
     }
+
+    /**
+     * Delete an order/transaction by ID or Order Number
+     */
+    public function destroy(string $id): JsonResponse
+    {
+        $order = Order::where('id', $id)
+            ->orWhere('order_number', $id)
+            ->first();
+
+        if (!$order) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Order not found',
+            ], 404);
+        }
+
+        $order->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Order and transaction deleted successfully',
+        ]);
+    }
+
+    /**
+     * Bulk delete orders/transactions or clear all
+     */
+    public function bulkDestroy(Request $request): JsonResponse
+    {
+        $ids = $request->input('ids', []);
+        if (!empty($ids) && is_array($ids)) {
+            Order::whereIn('id', $ids)->orWhereIn('order_number', $ids)->delete();
+        } else if ($request->input('all') === true) {
+            Order::query()->delete();
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Orders and transactions deleted successfully',
+        ]);
+    }
 }

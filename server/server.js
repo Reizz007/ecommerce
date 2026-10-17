@@ -127,13 +127,13 @@ const DEFAULT_CATEGORIES = [
 
 app.get('/api/categories', (req, res) => {
   const db = readDB();
-  const categories = (db.categories && db.categories.length > 0) ? db.categories : DEFAULT_CATEGORIES;
+  const categories = Array.isArray(db.categories) ? db.categories : [];
   res.json({ success: true, categories });
 });
 
 app.post('/api/categories', (req, res) => {
   const db = readDB();
-  if (!db.categories || db.categories.length === 0) db.categories = [...DEFAULT_CATEGORIES];
+  if (!Array.isArray(db.categories)) db.categories = [];
   const newCat = {
     id: Date.now(),
     name: req.body.name || 'New Category',
@@ -151,8 +151,8 @@ app.post('/api/categories', (req, res) => {
 
 app.put('/api/categories/:id', (req, res) => {
   const db = readDB();
-  if (!db.categories || db.categories.length === 0) db.categories = [...DEFAULT_CATEGORIES];
-  const idx = db.categories.findIndex(c => String(c.id) === String(req.params.id));
+  if (!Array.isArray(db.categories)) db.categories = [];
+  const idx = db.categories.findIndex(c => String(c.id) === String(req.params.id) || c.slug === req.params.id);
   if (idx === -1) return res.status(404).json({ success: false, message: 'Category not found' });
   db.categories[idx] = { ...db.categories[idx], ...req.body };
   writeDB(db);
@@ -161,8 +161,8 @@ app.put('/api/categories/:id', (req, res) => {
 
 app.delete('/api/categories/:id', (req, res) => {
   const db = readDB();
-  if (!db.categories || db.categories.length === 0) db.categories = [...DEFAULT_CATEGORIES];
-  db.categories = db.categories.filter(c => String(c.id) !== String(req.params.id));
+  if (!Array.isArray(db.categories)) db.categories = [];
+  db.categories = db.categories.filter(c => String(c.id) !== String(req.params.id) && c.slug !== req.params.id);
   writeDB(db);
   res.json({ success: true, message: 'Category deleted successfully' });
 });
@@ -331,6 +331,25 @@ app.put('/api/orders/:id/status', (req, res) => {
   res.json({ success: true, order: db.orders[orderIndex] });
 });
 
+app.delete('/api/orders/:id', (req, res) => {
+  const db = readDB();
+  db.orders = (db.orders || []).filter(o => String(o.id) !== String(req.params.id) && String(o.order_number) !== String(req.params.id));
+  writeDB(db);
+  res.json({ success: true, message: 'Order deleted successfully' });
+});
+
+app.delete('/api/orders/bulk', (req, res) => {
+  const db = readDB();
+  const ids = req.body.ids || [];
+  if (req.body.all === true) {
+    db.orders = [];
+  } else if (Array.isArray(ids) && ids.length > 0) {
+    db.orders = (db.orders || []).filter(o => !ids.some(id => String(id) === String(o.id) || String(id) === String(o.order_number)));
+  }
+  writeDB(db);
+  res.json({ success: true, message: 'Orders deleted successfully' });
+});
+
 // Subscribers Management
 app.get('/api/subscribers', (req, res) => {
   const db = readDB();
@@ -356,6 +375,25 @@ app.put('/api/subscribers/:id/tokens', (req, res) => {
 
   writeDB(db);
   res.json({ success: true, subscriber: db.subscribers[subIndex] });
+});
+
+app.delete('/api/subscribers/:id', (req, res) => {
+  const db = readDB();
+  db.subscribers = (db.subscribers || []).filter(s => String(s.id) !== String(req.params.id) && s.email !== req.params.id);
+  writeDB(db);
+  res.json({ success: true, message: 'Subscriber deleted successfully' });
+});
+
+app.delete('/api/subscribers/bulk', (req, res) => {
+  const db = readDB();
+  const ids = req.body.ids || [];
+  if (req.body.all === true) {
+    db.subscribers = [];
+  } else if (Array.isArray(ids) && ids.length > 0) {
+    db.subscribers = (db.subscribers || []).filter(s => !ids.some(id => String(id) === String(s.id) || id === s.email));
+  }
+  writeDB(db);
+  res.json({ success: true, message: 'Subscribers deleted successfully' });
 });
 
 // Dynamic KHQR & ABA Payment Generation & Verification

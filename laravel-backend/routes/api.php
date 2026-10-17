@@ -31,6 +31,10 @@ Route::get('/auth/me', [AuthController::class, 'me'])->middleware('auth:sanctum'
 Route::apiResource('categories', CategoryController::class);
 
 // Products / Tools CRUD API
+Route::delete('/products/uncategorized', [ProductController::class, 'destroyUncategorized']);
+Route::delete('/tools/uncategorized', [ProductController::class, 'destroyUncategorized']);
+Route::delete('/products/bulk', [ProductController::class, 'bulkDestroy']);
+Route::delete('/tools/bulk', [ProductController::class, 'bulkDestroy']);
 Route::apiResource('products', ProductController::class);
 
 // Backward-compatible routes for existing frontend
@@ -43,13 +47,17 @@ Route::delete('/tools/{id}', [ProductController::class, 'destroy']);
 // Orders Management
 Route::get('/orders', [OrderController::class, 'index']);
 Route::post('/orders', [OrderController::class, 'store']);
+Route::delete('/orders/bulk', [OrderController::class, 'bulkDestroy']);
 Route::get('/orders/{id}', [OrderController::class, 'show']);
 Route::put('/orders/{id}/activate', [OrderController::class, 'activate']);
 Route::put('/orders/{id}/status', [OrderController::class, 'updateStatus']);
+Route::delete('/orders/{id}', [OrderController::class, 'destroy']);
 
 // Subscribers Management
 Route::get('/subscribers', [SubscriberController::class, 'index']);
 Route::put('/subscribers/{id}/tokens', [SubscriberController::class, 'updateTokens']);
+Route::delete('/subscribers/bulk', [SubscriberController::class, 'bulkDestroy']);
+Route::delete('/subscribers/{id}', [SubscriberController::class, 'destroy']);
 
 // KHQR Dynamic Gateway Payment Routes
 Route::post('/payment/khqr/generate', [KhqrPaymentController::class, 'generate']);
@@ -63,22 +71,7 @@ Route::put('/settings', [SettingController::class, 'updateSettings']);
 // Dashboard Stats
 Route::get('/stats', [StatsController::class, 'index']);
 
-// Database Seeding & Provisioning Endpoint
-Route::match(['get', 'post'], '/setup/seed', function () {
-    try {
-        \Illuminate\Support\Facades\Artisan::call('db:seed', ['--force' => true]);
-        return response()->json([
-            'success' => true,
-            'message' => 'Database seeded successfully',
-            'output' => \Illuminate\Support\Facades\Artisan::output(),
-        ]);
-    } catch (\Throwable $e) {
-        return response()->json([
-            'success' => false,
-            'error' => $e->getMessage(),
-        ], 500);
-    }
-});
+
 
 // Outbound Connectivity Diagnostics Endpoint
 Route::get('/diagnostics/mail', function () {

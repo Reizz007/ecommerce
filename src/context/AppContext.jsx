@@ -56,7 +56,7 @@ export function AppProvider({ children }) {
           try {
             deleted = JSON.parse(localStorage.getItem('synapse_deleted_tools') || '[]');
           } catch {}
-          const filtered = list.filter(t => !deleted.includes(t.id) && !deleted.includes(t.slug) && !deleted.includes(t.product_id));
+          const filtered = list.filter(t => !deleted.some(d => String(d) === String(t.id) || (t.slug && String(d) === String(t.slug)) || (t.product_id && String(d) === String(t.product_id))));
           setTools(filtered);
           localStorage.setItem('synapse_custom_tools', JSON.stringify(filtered));
         }
@@ -72,7 +72,7 @@ export function AppProvider({ children }) {
       const saved = localStorage.getItem('synapse_custom_categories');
       if (saved !== null) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        if (Array.isArray(parsed)) return parsed;
       }
     } catch {}
     return [];

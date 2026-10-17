@@ -89,8 +89,8 @@ export default function ToolsCatalog({ searchRef }) {
     try {
       deleted = JSON.parse(localStorage.getItem('synapse_deleted_tools') || '[]');
     } catch {}
-    const list = Array.isArray(catalogTools) && catalogTools.length > 0 ? catalogTools : TOOLS_DATA;
-    return list.filter(t => !deleted.includes(t.id) && !deleted.includes(t.slug) && !deleted.includes(t.product_id));
+    const list = Array.isArray(catalogTools) ? catalogTools : [];
+    return list.filter(t => !deleted.some(d => String(d) === String(t.id) || (t.slug && String(d) === String(t.slug)) || (t.product_id && String(d) === String(t.product_id))));
   }, [catalogTools]);
 
   // Dynamically derive category pills from Admin Panel / Laravel Database
@@ -139,9 +139,9 @@ export default function ToolsCatalog({ searchRef }) {
       }
     }
 
-    // 3. Fallback to default categories if neither admin nor tools have categories
+    // 3. If no custom categories exist, return only the All Tools pill
     if (pills.length === 0) {
-      return DEFAULT_CATEGORIES;
+      return [allPill];
     }
 
     return [allPill, ...pills];
