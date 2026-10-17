@@ -267,49 +267,14 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }) {
                     type="email"
                     required
                     autoFocus
-                    placeholder="chetranicky@gmail.com"
+                    placeholder=""
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                   />
                 </div>
               </div>
 
-              {/* Quick Admin Helper Badge */}
-              <div 
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  padding: '8px 12px',
-                  borderRadius: '8px',
-                  background: 'rgba(56, 189, 248, 0.08)',
-                  border: '1px solid rgba(56, 189, 248, 0.2)',
-                  marginBottom: '1rem',
-                  fontSize: '0.8rem'
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <ShieldCheck size={15} className="text-cyan" />
-                  <span style={{ color: '#94a3b8' }}>Admin Login:</span>
-                  <span style={{ color: '#e2e8f0', fontWeight: 600 }}>chetranicky@gmail.com</span>
-                </div>
-                <button
-                  type="button"
-                  style={{
-                    background: 'rgba(56, 189, 248, 0.2)',
-                    border: '1px solid rgba(56, 189, 248, 0.35)',
-                    color: '#38bdf8',
-                    padding: '3px 8px',
-                    borderRadius: '5px',
-                    fontSize: '0.72rem',
-                    cursor: 'pointer',
-                    fontWeight: 600
-                  }}
-                  onClick={() => setEmail('chetranicky@gmail.com')}
-                >
-                  Use Admin
-                </button>
-              </div>
+             
 
               <button
                 type="submit"

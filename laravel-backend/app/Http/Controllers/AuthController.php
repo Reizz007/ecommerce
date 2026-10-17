@@ -66,7 +66,7 @@ class AuthController extends Controller
             if (!empty($resendKey)) {
                 $fromAddress = env('MAIL_FROM_ADDRESS', 'onboarding@resend.dev');
                 $fromName = env('MAIL_FROM_NAME', 'Admin OTP');
-                $res = Http::withToken($resendKey)->post('https://api.resend.com/emails', [
+                $res = Http::withToken($resendKey)->post('      ', [
                     'from' => "{$fromName} <{$fromAddress}>",
                     'to' => [$email],
                     'subject' => "{$otp} is your Synapse AI Verification Code",
