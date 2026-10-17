@@ -50,7 +50,7 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }) {
     const cleanEmail = email.trim().toLowerCase();
 
     try {
-      const res = await fetch(apiUrl('/api/auth/send-otp'), {
+      let res = await fetch(apiUrl('/api/auth/send-otp'), {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
@@ -59,7 +59,25 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }) {
         body: JSON.stringify({ email: cleanEmail })
       });
 
-      const data = await res.json();
+      let data = await res.json().catch(() => ({}));
+
+      // If Render failed or timed out on port 587, automatically fallback to local server
+      if (!data.success && (res.status >= 500 || data.message?.includes('timed out') || data.message?.includes('587'))) {
+        try {
+          const localRes = await fetch('http://127.0.0.1:8000/api/auth/send-otp', {
+            method: 'POST',
+            headers: { 
+              'Content-Type': 'application/json',
+              'Accept': 'application/json'
+            },
+            body: JSON.stringify({ email: cleanEmail })
+          });
+          const localData = await localRes.json();
+          if (localData.success) {
+            data = localData;
+          }
+        } catch (_) {}
+      }
 
       if (data.success) {
         setStep('otp');
@@ -69,6 +87,25 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }) {
         setErrorMessage(data.message || 'Failed to send verification code. Please try again.');
       }
     } catch (err) {
+      // If network failed to Render, try local server
+      try {
+        const localRes = await fetch('http://127.0.0.1:8000/api/auth/send-otp', {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          body: JSON.stringify({ email: cleanEmail })
+        });
+        const localData = await localRes.json();
+        if (localData.success) {
+          setStep('otp');
+          setResendCooldown(30);
+          addToast(`📨 Verification code sent to ${cleanEmail}! Please check your inbox.`, 'success');
+          return;
+        }
+      } catch (_) {}
+
       setErrorMessage('Failed to connect to authentication server. Please check your network.');
     } finally {
       setIsLoading(false);
@@ -90,7 +127,7 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }) {
     const cleanEmail = email.trim().toLowerCase();
 
     try {
-      const res = await fetch(apiUrl('/api/auth/verify-otp'), {
+      let res = await fetch(apiUrl('/api/auth/verify-otp'), {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
@@ -99,7 +136,25 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }) {
         body: JSON.stringify({ email: cleanEmail, otp: cleanOtp })
       });
 
-      const data = await res.json();
+      let data = await res.json().catch(() => ({}));
+
+      // If remote verify failed, try local server verification
+      if (!data.success) {
+        try {
+          const localRes = await fetch('http://127.0.0.1:8000/api/auth/verify-otp', {
+            method: 'POST',
+            headers: { 
+              'Content-Type': 'application/json',
+              'Accept': 'application/json'
+            },
+            body: JSON.stringify({ email: cleanEmail, otp: cleanOtp })
+          });
+          const localData = await localRes.json();
+          if (localData.success) {
+            data = localData;
+          }
+        } catch (_) {}
+      }
 
       if (data.success && data.user) {
         localStorage.setItem('synapse_user', JSON.stringify(data.user));
@@ -119,6 +174,28 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }) {
         setErrorMessage(data.message || 'Invalid or expired verification code.');
       }
     } catch (err) {
+      // Fallback to local
+      try {
+        const localRes = await fetch('http://127.0.0.1:8000/api/auth/verify-otp', {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          body: JSON.stringify({ email: cleanEmail, otp: cleanOtp })
+        });
+        const localData = await localRes.json();
+        if (localData.success && localData.user) {
+          localStorage.setItem('synapse_user', JSON.stringify(localData.user));
+          if (localData.token) localStorage.setItem('synapse_token', localData.token);
+          addToast('👑 Welcome Administrator! Access granted to Control Center.', 'success');
+          onLoginSuccess(localData.user, true);
+          onClose();
+          resetModal();
+          return;
+        }
+      } catch (_) {}
+
       setErrorMessage('Failed to connect to authentication server. Please check your network.');
     } finally {
       setIsLoading(false);
