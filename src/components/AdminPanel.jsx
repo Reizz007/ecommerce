@@ -50,7 +50,7 @@ import {
 } from 'lucide-react';
 
 export default function AdminPanel({ onCloseAdmin, onLogout }) {
-  const { addToast, formatPrice, refreshTools } = useApp();
+  const { addToast, formatPrice, refreshTools, refreshCategories } = useApp();
 
   const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'tools' | 'categories' | 'orders' | 'subscribers' | 'settings'
   const [loading, setLoading] = useState(false);
@@ -318,6 +318,7 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
       }
       setIsCategoryModalOpen(false);
       loadBackendData();
+      if (refreshCategories) refreshCategories();
     } catch (err) {
       addToast('Error saving category to database', 'error');
     }
@@ -331,6 +332,7 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
       if (data.success) {
         setCategories(prev => prev.filter(c => c.id !== id));
         loadBackendData();
+        if (refreshCategories) refreshCategories();
         addToast(`Category "${name}" deleted from database`, 'info');
       }
     } catch (err) {

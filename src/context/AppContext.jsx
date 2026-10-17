@@ -66,9 +66,37 @@ export function AppProvider({ children }) {
     }
   }, []);
 
+  // Categories state with persistent database sync & localStorage cache
+  const [categories, setCategories] = useState(() => {
+    try {
+      const saved = localStorage.getItem('synapse_custom_categories');
+      if (saved !== null) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch {}
+    return [];
+  });
+
+  const refreshCategories = useCallback(async () => {
+    try {
+      const res = await fetch(apiUrl('/api/categories'));
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data.categories)) {
+          setCategories(data.categories);
+          localStorage.setItem('synapse_custom_categories', JSON.stringify(data.categories));
+        }
+      }
+    } catch (e) {
+      // offline or server error fallback
+    }
+  }, []);
+
   useEffect(() => {
     refreshTools();
-  }, [refreshTools]);
+    refreshCategories();
+  }, [refreshTools, refreshCategories]);
 
   // Promo Code
   const [promoCode, setPromoCode] = useState('');
@@ -282,7 +310,10 @@ export function AppProvider({ children }) {
         setPurchasedLicenses,
         tools,
         setTools,
-        refreshTools
+        refreshTools,
+        categories,
+        setCategories,
+        refreshCategories
       }}
     >
       {children}

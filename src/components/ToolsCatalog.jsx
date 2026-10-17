@@ -19,7 +19,18 @@ import {
   Eye, 
   Zap, 
   CheckCircle2,
-  ExternalLink
+  ExternalLink,
+  Boxes,
+  Bot,
+  FolderKanban,
+  Cpu,
+  Layers,
+  Tag,
+  Headphones,
+  Globe,
+  Wrench,
+  Rocket,
+  Flame
 } from 'lucide-react';
 
 const ICON_MAP = {
@@ -32,10 +43,36 @@ const ICON_MAP = {
   Database,
   ShieldCheck,
   Sliders,
-  TrendingUp
+  TrendingUp,
+  Boxes,
+  Bot,
+  FolderKanban,
+  Cpu,
+  Layers,
+  Tag,
+  Headphones,
+  Globe,
+  Wrench,
+  Rocket,
+  Flame
 };
 
-const CATEGORIES = [
+function getIconForCategory(nameOrSlug = '') {
+  const s = String(nameOrSlug).toLowerCase();
+  if (s.includes('brain') || s.includes('llm') || s.includes('reasoning') || s.includes('gpt')) return Brain;
+  if (s.includes('code') || s.includes('dev') || s.includes('program')) return Code2;
+  if (s.includes('vision') || s.includes('art') || s.includes('image') || s.includes('draw')) return Sparkles;
+  if (s.includes('video') || s.includes('3d') || s.includes('anim')) return Video;
+  if (s.includes('audio') || s.includes('voice') || s.includes('speech') || s.includes('sound')) return Mic;
+  if (s.includes('data') || s.includes('seo') || s.includes('analytic')) return Database;
+  if (s.includes('agent') || s.includes('flow') || s.includes('auto')) return Workflow;
+  if (s.includes('tool') || s.includes('box') || s.includes('pack')) return Boxes;
+  if (s.includes('bot') || s.includes('robot')) return Bot;
+  if (s.includes('folder') || s.includes('suite')) return FolderKanban;
+  return Boxes;
+}
+
+const DEFAULT_CATEGORIES = [
   { id: 'all', label: 'All Tools', icon: null },
   { id: 'llm', label: 'LLM & Reasoning', icon: Brain },
   { id: 'code', label: 'Code & Dev', icon: Code2 },
@@ -46,7 +83,7 @@ const CATEGORIES = [
 ];
 
 export default function ToolsCatalog({ searchRef }) {
-  const { addToCart, formatPrice, setSelectedToolModal, tools: catalogTools } = useApp();
+  const { addToCart, formatPrice, setSelectedToolModal, tools: catalogTools, categories: adminCategories } = useApp();
   const sourceTools = useMemo(() => {
     let deleted = [];
     try {
@@ -56,6 +93,60 @@ export default function ToolsCatalog({ searchRef }) {
     return list.filter(t => !deleted.includes(t.id) && !deleted.includes(t.slug) && !deleted.includes(t.product_id));
   }, [catalogTools]);
 
+  // Dynamically derive category pills from Admin Panel / Laravel Database
+  const categoryList = useMemo(() => {
+    const allPill = { id: 'all', label: 'All Tools', icon: null };
+    const pills = [];
+    const seenIds = new Set(['all']);
+
+    // 1. Add categories configured in Admin Panel / Database (sorted by display_order)
+    if (Array.isArray(adminCategories) && adminCategories.length > 0) {
+      const sortedAdmin = [...adminCategories].sort((a, b) => (a.display_order || 0) - (b.display_order || 0));
+      for (const cat of sortedAdmin) {
+        const id = String(cat.slug || cat.id).toLowerCase().trim();
+        if (!seenIds.has(id)) {
+          seenIds.add(id);
+          pills.push({
+            id: cat.slug || String(cat.id),
+            rawId: cat.id,
+            slug: cat.slug,
+            label: cat.name,
+            icon: ICON_MAP[cat.icon] || getIconForCategory(cat.slug || cat.name),
+            badge: cat.badge,
+            color: cat.color
+          });
+        }
+      }
+    }
+
+    // 2. Also ensure any extra category present on tools in sourceTools is included
+    for (const t of sourceTools) {
+      const catSlug = String(t.category_slug || (typeof t.category === 'object' ? t.category?.slug : t.category) || '').toLowerCase().trim();
+      if (catSlug && !seenIds.has(catSlug)) {
+        seenIds.add(catSlug);
+        const catName = typeof t.category === 'object' && t.category?.name 
+          ? t.category.name 
+          : catSlug.split(/[-_]/).map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+        pills.push({
+          id: catSlug,
+          rawId: t.category_id,
+          slug: catSlug,
+          label: catName,
+          icon: getIconForCategory(catSlug),
+          badge: null,
+          color: '#8b5cf6'
+        });
+      }
+    }
+
+    // 3. Fallback to default categories if neither admin nor tools have categories
+    if (pills.length === 0) {
+      return DEFAULT_CATEGORIES;
+    }
+
+    return [allPill, ...pills];
+  }, [adminCategories, sourceTools]);
+
   const [activeCategory, setActiveCategory] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [pricingFilter, setPricingFilter] = useState('all'); // 'all' | 'subscription' | 'lifetime'
@@ -63,10 +154,21 @@ export default function ToolsCatalog({ searchRef }) {
 
   const filteredTools = useMemo(() => {
     return sourceTools.filter((tool) => {
-      // Category filter
-      const toolCat = String(tool.category_slug || (typeof tool.category === 'object' ? tool.category?.slug : tool.category) || '').toLowerCase();
-      if (activeCategory !== 'all' && toolCat !== activeCategory) {
-        return false;
+      // Category filter - robust matching by slug, id, or name
+      if (activeCategory !== 'all') {
+        const catSlug = String(tool.category_slug || (typeof tool.category === 'object' ? tool.category?.slug : tool.category) || '').toLowerCase().trim();
+        const catId = String(tool.category_id || (typeof tool.category === 'object' ? tool.category?.id : '') || '').trim();
+        const catName = String(typeof tool.category === 'object' ? tool.category?.name : '').toLowerCase().trim();
+        const activeLower = String(activeCategory).toLowerCase().trim();
+
+        const matches = 
+          catSlug === activeLower ||
+          catId === activeLower ||
+          catName === activeLower;
+
+        if (!matches) {
+          return false;
+        }
       }
       // Search filter
       if (searchQuery.trim()) {
@@ -122,16 +224,63 @@ export default function ToolsCatalog({ searchRef }) {
         <div className="catalog-toolbar">
           {/* Categories */}
           <div className="category-filters">
-            {CATEGORIES.map((cat) => {
+            {categoryList.map((cat) => {
               const IconComp = cat.icon;
+              const count = cat.id === 'all' 
+                ? sourceTools.length 
+                : sourceTools.filter(t => {
+                    const slug = String(t.category_slug || (typeof t.category === 'object' ? t.category?.slug : t.category) || '').toLowerCase().trim();
+                    const id = String(t.category_id || (typeof t.category === 'object' ? t.category?.id : '') || '').trim();
+                    const name = String(typeof t.category === 'object' ? t.category?.name : '').toLowerCase().trim();
+                    const target = String(cat.id).toLowerCase().trim();
+                    return slug === target || id === target || name === target || (cat.rawId && id === String(cat.rawId));
+                  }).length;
+
+              const isActive = activeCategory === cat.id;
+
               return (
                 <button
                   key={cat.id}
-                  className={`cat-pill ${activeCategory === cat.id ? 'active' : ''}`}
+                  className={`cat-pill ${isActive ? 'active' : ''}`}
                   onClick={() => setActiveCategory(cat.id)}
+                  style={isActive && cat.color ? { borderColor: cat.color, boxShadow: `0 0 16px ${cat.color}40` } : {}}
                 >
-                  {IconComp && <IconComp size={15} />}
+                  {IconComp && <IconComp size={15} style={cat.color ? { color: cat.color } : {}} />}
                   <span>{cat.label}</span>
+                  {count > 0 && (
+                    <span 
+                      className="cat-count-pill" 
+                      style={{
+                        fontSize: '0.72rem',
+                        opacity: 0.85,
+                        marginLeft: '0.2rem',
+                        padding: '1px 5px',
+                        borderRadius: '8px',
+                        background: 'rgba(255, 255, 255, 0.12)'
+                      }}
+                    >
+                      {count}
+                    </span>
+                  )}
+                  {cat.badge && (
+                    <span 
+                      className="cat-badge-pill" 
+                      style={{
+                        fontSize: '0.65rem',
+                        fontWeight: 700,
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.04em',
+                        marginLeft: '0.25rem',
+                        padding: '1px 6px',
+                        borderRadius: '6px',
+                        background: cat.color ? `${cat.color}25` : 'rgba(139, 92, 246, 0.25)',
+                        color: cat.color || 'var(--cyan)',
+                        border: `1px solid ${cat.color ? `${cat.color}40` : 'rgba(139, 92, 246, 0.4)'}`
+                      }}
+                    >
+                      {cat.badge}
+                    </span>
+                  )}
                 </button>
               );
             })}
