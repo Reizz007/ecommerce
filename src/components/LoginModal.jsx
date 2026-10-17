@@ -21,10 +21,8 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }) {
   const [step, setStep] = useState('email');
   const [email, setEmail] = useState('');
   const [otp, setOtp] = useState('');
-  const [previewOtp, setPreviewOtp] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
-  const [deliveryNotice, setDeliveryNotice] = useState('');
   const [resendCooldown, setResendCooldown] = useState(0);
 
   // Cooldown countdown timer
@@ -66,25 +64,12 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }) {
       if (data.success) {
         setStep('otp');
         setResendCooldown(30);
-        if (data.otp_preview) {
-          setPreviewOtp(data.otp_preview);
-        }
-        if (data.mail_delivered === false || data.mail_error) {
-          setDeliveryNotice('Google SMTP password needs update (BadCredentials). Use the Auto-Fill code below to sign in:');
-        } else {
-          setDeliveryNotice('');
-        }
-        addToast(`📨 Verification code generated for ${cleanEmail}`, 'success');
+        addToast(`📨 Verification code sent to ${cleanEmail}! Please check your inbox.`, 'success');
       } else {
         setErrorMessage(data.message || 'Failed to send verification code. Please try again.');
       }
     } catch (err) {
-      // Offline / fallback generator
-      const mockOtp = String(Math.floor(100000 + Math.random() * 900000));
-      setPreviewOtp(mockOtp);
-      setStep('otp');
-      setResendCooldown(30);
-      addToast(`📨 Verification code generated for ${cleanEmail}`, 'info');
+      setErrorMessage('Failed to connect to authentication server. Please check your network.');
     } finally {
       setIsLoading(false);
     }
@@ -131,51 +116,18 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }) {
         onClose();
         resetModal();
       } else {
-        // Fallback check
-        if (previewOtp && cleanOtp === previewOtp) {
-          handleOfflineAdminLogin(cleanEmail);
-        } else {
-          setErrorMessage(data.message || 'Invalid or expired verification code.');
-        }
+        setErrorMessage(data.message || 'Invalid or expired verification code.');
       }
     } catch (err) {
-      // Offline fallback
-      if (cleanEmail === 'chetranicky@gmail.com' || (previewOtp && cleanOtp === previewOtp)) {
-        handleOfflineAdminLogin(cleanEmail);
-      } else {
-        setErrorMessage('Failed to connect to authentication server. Please check your network.');
-      }
+      setErrorMessage('Failed to connect to authentication server. Please check your network.');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleOfflineAdminLogin = (cleanEmail) => {
-    const isAdmin = cleanEmail === 'chetranicky@gmail.com' || cleanEmail.includes('admin');
-    const user = {
-      id: isAdmin ? 'admin_chetra' : 'user_' + Date.now(),
-      name: isAdmin ? 'Master Admin' : cleanEmail.split('@')[0],
-      email: cleanEmail,
-      role: isAdmin ? 'admin' : 'user'
-    };
-    localStorage.setItem('synapse_user', JSON.stringify(user));
-    localStorage.setItem('synapse_token', 'token_' + Date.now());
-
-    if (isAdmin) {
-      addToast('👑 Welcome Administrator! Access granted.', 'success');
-      onLoginSuccess(user, true);
-    } else {
-      addToast(`👋 Welcome, ${user.name}!`, 'info');
-      onLoginSuccess(user, false);
-    }
-    onClose();
-    resetModal();
-  };
-
   const resetModal = () => {
     setStep('email');
     setOtp('');
-    setPreviewOtp('');
     setErrorMessage('');
     setIsLoading(false);
   };
@@ -320,66 +272,9 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }) {
                 </div>
               </div>
 
-              {deliveryNotice && (
-                <div 
-                  style={{
-                    padding: '8px 12px',
-                    borderRadius: '8px',
-                    background: 'rgba(234, 179, 8, 0.12)',
-                    border: '1px solid rgba(234, 179, 8, 0.35)',
-                    marginBottom: '0.85rem',
-                    color: '#fde047',
-                    fontSize: '0.78rem',
-                    lineHeight: 1.45
-                  }}
-                >
-                  ⚠️ <strong>Notice:</strong> {deliveryNotice}
-                </div>
-              )}
-
-              {previewOtp && (
-                <div 
-                  style={{
-                    padding: '8px 12px',
-                    borderRadius: '8px',
-                    background: 'rgba(16, 185, 129, 0.1)',
-                    border: '1px solid rgba(16, 185, 129, 0.3)',
-                    marginBottom: '1rem',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    fontSize: '0.8rem'
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <CheckCircle2 size={15} style={{ color: '#10b981' }} />
-                    <span style={{ color: '#cbd5e1' }}>Code:</span>
-                    <strong style={{ color: '#38bdf8', letterSpacing: '2px', fontFamily: 'monospace' }}>
-                      {previewOtp}
-                    </strong>
-                  </div>
-                  <button
-                    type="button"
-                    style={{
-                      background: 'rgba(56, 189, 248, 0.2)',
-                      border: '1px solid rgba(56, 189, 248, 0.4)',
-                      color: '#38bdf8',
-                      padding: '3px 8px',
-                      borderRadius: '5px',
-                      fontSize: '0.72rem',
-                      cursor: 'pointer',
-                      fontWeight: 600
-                    }}
-                    onClick={() => setOtp(previewOtp)}
-                  >
-                    Auto-Fill
-                  </button>
-                </div>
-              )}
-
               <button
                 type="submit"
-                className="btn btn-primary btn-glow btn-full"
+                className="btn btn-primary btn-glow btn-full mt-3"
                 disabled={isLoading || otp.length < 4}
               >
                 <span>{isLoading ? 'Verifying Code...' : 'Verify & Sign In'}</span>
