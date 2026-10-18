@@ -11,6 +11,6 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // Seeders removed. Database remains clean and only contains data created by the admin/user.
+        // No seeders used.
     }
 }
