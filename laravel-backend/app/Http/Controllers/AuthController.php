@@ -87,34 +87,26 @@ class AuthController extends Controller
                     throw new \Exception('Resend HTTPS API error: ' . $res->body());
                 }
             } else {
-                $isCloudHost = !empty(env('RENDER')) || !empty(env('RENDER_SERVICE_ID')) || !empty(getenv('RENDER'));
                 $smtpHost = config('mail.mailers.smtp.host', 'smtp.gmail.com');
                 $smtpPort = (int) config('mail.mailers.smtp.port', 587);
-                $canConnect = false;
 
-                // Cloud hosts like Render free tier block outbound SMTP (ports 25, 465, 587).
-                // Avoid initiating TCP probes or Mail::html in cloud environments where SMTP is blocked.
-                if (!$isCloudHost && !empty($smtpHost) && $smtpHost !== 'localhost') {
-                    $socket = @stream_socket_client("tcp://{$smtpHost}:{$smtpPort}", $errno, $errstr, 0.8, STREAM_CLIENT_CONNECT);
-                    if ($socket) {
-                        fclose($socket);
-                        $canConnect = true;
-                    }
-                }
-
-                if ($canConnect) {
+                // Quick socket probe (1.5s) to check if SMTP port is open and not blackholed by cloud firewall
+                $socket = @stream_socket_client("tcp://{$smtpHost}:{$smtpPort}", $errno, $errstr, 1.5, STREAM_CLIENT_CONNECT);
+                if ($socket) {
+                    fclose($socket);
                     try {
-                        config(['mail.mailers.smtp.timeout' => 3]);
                         Mail::html($htmlContent, function ($message) use ($email, $otp) {
                             $message->to($email)
                                     ->subject("{$otp} is your Synapse AI Verification Code");
                         });
                         $mailSent = true;
                     } catch (\Throwable $mEx) {
-                        Log::warning('SMTP Mail sending failed: ' . $mEx->getMessage());
+                        $mailError = $mEx->getMessage();
+                        Log::warning('SMTP Mail sending failed: ' . $mailError);
                     }
                 } else {
-                    Log::info("Outbound SMTP to {$smtpHost}:{$smtpPort} bypassed or unreachable. Providing direct OTP code.");
+                    $mailError = "Outbound connection to {$smtpHost}:{$smtpPort} unreachable or blocked by cloud firewall ({$errstr}).";
+                    Log::warning($mailError);
                 }
             }
         } catch (\Throwable $e) {

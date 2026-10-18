@@ -53,9 +53,7 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }) {
     setIsLoading(true);
 
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 7000);
-
-    let delivered = false;
+    const timeoutId = setTimeout(() => controller.abort(), 25000);
 
     try {
       const res = await fetch(apiUrl('/api/auth/send-otp'), {
@@ -70,45 +68,29 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }) {
 
       clearTimeout(timeoutId);
 
-      if (res.ok) {
-        const data = await res.json().catch(() => ({}));
-        if (data.success) {
-          delivered = true;
-          setStep('otp');
-          setResendCooldown(30);
+      const data = await res.json().catch(() => ({}));
 
+      if (res.ok && data.success) {
+        setStep('otp');
+        setResendCooldown(30);
+
+        if (data.channel === 'email') {
+          addToast(`📨 Verification code sent to ${cleanEmail}! Please check your inbox.`, 'success');
+        } else if (data.otp || data.dev_otp) {
           const code = data.otp || data.dev_otp;
-          if (code) {
-            // Note: Never auto-fill the OTP input field
-            addToast(`🔑 Verification code: ${code}`, 'success');
-          } else {
-            addToast(`📨 Verification code sent to ${cleanEmail}! Please check your inbox.`, 'success');
-          }
+          addToast(`🔑 Verification code: ${code}`, 'success');
         } else {
-          setErrorMessage(data.message || 'Failed to send verification code. Please try again.');
+          addToast(`📨 Verification code sent to ${cleanEmail}! Please check your inbox.`, 'success');
         }
+      } else {
+        setErrorMessage(data.message || 'Failed to send verification code. Please check mail server settings.');
       }
     } catch (err) {
       clearTimeout(timeoutId);
+      setErrorMessage('Authentication server request timed out. Please check your network and try again.');
+    } finally {
+      setIsLoading(false);
     }
-
-    // Resilient fallback: If remote server is sleeping, blocked, or returning 500,
-    // generate an offline verification code so users and admins can always log in immediately
-    if (!delivered && !errorMessage) {
-      const fallbackOtp = Math.floor(100000 + Math.random() * 900000).toString();
-      try {
-        sessionStorage.setItem('synapse_offline_otp_' + cleanEmail, JSON.stringify({
-          otp: fallbackOtp,
-          expiresAt: Date.now() + 10 * 60 * 1000
-        }));
-      } catch (e) {}
-
-      setStep('otp');
-      setResendCooldown(30);
-      addToast(`🔑 Verification code: ${fallbackOtp}`, 'success');
-    }
-
-    setIsLoading(false);
   };
 
   // Step 2: Verify OTP & Sign In
@@ -125,7 +107,7 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }) {
     const cleanEmail = email.trim().toLowerCase();
 
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 6000);
+    const timeoutId = setTimeout(() => controller.abort(), 15000);
 
     let verifiedUser = null;
     let verifiedToken = null;
