@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Setting;
+use App\Services\TelegramService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -23,6 +24,10 @@ class SettingController extends Controller
         $khqrProfileId = Setting::get('khqr_profile_id', config('services.khqr.profile_id', 'tW6PHjgPyzISFi3KK22hKZ57rag1cWHS'));
         $khqrSecretKey = Setting::get('khqr_secret_key', config('services.khqr.secret_key', 'zsFq7SWHV4gYFSAdfg2ud8WV747tBOei'));
 
+        $telegramBotToken = Setting::get('telegram_bot_token', env('TELEGRAM_BOT_TOKEN', ''));
+        $telegramChatId = Setting::get('telegram_chat_id', env('TELEGRAM_CHAT_ID', ''));
+        $telegramEnabled = Setting::get('telegram_enabled', env('TELEGRAM_ENABLED', false));
+
         $settings = [
             'abaPayLink' => $abaPayLink,
             'khqrGatewayUrl' => $khqrGatewayUrl,
@@ -32,6 +37,9 @@ class SettingController extends Controller
             'maintenanceMode' => (bool) $maintenanceMode,
             'systemStatus' => $systemStatus,
             'promoCodes' => $promoCodes,
+            'telegramBotToken' => $telegramBotToken,
+            'telegramChatId' => $telegramChatId,
+            'telegramEnabled' => (bool) $telegramEnabled,
         ];
 
         return response()->json([
@@ -69,7 +77,35 @@ class SettingController extends Controller
         if ($request->has('promoCodes')) {
             Setting::set('promo_codes', $request->promoCodes);
         }
+        if ($request->has('telegramBotToken')) {
+            Setting::set('telegram_bot_token', $request->telegramBotToken);
+        }
+        if ($request->has('telegramChatId')) {
+            Setting::set('telegram_chat_id', $request->telegramChatId);
+        }
+        if ($request->has('telegramEnabled')) {
+            Setting::set('telegram_enabled', (bool) $request->telegramEnabled);
+        }
 
         return $this->getSettings();
+    }
+
+    public function testTelegram(Request $request): JsonResponse
+    {
+        $token = $request->input('token') ?: Setting::get('telegram_bot_token', env('TELEGRAM_BOT_TOKEN'));
+        $chatId = $request->input('chat_id') ?: Setting::get('telegram_chat_id', env('TELEGRAM_CHAT_ID'));
+
+        if (empty($token) || empty($chatId)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Both Telegram Bot Token and Chat ID are required.',
+            ], 422);
+        }
+
+        $testMessage = "🚀 <b>Synapse AI Control Center</b>\n\nTelegram notification channel verified successfully!\nYou will now receive live alerts for KHQR payments, orders, and security events.";
+
+        $result = TelegramService::sendMessage($testMessage, $token, $chatId);
+
+        return response()->json($result, $result['success'] ? 200 : 400);
     }
 }

@@ -40,21 +40,80 @@ function writeDB(data) {
 // ROUTES
 // -------------------------------------------------------------
 
-// Auth Login
+// In-memory OTP storage
+const otps = new Map();
+
+// Send OTP
+app.post('/api/auth/send-otp', (req, res) => {
+  const { email } = req.body;
+  if (!email || !email.includes('@')) {
+    return res.status(400).json({ success: false, message: 'Valid email required' });
+  }
+
+  const cleanEmail = email.toLowerCase().trim();
+  const otp = Math.floor(100000 + Math.random() * 900000).toString();
+  otps.set(cleanEmail, { otp, expiresAt: Date.now() + 10 * 60 * 1000 });
+
+  return res.json({
+    success: true,
+    message: `Verification code generated for ${cleanEmail}. (Use code: ${otp})`,
+    email: cleanEmail,
+    otp: otp,
+    dev_otp: otp
+  });
+});
+
+// Verify OTP
+app.post('/api/auth/verify-otp', (req, res) => {
+  const { email, otp } = req.body;
+  if (!email || !otp) {
+    return res.status(400).json({ success: false, message: 'Email and OTP code required' });
+  }
+
+  const cleanEmail = email.toLowerCase().trim();
+  const stored = otps.get(cleanEmail);
+
+  if (!stored || stored.otp !== String(otp).trim() || stored.expiresAt < Date.now()) {
+    return res.status(422).json({ success: false, message: 'Invalid or expired verification code.' });
+  }
+
+  otps.delete(cleanEmail);
+
+  const isAdmin = cleanEmail === 'admin@synapse.ai' || cleanEmail === 'chetranicky@gmail.com';
+  const user = {
+    id: isAdmin ? 'admin_master' : `user_${Date.now()}`,
+    name: isAdmin ? 'Master Admin' : cleanEmail.split('@')[0],
+    email: cleanEmail,
+    role: isAdmin ? 'admin' : 'user',
+    permissions: isAdmin ? ['all'] : ['standard']
+  };
+
+  return res.json({
+    success: true,
+    message: 'Authentication successful',
+    token: `jwt_synapse_${user.role}_token_${Date.now()}`,
+    user: user
+  });
+});
+
+// Auth Login (Password)
 app.post('/api/auth/login', (req, res) => {
   const { email, password } = req.body;
   if (!email || !password) {
     return res.status(400).json({ success: false, message: 'Email and password required' });
   }
 
+  const cleanEmail = email.toLowerCase().trim();
+  const isAdminEmail = cleanEmail === 'admin@synapse.ai' || cleanEmail === 'admin' || cleanEmail === 'chetranicky@gmail.com';
+
   // Check Admin Credentials
-  if ((email.toLowerCase() === 'admin@synapse.ai' || email.toLowerCase() === 'admin') && password === 'admin123') {
+  if (isAdminEmail && password === 'admin123') {
     return res.json({
       success: true,
       user: {
         id: 'admin_master',
         name: 'Master Admin',
-        email: 'admin@synapse.ai',
+        email: cleanEmail === 'admin' ? 'admin@synapse.ai' : cleanEmail,
         role: 'admin',
         permissions: ['all']
       },
@@ -68,8 +127,8 @@ app.post('/api/auth/login', (req, res) => {
       success: true,
       user: {
         id: `user_${Date.now()}`,
-        name: email.split('@')[0] || 'Subscriber',
-        email: email,
+        name: cleanEmail.split('@')[0] || 'Subscriber',
+        email: cleanEmail,
         role: 'user',
         permissions: ['standard']
       },
@@ -77,7 +136,34 @@ app.post('/api/auth/login', (req, res) => {
     });
   }
 
-  return res.status(401).json({ success: false, message: 'Invalid credentials. For Admin use admin@synapse.ai / admin123' });
+  return res.status(401).json({ success: false, message: 'Invalid credentials. For Admin use admin@synapse.ai or chetranicky@gmail.com / admin123' });
+});
+
+// Test Telegram endpoint
+app.post('/api/settings/test-telegram', async (req, res) => {
+  const token = req.body.token || req.body.telegramBotToken;
+  const chatId = req.body.chat_id || req.body.telegramChatId;
+  if (!token || !chatId) {
+    return res.status(422).json({ success: false, message: 'Both Telegram Bot Token and Chat ID are required.' });
+  }
+  try {
+    const tgRes = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chat_id: chatId,
+        text: '🚀 <b>Synapse AI Control Center</b>\n\nTelegram notification channel verified successfully!\nYou will now receive live alerts for KHQR payments, orders, and security events.',
+        parse_mode: 'HTML'
+      })
+    });
+    const tgData = await tgRes.json();
+    if (tgData.ok) {
+      return res.json({ success: true, message: 'Telegram alert delivered successfully!' });
+    }
+    return res.status(400).json({ success: false, message: tgData.description || 'Telegram API returned an error' });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: 'Could not connect to Telegram: ' + err.message });
+  }
 });
 
 // Health check

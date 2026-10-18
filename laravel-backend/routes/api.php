@@ -67,6 +67,7 @@ Route::get('/payment/khqr/info', [KhqrPaymentController::class, 'info']);
 // Global Settings & ABA PayWay Link
 Route::get('/settings', [SettingController::class, 'getSettings']);
 Route::put('/settings', [SettingController::class, 'updateSettings']);
+Route::post('/settings/test-telegram', [SettingController::class, 'testTelegram']);
 
 // Dashboard Stats
 Route::get('/stats', [StatsController::class, 'index']);
