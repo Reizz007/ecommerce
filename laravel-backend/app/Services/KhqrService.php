@@ -22,9 +22,11 @@ class KhqrService
     /**
      * Generate dynamic KHQR Payment Checkout URL and security hash.
      *
-     * Hash formula: sha1(secretKey + transactionId + formattedAmount + remark)
+     * Hash formula:
+     * - With success_url: sha1(secretKey + transactionId + formattedAmount + successUrl + remark)
+     * - Without success_url: sha1(secretKey + transactionId + formattedAmount + remark)
      */
-    public function createPayment(float|string $amount, ?string $transactionId = null, ?string $remark = null): array
+    public function createPayment(float|string $amount, ?string $transactionId = null, ?string $remark = null, ?string $successUrl = null): array
     {
         if (empty($transactionId)) {
             $transactionId = 'SYN-' . strtoupper(Str::random(10)) . '-' . time();
@@ -38,7 +40,11 @@ class KhqrService
         $cleanRemark = substr($remark, 0, 50);
 
         // Security Hash generation matching khqr.cc specification
-        $rawStringToHash = $this->secretKey . $transactionId . $formattedAmount . $cleanRemark;
+        if (!empty($successUrl)) {
+            $rawStringToHash = $this->secretKey . $transactionId . $formattedAmount . $successUrl . $cleanRemark;
+        } else {
+            $rawStringToHash = $this->secretKey . $transactionId . $formattedAmount . $cleanRemark;
+        }
         $hash = sha1($rawStringToHash);
 
         // Normalize Gateway URL with Profile ID
@@ -56,6 +62,10 @@ class KhqrService
             'hash' => $hash,
         ];
 
+        if (!empty($successUrl)) {
+            $queryParams['success_url'] = $successUrl;
+        }
+
         $checkoutUrl = $baseUrl . '?' . http_build_query($queryParams);
         $iframeUrl = $checkoutUrl . '&iframe=1';
 
@@ -70,6 +80,7 @@ class KhqrService
             'profile_id' => $this->profileId,
             'checkout_url' => $checkoutUrl,
             'iframe_url' => $iframeUrl,
+            'success_url' => $successUrl,
             'gateway_url' => $baseUrl,
             'created_at' => now()->toIso8601String(),
         ];
@@ -78,11 +89,15 @@ class KhqrService
     /**
      * Verify hash validity
      */
-    public function verifyHash(string $transactionId, string|float $amount, string $remark, string $hashToVerify): bool
+    public function verifyHash(string $transactionId, string|float $amount, string $remark, string $hashToVerify, ?string $successUrl = null): bool
     {
         $formattedAmount = number_format((float) $amount, 2, '.', '');
         $cleanRemark = substr($remark, 0, 50);
-        $expectedHash = sha1($this->secretKey . $transactionId . $formattedAmount . $cleanRemark);
+        if (!empty($successUrl)) {
+            $expectedHash = sha1($this->secretKey . $transactionId . $formattedAmount . $successUrl . $cleanRemark);
+        } else {
+            $expectedHash = sha1($this->secretKey . $transactionId . $formattedAmount . $cleanRemark);
+        }
 
         return hash_equals($expectedHash, $hashToVerify);
     }

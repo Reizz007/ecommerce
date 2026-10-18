@@ -71,6 +71,7 @@ export default function CheckoutModal() {
     setKhqrIframeLoading(true);
 
     try {
+      const currentOrigin = typeof window !== 'undefined' ? window.location.origin : 'https://ecommerce-2smr.onrender.com';
       const res = await fetch(apiUrl('/api/payment/khqr/generate'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -80,6 +81,7 @@ export default function CheckoutModal() {
           customerEmail,
           company: customerCompany,
           items: cart.map((c) => c.name),
+          success_url: `${currentOrigin}/payment-success.html`,
         }),
       });
       const data = await res.json();
@@ -104,6 +106,67 @@ export default function CheckoutModal() {
       generateKhqrPayment();
     }
   }, [step, totalUSD]);
+
+  // Real-time automatic payment detection while on Step 2 (QR code scan screen)
+  useEffect(() => {
+    if (step !== 2 || !khqrPayment?.transaction_id) return;
+
+    const activeTxId = khqrPayment.transaction_id;
+    let isCompleted = false;
+
+    const triggerAutoSuccess = async () => {
+      if (isCompleted || isProcessing) return;
+      isCompleted = true;
+      addToast('✅ Payment verified! Activating license...', 'success');
+      await handleCompleteOrder();
+    };
+
+    // 1. Polling verification status every 2.5 seconds
+    const pollInterval = setInterval(async () => {
+      if (isCompleted || isProcessing) return;
+      try {
+        const res = await fetch(apiUrl(`/api/payment/khqr/verify/${activeTxId}`));
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data.success && (data.is_paid || data.status === 'Verified')) {
+          clearInterval(pollInterval);
+          triggerAutoSuccess();
+        }
+      } catch (err) {
+        // silent polling catch
+      }
+    }, 2500);
+
+    // 2. PostMessage listener for iframe / popup payment-success.html
+    const handleMessage = (event) => {
+      if (isCompleted || isProcessing) return;
+      if (event.data?.type === 'KHQR_PAYMENT_SUCCESS') {
+        const receivedTx = event.data.transaction_id;
+        if (!receivedTx || receivedTx === activeTxId) {
+          clearInterval(pollInterval);
+          triggerAutoSuccess();
+        }
+      }
+    };
+
+    // 3. LocalStorage listener across browser tabs
+    const handleStorage = (event) => {
+      if (isCompleted || isProcessing) return;
+      if (event.key === 'synapse_latest_paid_tx' && event.newValue === activeTxId) {
+        clearInterval(pollInterval);
+        triggerAutoSuccess();
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
+    window.addEventListener('storage', handleStorage);
+
+    return () => {
+      clearInterval(pollInterval);
+      window.removeEventListener('message', handleMessage);
+      window.removeEventListener('storage', handleStorage);
+    };
+  }, [step, khqrPayment?.transaction_id, isProcessing]);
 
   // Real-time polling for admin's published activation link while in Step 3
   useEffect(() => {
@@ -174,6 +237,7 @@ export default function CheckoutModal() {
 
 
   const handleCompleteOrder = async () => {
+    if (isProcessing) return;
     setIsProcessing(true);
     const fallbackKey = generateNewApiKey(`Production - ${customerCompany || customerName}`);
     let finalKey = fallbackKey.key;
@@ -517,7 +581,14 @@ Thank you for building with SYNAPSE.AI!
                     {/* Left: Official Live KHQR Gateway Embed */}
                     <div className="khqr-embed-col">
                       <div className="khqr-iframe-card">
-                        {khqrIframeLoading && (
+                        {isProcessing && (
+                          <div className="khqr-iframe-loading-overlay active">
+                            <CheckCircle2 size={32} className="text-emerald animate-bounce" />
+                            <strong className="text-emerald" style={{ color: '#10b981', fontSize: '1rem' }}>Payment Verified!</strong>
+                            <span style={{ fontSize: '0.82rem', color: '#94a3b8' }}>Activating license & keys...</span>
+                          </div>
+                        )}
+                        {khqrIframeLoading && !isProcessing && (
                           <div className="khqr-iframe-loading-overlay">
                             <RefreshCw size={26} className="spin-icon text-cyan" />
                             <span>Loading official KHQR QR code...</span>
@@ -535,6 +606,10 @@ Thank you for building with SYNAPSE.AI!
                       <div className="khqr-scan-caption">
                         <Smartphone size={13} className="inline mr-1" />
                         <span>Scan QR above with ABA Mobile, Bakong, or any Banking App</span>
+                      </div>
+                      <div className="khqr-live-detect-banner">
+                        <span className="khqr-badge-pulse-dot"></span>
+                        <span>Auto-detecting scan... Advances automatically once paid.</span>
                       </div>
                     </div>
 

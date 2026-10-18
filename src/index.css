@@ -5842,6 +5842,38 @@ input:checked+.slider:before {
   display: none;
 }
 
+.khqr-live-detect-banner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.85rem;
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid rgba(16, 185, 129, 0.35);
+  border-radius: 999px;
+  font-size: 0.76rem;
+  font-weight: 500;
+  color: #34d399;
+  margin-top: 0.65rem;
+  text-align: center;
+}
+
+.khqr-badge-pulse-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #10b981;
+  box-shadow: 0 0 10px #10b981;
+  animation: pulse-dot 1.4s ease-in-out infinite alternate;
+  flex-shrink: 0;
+}
+
+@keyframes pulse-dot {
+  0% { transform: scale(0.8); opacity: 0.5; }
+  100% { transform: scale(1.3); opacity: 1; }
+}
+
+
 /* Native ABA PayWay QR Card */
 .aba-qr-card-container {
   width: 290px;

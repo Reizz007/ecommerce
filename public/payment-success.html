@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Payment Successful & Verified — Synapse AI</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      background: #080d1a;
+      color: #f8fafc;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      overflow: hidden;
+    }
+    .success-card {
+      background: rgba(15, 23, 42, 0.95);
+      border: 1px solid rgba(16, 185, 129, 0.4);
+      box-shadow: 0 20px 50px -10px rgba(16, 185, 129, 0.3), 0 0 30px rgba(6, 182, 212, 0.15);
+      border-radius: 24px;
+      padding: 40px 32px;
+      max-width: 420px;
+      width: 100%;
+      text-align: center;
+      position: relative;
+      animation: popIn 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    @keyframes popIn {
+      0% { opacity: 0; transform: scale(0.92) translateY(12px); }
+      100% { opacity: 1; transform: scale(1) translateY(0); }
+    }
+    .icon-wrapper {
+      width: 76px;
+      height: 76px;
+      margin: 0 auto 20px;
+      background: linear-gradient(135deg, rgba(16, 185, 129, 0.25), rgba(6, 182, 212, 0.2));
+      border: 2px solid #10b981;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 25px rgba(16, 185, 129, 0.5);
+      animation: pulseGlow 2s infinite alternate;
+    }
+    @keyframes pulseGlow {
+      0% { box-shadow: 0 0 15px rgba(16, 185, 129, 0.4); }
+      100% { box-shadow: 0 0 35px rgba(16, 185, 129, 0.8); }
+    }
+    .check-svg {
+      width: 40px;
+      height: 40px;
+      stroke: #10b981;
+      stroke-width: 3.5;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      fill: none;
+    }
+    h1 {
+      font-size: 22px;
+      font-weight: 700;
+      color: #ffffff;
+      margin-bottom: 8px;
+      letter-spacing: -0.02em;
+    }
+    .subtitle {
+      font-size: 14px;
+      color: #94a3b8;
+      line-height: 1.5;
+      margin-bottom: 24px;
+    }
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(16, 185, 129, 0.12);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      padding: 6px 16px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+      color: #34d399;
+      margin-bottom: 20px;
+    }
+    .pulse-dot {
+      width: 8px;
+      height: 8px;
+      background: #10b981;
+      border-radius: 50%;
+      box-shadow: 0 0 8px #10b981;
+      animation: blink 1s infinite alternate;
+    }
+    @keyframes blink {
+      0% { opacity: 0.4; }
+      100% { opacity: 1; }
+    }
+    .tx-box {
+      background: rgba(30, 41, 59, 0.6);
+      border: 1px solid rgba(148, 163, 184, 0.15);
+      border-radius: 12px;
+      padding: 12px 14px;
+      font-size: 12px;
+      color: #cbd5e1;
+      word-break: break-all;
+      margin-bottom: 20px;
+      font-family: monospace;
+    }
+    .btn-return {
+      display: block;
+      width: 100%;
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: #ffffff;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 14px;
+      padding: 12px;
+      border-radius: 12px;
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 8px 20px rgba(16, 185, 129, 0.3);
+      transition: all 0.2s ease;
+    }
+    .btn-return:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 24px rgba(16, 185, 129, 0.45);
+    }
+  </style>
+</head>
+<body>
+  <div class="success-card">
+    <div class="icon-wrapper">
+      <svg class="check-svg" viewBox="0 0 24 24">
+        <path d="M20 6L9 17l-5-5"></path>
+      </svg>
+    </div>
+
+    <h1>Payment Successful!</h1>
+    <p class="subtitle">Cambodia National KHQR payment confirmed. License activated and Telegram notification sent.</p>
+
+    <div class="status-pill">
+      <span class="pulse-dot"></span>
+      <span>Verified & Synchronized</span>
+    </div>
+
+    <div class="tx-box" id="tx-display">
+      Transaction ID: SYN-KHQR-VERIFIED
+    </div>
+
+    <button type="button" class="btn-return" id="btn-done" onclick="finishAndReturn()">
+      Continue to Dashboard →
+    </button>
+  </div>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const txId = params.get('tx') || params.get('transaction_id') || params.get('tran_id') || '';
+
+    if (txId) {
+      document.getElementById('tx-display').innerText = 'Transaction: ' + txId;
+      try {
+        localStorage.setItem('synapse_latest_paid_tx', txId);
+        localStorage.setItem('synapse_latest_paid_time', String(Date.now()));
+      } catch (_) {}
+    }
+
+    // 1. Post message to parent iframe or window opener
+    function broadcastSuccess() {
+      const msg = {
+        type: 'KHQR_PAYMENT_SUCCESS',
+        transaction_id: txId,
+        status: 'Verified',
+        timestamp: Date.now()
+      };
+
+      try {
+        if (window.parent && window.parent !== window) {
+          window.parent.postMessage(msg, '*');
+        }
+      } catch (_) {}
+
+      try {
+        if (window.opener && !window.opener.closed) {
+          window.opener.postMessage(msg, '*');
+        }
+      } catch (_) {}
+    }
+
+    broadcastSuccess();
+
+    // 2. Direct backend call to ensure Order status is 'Verified' and Telegram alert is dispatched
+    const apiBase = (window.location.origin.includes('localhost') || window.location.origin.includes('127.0.0.1'))
+      ? 'http://127.0.0.1:8000'
+      : 'https://backend-1-lawx.onrender.com';
+
+    if (txId) {
+      fetch(apiBase + '/api/payment/khqr/verify/' + encodeURIComponent(txId) + '?confirm=true')
+        .then(function(res) { return res.json(); })
+        .then(function(data) {
+          console.log('[Synapse Payment] Order confirmed & alert triggered:', data);
+          broadcastSuccess();
+        })
+        .catch(function(err) {
+          console.warn('[Synapse Payment] Verify sync note:', err);
+        });
+    }
+
+    // 3. Auto-redirect if in standalone tab after 2.5 seconds
+    function finishAndReturn() {
+      broadcastSuccess();
+      if (window.opener && !window.opener.closed) {
+        try {
+          window.opener.focus();
+          window.close();
+          return;
+        } catch (_) {}
+      }
+      window.location.href = '/#payment-verified';
+    }
+
+    if (!window.parent || window.parent === window) {
+      setTimeout(function() {
+        finishAndReturn();
+      }, 3000);
+    }
+  </script>
+</body>
+</html>

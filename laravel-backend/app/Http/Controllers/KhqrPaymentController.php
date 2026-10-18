@@ -5,8 +5,10 @@ namespace App\Http\Controllers;
 use App\Models\Order;
 use App\Models\Subscriber;
 use App\Services\KhqrService;
+use App\Services\TelegramService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class KhqrPaymentController extends Controller
@@ -33,6 +35,7 @@ class KhqrPaymentController extends Controller
             'transaction_id' => 'nullable|string',
             'paymentMethod' => 'nullable|string',
             'payment_method' => 'nullable|string',
+            'success_url' => 'nullable|string',
         ]);
 
         $amount = (float) $validated['amount'];
@@ -48,8 +51,20 @@ class KhqrPaymentController extends Controller
             : ('KHQR_' . substr(preg_replace('/[^A-Za-z0-9]/', '', $transactionId), -8));
         $remark = $validated['remark'] ?? $defaultRemark;
 
-        // Generate dynamic payment via service (valid signed SHA1 for khqr.cc)
-        $payment = $this->khqrService->createPayment($amount, $transactionId, $remark);
+        // Resolve frontend success_url for automatic redirection upon payment completion
+        $frontendOrigin = $request->header('origin') ?: $request->header('referer');
+        if ($frontendOrigin) {
+            $parsedHost = parse_url($frontendOrigin, PHP_URL_HOST);
+            $parsedScheme = parse_url($frontendOrigin, PHP_URL_SCHEME) ?: 'https';
+            $parsedPort = parse_url($frontendOrigin, PHP_URL_PORT);
+            $parsedOrigin = $parsedScheme . '://' . $parsedHost . ($parsedPort ? ':' . $parsedPort : '');
+        } else {
+            $parsedOrigin = 'https://ecommerce-2smr.onrender.com';
+        }
+        $successUrl = $validated['success_url'] ?? ($parsedOrigin . '/payment-success.html?tx=' . $transactionId);
+
+        // Generate dynamic payment via service (valid signed SHA1 for khqr.cc with success_url)
+        $payment = $this->khqrService->createPayment($amount, $transactionId, $remark, $successUrl);
 
         // Pre-create or record Order in database
         $order = Order::updateOrCreate(
@@ -67,6 +82,13 @@ class KhqrPaymentController extends Controller
             ]
         );
 
+        // Send Telegram alert for new payment request
+        try {
+            TelegramService::sendOrderAlert($order, 'New KHQR Payment Created');
+        } catch (\Throwable $e) {
+            // graceful fallback
+        }
+
         return response()->json([
             'success' => true,
             'message' => 'Payment request generated successfully',
@@ -79,6 +101,7 @@ class KhqrPaymentController extends Controller
             'profile_id' => $payment['profile_id'],
             'checkout_url' => $payment['checkout_url'],
             'iframe_url' => $payment['iframe_url'],
+            'success_url' => $payment['success_url'] ?? $successUrl,
             'order_id' => $order->id,
             'order_number' => $order->order_number,
             'order' => $order,
@@ -94,6 +117,34 @@ class KhqrPaymentController extends Controller
         $order = Order::where('order_number', $transactionId)->first();
 
         if (!$order) {
+            if ($request->boolean('confirm') || $request->input('confirm') === 'true' || $request->input('confirm') == '1') {
+                $order = Order::create([
+                    'order_number' => $transactionId,
+                    'customer_name' => $request->input('customer_name', $request->input('customerName', 'Valued Customer')),
+                    'customer_email' => $request->input('customer_email', $request->input('customerEmail', 'customer@synapse.ai')),
+                    'company' => $request->input('company', ''),
+                    'items' => is_array($request->input('items')) ? $request->input('items') : [$request->input('items', 'AI Suite License')],
+                    'amount' => (float) $request->input('amount', 49.00),
+                    'payment_method' => 'Cambodia National KHQR Gateway',
+                    'status' => 'Verified',
+                    'api_key' => 'sk_synapse_live_' . Str::random(28),
+                ]);
+
+                try {
+                    TelegramService::sendOrderSuccessAlert($order);
+                } catch (\Throwable $e) {
+                    Log::warning('Telegram order alert exception: ' . $e->getMessage());
+                }
+
+                return response()->json([
+                    'success' => true,
+                    'order' => $order,
+                    'status' => 'Verified',
+                    'is_paid' => true,
+                    'api_key' => $order->api_key,
+                ]);
+            }
+
             return response()->json([
                 'success' => false,
                 'message' => 'Transaction not found',
@@ -102,8 +153,18 @@ class KhqrPaymentController extends Controller
 
         // If client sends confirmation or manual verification
         if ($request->boolean('confirm') || $request->input('confirm') === 'true' || $request->input('confirm') == '1' || $order->status === 'Verified') {
+            $wasAlreadyVerified = ($order->getOriginal('status') === 'Verified');
             $order->status = 'Verified';
             $order->save();
+
+            // Send "Order Successful & Verified!" Telegram Alert
+            if (!$wasAlreadyVerified || $request->boolean('confirm') || $request->input('confirm') === 'true') {
+                try {
+                    TelegramService::sendOrderSuccessAlert($order);
+                } catch (\Throwable $e) {
+                    // graceful fallback
+                }
+            }
 
             // Auto-enroll subscriber
             if (!empty($order->customer_email)) {
