@@ -122,6 +122,9 @@ function MainContent() {
       setIsAdminOpen(true);
       setIsLoginOpen(false);
     }
+    if (window.location.pathname === '/login' || window.location.hash === '#login') {
+      window.history.replaceState(null, '', '/');
+    }
   };
 
   const handleLogout = () => {
@@ -263,7 +266,12 @@ function MainContent() {
       <ToolQuickViewModal />
       <LoginModal 
         isOpen={isLoginOpen} 
-        onClose={() => setIsLoginOpen(false)} 
+        onClose={() => {
+          setIsLoginOpen(false);
+          if (window.location.pathname === '/login' || window.location.hash === '#login') {
+            window.history.replaceState(null, '', '/');
+          }
+        }} 
         onLoginSuccess={handleLoginSuccess}
       />
       <ToastContainer />

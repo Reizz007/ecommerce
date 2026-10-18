@@ -14,7 +14,6 @@ import {
   HelpCircle,
   Star,
   ShieldCheck,
-  LogIn,
   LogOut,
   Sun,
   Moon
@@ -142,16 +141,7 @@ export default function Navbar({ onOpenSearch, onOpenAdmin, currentUser, onOpenL
                   <LogOut size={14} />
                 </button>
               </div>
-            ) : (
-              <button 
-                className="btn-signin-nav"
-                onClick={onOpenLogin}
-                title="Sign in / Login"
-              >
-                <LogIn size={15} />
-                <span>Sign In</span>
-              </button>
-            )}
+            ) : null}
 
             {/* Theme Toggle (Light / Dark Mode) */}
             <button
@@ -247,17 +237,7 @@ export default function Navbar({ onOpenSearch, onOpenAdmin, currentUser, onOpenL
                       <LogOut size={16} /> Sign Out
                     </button>
                   </>
-                ) : (
-                  <button 
-                    className="btn btn-secondary btn-full"
-                    onClick={() => {
-                      setMobileMenuOpen(false);
-                      onOpenLogin();
-                    }}
-                  >
-                    <LogIn size={16} /> Sign In / Create Account
-                  </button>
-                )}
+                ) : null}
 
                 <button 
                   type="button"
