@@ -103,6 +103,38 @@ export function AppProvider({ children }) {
   const [appliedDiscount, setAppliedDiscount] = useState(null); // { code: 'NEURON20', percent: 20 }
   const [promoMessage, setPromoMessage] = useState(null);
 
+  // Theme state ('dark' | 'light')
+  const [theme, setTheme] = useState(() => {
+    try {
+      const saved = localStorage.getItem('synapse_theme');
+      if (saved === 'light' || saved === 'dark') return saved;
+      if (typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
+        return 'light';
+      }
+    } catch {}
+    return 'dark';
+  });
+
+  const toggleTheme = useCallback(() => {
+    setTheme(prev => (prev === 'dark' ? 'light' : 'dark'));
+  }, []);
+
+  useEffect(() => {
+    try {
+      document.documentElement.setAttribute('data-theme', theme);
+      if (theme === 'light') {
+        document.documentElement.classList.add('light-theme');
+        document.documentElement.classList.remove('dark-theme');
+      } else {
+        document.documentElement.classList.add('dark-theme');
+        document.documentElement.classList.remove('light-theme');
+      }
+      localStorage.setItem('synapse_theme', theme);
+    } catch (e) {
+      console.warn('Could not save theme:', e);
+    }
+  }, [theme]);
+
   // Currency
   const [currency, setCurrency] = useState('USD');
 
@@ -313,7 +345,10 @@ export function AppProvider({ children }) {
         refreshTools,
         categories,
         setCategories,
-        refreshCategories
+        refreshCategories,
+        theme,
+        setTheme,
+        toggleTheme
       }}
     >
       {children}

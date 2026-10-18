@@ -15,7 +15,9 @@ import {
   Star,
   ShieldCheck,
   LogIn,
-  LogOut
+  LogOut,
+  Sun,
+  Moon
 } from 'lucide-react';
 
 export default function Navbar({ onOpenSearch, onOpenAdmin, currentUser, onOpenLogin, onLogout }) {
@@ -24,7 +26,9 @@ export default function Navbar({ onOpenSearch, onOpenAdmin, currentUser, onOpenL
     currency, 
     setCurrency, 
     setIsCartOpen, 
-    setIsAccountOpen 
+    setIsAccountOpen,
+    theme,
+    toggleTheme
   } = useApp();
 
   const [isScrolled, setIsScrolled] = useState(false);
@@ -139,10 +143,30 @@ export default function Navbar({ onOpenSearch, onOpenAdmin, currentUser, onOpenL
                 </button>
               </div>
             ) : (
-             <div>
-              
-             </div>
+              <button 
+                className="btn-signin-nav"
+                onClick={onOpenLogin}
+                title="Sign in / Login"
+              >
+                <LogIn size={15} />
+                <span>Sign In</span>
+              </button>
             )}
+
+            {/* Theme Toggle (Light / Dark Mode) */}
+            <button
+              type="button"
+              className="theme-toggle-btn"
+              onClick={toggleTheme}
+              title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+              aria-label="Toggle Light and Dark Mode"
+            >
+              {theme === 'dark' ? (
+                <Sun size={17} className="theme-toggle-icon sun" />
+              ) : (
+                <Moon size={17} className="theme-toggle-icon moon" />
+              )}
+            </button>
 
             {/* Cart Button */}
             <button 
@@ -234,6 +258,18 @@ export default function Navbar({ onOpenSearch, onOpenAdmin, currentUser, onOpenL
                     <LogIn size={16} /> Sign In / Create Account
                   </button>
                 )}
+
+                <button 
+                  type="button"
+                  className="btn btn-secondary btn-full theme-mobile-toggle"
+                  onClick={() => {
+                    toggleTheme();
+                    setMobileMenuOpen(false);
+                  }}
+                >
+                  {theme === 'dark' ? <Sun size={16} className="text-warning" /> : <Moon size={16} className="text-primary" />}
+                  <span>{theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}</span>
+                </button>
 
                 <a 
                   href="#tools" 

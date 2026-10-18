@@ -20,6 +20,18 @@
 
     <!-- Favicon SVG -->
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238b5cf6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 18a8 8 0 1 1 8-8 8 8 0 0 1-8 8z'/><circle cx='12' cy='12' r='3'/></svg>" />
+
+    <!-- Instant Theme Initializer (prevents flash of wrong theme) -->
+    <script>
+      (function() {
+        try {
+          var saved = localStorage.getItem('synapse_theme');
+          var theme = saved || (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+          document.documentElement.setAttribute('data-theme', theme);
+          document.documentElement.classList.add(theme === 'light' ? 'light-theme' : 'dark-theme');
+        } catch (e) {}
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>
