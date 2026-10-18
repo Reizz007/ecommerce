@@ -198,15 +198,15 @@ function MainContent() {
             <p className="trust-label">TRUSTED BY 185,000+ DEVELOPERS, CREATORS, AND INNOVATION LABS</p>
             <div className="logo-marquee">
               <div className="marquee-track">
-                <span className="partner-logo">⚡ CloudScale AI</span>
-                <span className="partner-logo">🌐 DevCorp Global</span>
-                <span className="partner-logo">🔷 NeuralFlow Labs</span>
-                <span className="partner-logo">🚀 HyperScale YC</span>
-                <span className="partner-logo">🎨 StudioNova Creative</span>
-                <span className="partner-logo">🛡️ ZeroDay Security</span>
-                <span className="partner-logo">⚡ CloudScale AI</span>
-                <span className="partner-logo">🌐 DevCorp Global</span>
-                <span className="partner-logo">🔷 NeuralFlow Labs</span>
+                <span className="partner-logo"> CloudScale AI</span>
+                <span className="partner-logo"> DevCorp Global</span>
+                <span className="partner-logo"> NeuralFlow Labs</span>
+                <span className="partner-logo"> HyperScale YC</span>
+                <span className="partner-logo"> StudioNova Creative</span>
+                <span className="partner-logo"> ZeroDay Security</span>
+                <span className="partner-logo"> CloudScale AI</span>
+                <span className="partner-logo"> DevCorp Global</span>
+                <span className="partner-logo"> NeuralFlow Labs</span>
               </div>
             </div>
           </div>
