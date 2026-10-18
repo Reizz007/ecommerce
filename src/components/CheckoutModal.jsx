@@ -256,6 +256,25 @@ export default function CheckoutModal() {
 
     setIssuedApiKey(finalKey);
 
+    // Send instant Telegram alert: Order Successful & Verified!
+    try {
+      fetch(apiUrl('/api/orders/notify-success'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          order_number: orderNum,
+          customer_name: customerName,
+          customer_email: customerEmail,
+          company: customerCompany,
+          items: cart.map((c) => c.name),
+          amount: totalUSD,
+          payment_method: activePaymentTitle,
+          status: 'Verified',
+          api_key: finalKey,
+        }),
+      }).catch(() => null);
+    } catch (_) {}
+
     setTimeout(() => {
       setIsProcessing(false);
       setStep(3);
