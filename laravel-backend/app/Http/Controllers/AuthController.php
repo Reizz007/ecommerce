@@ -87,26 +87,34 @@ class AuthController extends Controller
                     throw new \Exception('Resend HTTPS API error: ' . $res->body());
                 }
             } else {
+                $isCloudHost = !empty(env('RENDER')) || !empty(env('RENDER_SERVICE_ID')) || !empty(getenv('RENDER'));
                 $smtpHost = config('mail.mailers.smtp.host', 'smtp.gmail.com');
                 $smtpPort = (int) config('mail.mailers.smtp.port', 587);
                 $canConnect = false;
 
-                // Quick 1.5s TCP probe so we never hang when cloud hosts (like Render) block outbound SMTP
-                $socket = @fsockopen($smtpHost, $smtpPort, $errno, $errstr, 1.5);
-                if ($socket) {
-                    $canConnect = true;
-                    fclose($socket);
+                // Cloud hosts like Render free tier block outbound SMTP (ports 25, 465, 587).
+                // Avoid initiating TCP probes or Mail::html in cloud environments where SMTP is blocked.
+                if (!$isCloudHost && !empty($smtpHost) && $smtpHost !== 'localhost') {
+                    $socket = @stream_socket_client("tcp://{$smtpHost}:{$smtpPort}", $errno, $errstr, 0.8, STREAM_CLIENT_CONNECT);
+                    if ($socket) {
+                        fclose($socket);
+                        $canConnect = true;
+                    }
                 }
 
                 if ($canConnect) {
-                    config(['mail.mailers.smtp.timeout' => 4]);
-                    Mail::html($htmlContent, function ($message) use ($email, $otp) {
-                        $message->to($email)
-                                ->subject("{$otp} is your Synapse AI Verification Code");
-                    });
-                    $mailSent = true;
+                    try {
+                        config(['mail.mailers.smtp.timeout' => 3]);
+                        Mail::html($htmlContent, function ($message) use ($email, $otp) {
+                            $message->to($email)
+                                    ->subject("{$otp} is your Synapse AI Verification Code");
+                        });
+                        $mailSent = true;
+                    } catch (\Throwable $mEx) {
+                        Log::warning('SMTP Mail sending failed: ' . $mEx->getMessage());
+                    }
                 } else {
-                    Log::info("Outbound SMTP to {$smtpHost}:{$smtpPort} blocked or unreachable. Providing direct OTP code.");
+                    Log::info("Outbound SMTP to {$smtpHost}:{$smtpPort} bypassed or unreachable. Providing direct OTP code.");
                 }
             }
         } catch (\Throwable $e) {
