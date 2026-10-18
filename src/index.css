@@ -6381,6 +6381,145 @@ input:checked+.slider:before {
   min-width: 130px;
 }
 
+/* Telegram Admin Settings Card */
+.telegram-admin-settings-card {
+  border-color: rgba(34, 158, 217, 0.35) !important;
+  box-shadow: 0 4px 25px rgba(34, 158, 217, 0.08);
+}
+
+.telegram-mini-badge-admin {
+  background: linear-gradient(135deg, #229ED9 0%, #0088cc 100%);
+  color: #fff;
+  font-size: 0.76rem;
+  font-weight: 800;
+  padding: 0.25rem 0.6rem;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.telegram-header-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.status-badge-inline {
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  padding: 0.2rem 0.5rem;
+  border-radius: 9999px;
+}
+
+.status-badge-inline.active {
+  background: rgba(16, 185, 129, 0.2);
+  color: #10b981;
+  border: 1px solid rgba(16, 185, 129, 0.4);
+}
+
+.status-badge-inline.inactive {
+  background: rgba(148, 163, 184, 0.15);
+  color: #94a3b8;
+  border: 1px solid rgba(148, 163, 184, 0.3);
+}
+
+.toggle-switch-compact {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 24px;
+  flex-shrink: 0;
+}
+
+.toggle-switch-compact input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider-compact {
+  position: absolute;
+  cursor: pointer;
+  inset: 0;
+  background-color: rgba(255, 255, 255, 0.15);
+  transition: .3s;
+  border-radius: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.slider-compact:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 2px;
+  bottom: 2px;
+  background-color: white;
+  transition: .3s;
+  border-radius: 50%;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.toggle-switch-compact input:checked + .slider-compact {
+  background-color: #229ED9;
+  border-color: #229ED9;
+}
+
+.toggle-switch-compact input:checked + .slider-compact:before {
+  transform: translateX(20px);
+}
+
+.telegram-quick-guide {
+  background: rgba(34, 158, 217, 0.05);
+  border: 1px solid rgba(34, 158, 217, 0.2);
+  border-radius: var(--radius-sm);
+  padding: 0.85rem 1rem;
+  margin: 1rem 0;
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+.telegram-quick-guide .guide-title {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-bottom: 0.5rem;
+  color: #38bdf8;
+}
+
+.telegram-quick-guide .guide-steps {
+  margin: 0;
+  padding-left: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  color: var(--text-body);
+}
+
+.telegram-quick-guide code {
+  background: rgba(0, 0, 0, 0.3);
+  padding: 0.1rem 0.35rem;
+  border-radius: 3px;
+  font-size: 0.8rem;
+  color: #38bdf8;
+}
+
+.telegram-test-panel {
+  border-color: rgba(34, 158, 217, 0.25);
+}
+
+.telegram-result-success {
+  background: rgba(16, 185, 129, 0.08);
+  border-top-color: rgba(16, 185, 129, 0.3);
+}
+
+.telegram-result-error {
+  background: rgba(239, 68, 68, 0.08);
+  border-top-color: rgba(239, 68, 68, 0.3);
+}
+
 /* ==========================================================================
    ADMIN NEW ORDER ALERTS & ACTIVATION LINK WORKFLOW
    ========================================================================== */
@@ -7301,6 +7440,31 @@ input:checked+.slider:before {
   background: #ffffff;
   border-color: rgba(15, 23, 42, 0.08);
   box-shadow: 0 2px 10px rgba(15, 23, 42, 0.04);
+}
+
+[data-theme="light"] .telegram-admin-settings-card {
+  border-color: rgba(34, 158, 217, 0.35) !important;
+  background: #ffffff !important;
+}
+
+[data-theme="light"] .telegram-quick-guide {
+  background: rgba(34, 158, 217, 0.08);
+  border-color: rgba(34, 158, 217, 0.25);
+  color: #0f172a;
+}
+
+[data-theme="light"] .telegram-quick-guide .guide-steps {
+  color: #334155;
+}
+
+[data-theme="light"] .telegram-quick-guide code {
+  background: rgba(34, 158, 217, 0.15);
+  color: #0369a1;
+}
+
+[data-theme="light"] .telegram-test-panel {
+  background: #f8fafc !important;
+  border-color: rgba(15, 23, 42, 0.08) !important;
 }
 
 /* Footer in Light Mode */

@@ -92,11 +92,17 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
     khqrProfileId: 'tW6PHjgPyzISFi3KK22hKZ57rag1cWHS',
     khqrSecretKey: 'zsFq7SWHV4gYFSAdfg2ud8WV747tBOei',
     announcementText: 'Synapse Omni-LLM 4.5 & VideoGen 4D are now live! Get 20% OFF all annual subscriptions with code NEURON20',
-    maintenanceMode: false
+    maintenanceMode: false,
+    telegramBotToken: '',
+    telegramChatId: '',
+    telegramEnabled: false
   });
   const [showSecretKey, setShowSecretKey] = useState(false);
+  const [showTelegramToken, setShowTelegramToken] = useState(false);
   const [khqrTestResult, setKhqrTestResult] = useState(null);
   const [khqrTesting, setKhqrTesting] = useState(false);
+  const [telegramTesting, setTelegramTesting] = useState(false);
+  const [telegramTestResult, setTelegramTestResult] = useState(null);
 
   // Product Modal state (Create / Edit)
   const [isToolModalOpen, setIsToolModalOpen] = useState(false);
@@ -582,6 +588,40 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
       addToast('Error communicating with KHQR backend', 'error');
     } finally {
       setKhqrTesting(false);
+    }
+  };
+
+  const handleTestTelegram = async () => {
+    if (!settings.telegramBotToken || !settings.telegramChatId) {
+      addToast('Please enter both Telegram Bot Token and Chat ID', 'error');
+      return;
+    }
+    setTelegramTesting(true);
+    setTelegramTestResult(null);
+
+    try {
+      const res = await fetch(apiUrl('/api/settings/test-telegram'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          token: settings.telegramBotToken,
+          chat_id: settings.telegramChatId
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setTelegramTestResult({ success: true, message: data.message });
+        addToast('🎉 Telegram test alert delivered successfully!', 'success');
+      } else {
+        setTelegramTestResult({ success: false, message: data.message || 'Failed to send test alert' });
+        addToast(data.message || 'Telegram test failed', 'error');
+      }
+    } catch (err) {
+      console.error('Telegram test request failed:', err);
+      setTelegramTestResult({ success: false, message: 'Could not connect to backend server' });
+      addToast('Failed to connect to backend server', 'error');
+    } finally {
+      setTelegramTesting(false);
     }
   };
 
@@ -1502,6 +1542,118 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
                     </div>
                   </div>
 
+                  {/* CARD 2: TELEGRAM ORDER & PAYMENT ALERTS */}
+                  <div className="settings-card telegram-admin-settings-card mt-4">
+                    <div className="settings-card-header">
+                      <div className="telegram-mini-badge-admin">
+                        <Send size={15} />
+                        <span>Telegram</span>
+                      </div>
+                      <div>
+                        <h4>Telegram Order & Payment Alerts</h4>
+                        <span className="text-xs text-muted">
+                          Receive instant push notifications on your Telegram for new orders, activations, and payments
+                        </span>
+                      </div>
+                      <div className="telegram-header-controls ml-auto">
+                        <span className={`status-badge-inline ${settings.telegramEnabled ? 'active' : 'inactive'}`}>
+                          {settings.telegramEnabled ? 'ALERTS ON' : 'MUTED'}
+                        </span>
+                        <label className="toggle-switch-compact" title="Toggle Telegram Notifications">
+                          <input
+                            type="checkbox"
+                            checked={Boolean(settings.telegramEnabled)}
+                            onChange={(e) => setSettings({ ...settings, telegramEnabled: e.target.checked })}
+                          />
+                          <span className="slider-compact round"></span>
+                        </label>
+                      </div>
+                    </div>
+
+                    <div className="form-grid">
+                      <div className="form-group">
+                        <label>Telegram Bot Token ($token) *</label>
+                        <div className="input-with-action">
+                          <input
+                            type={showTelegramToken ? "text" : "password"}
+                            value={settings.telegramBotToken || ''}
+                            onChange={(e) => setSettings({ ...settings, telegramBotToken: e.target.value })}
+                            placeholder="e.g. 7123456789:AAHxyzYourBotTokenHere"
+                          />
+                          <button
+                            type="button"
+                            className="btn-toggle-eye"
+                            onClick={() => setShowTelegramToken(!showTelegramToken)}
+                            title={showTelegramToken ? "Hide token" : "Show token"}
+                          >
+                            {showTelegramToken ? <EyeOff size={16} /> : <Eye size={16} />}
+                          </button>
+                        </div>
+                        <span className="input-hint">
+                          Created via <strong>@BotFather</strong> on Telegram using <code>/newbot</code> command.
+                        </span>
+                      </div>
+
+                      <div className="form-group">
+                        <label>Telegram Chat ID ($chat_id) *</label>
+                        <input
+                          type="text"
+                          value={settings.telegramChatId || ''}
+                          onChange={(e) => setSettings({ ...settings, telegramChatId: e.target.value })}
+                          placeholder="e.g. 987654321 or -1001234567890"
+                        />
+                        <span className="input-hint">
+                          Your private user ID, group, or channel ID (e.g. from <strong>@userinfobot</strong> or <strong>@getidsbot</strong>).
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Telegram Quick Setup Guide */}
+                    <div className="telegram-quick-guide">
+                      <div className="guide-title">
+                        <BellRing size={14} className="text-cyan inline mr-1" />
+                        <strong>Quick Setup Instructions:</strong>
+                      </div>
+                      <ol className="guide-steps">
+                        <li>Message <strong>@BotFather</strong> on Telegram → send <code>/newbot</code> to get your <strong>$token</strong>.</li>
+                        <li>Message <strong>@userinfobot</strong> or <strong>@getidsbot</strong> to copy your <strong>$chat_id</strong> (for channels/groups, add the bot as Admin).</li>
+                        <li><strong>Important:</strong> Open your new bot and click <strong>Start</strong> so the bot is allowed to message you.</li>
+                        <li>Paste your <strong>$token</strong> and <strong>$chat_id</strong> above, then click <strong>Send Test Telegram Alert</strong> below!</li>
+                      </ol>
+                    </div>
+
+                    {/* Telegram Live Tester Panel */}
+                    <div className="khqr-test-panel telegram-test-panel">
+                      <div className="khqr-test-header">
+                        <Send size={15} className="text-cyan" />
+                        <strong>Telegram Bot Connectivity Tester:</strong>
+                        <button
+                          type="button"
+                          className="btn btn-secondary btn-sm ml-auto"
+                          onClick={handleTestTelegram}
+                          disabled={telegramTesting}
+                        >
+                          {telegramTesting ? <RefreshCw size={13} className="spin-icon inline mr-1" /> : <Send size={13} className="inline mr-1" />}
+                          {telegramTesting ? 'Sending Test...' : 'Send Test Telegram Alert'}
+                        </button>
+                      </div>
+
+                      {telegramTestResult && (
+                        <div className={`khqr-test-result-box ${telegramTestResult.success ? 'telegram-result-success' : 'telegram-result-error'}`}>
+                          <div className="test-result-row">
+                            <span>Status:</span>
+                            <span className={telegramTestResult.success ? "text-success font-semibold" : "text-danger font-semibold"}>
+                              {telegramTestResult.success ? '✓ Delivered to Telegram' : '✗ Failed to Deliver'}
+                            </span>
+                          </div>
+                          <div className="test-result-row">
+                            <span>Message:</span>
+                            <span className="text-xs">{telegramTestResult.message}</span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
 
                   <div className="settings-card mt-4">
                     <div className="settings-card-header">
