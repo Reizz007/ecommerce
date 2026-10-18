@@ -190,7 +190,7 @@ function MainContent() {
 
       <main id="main-content">
         {/* Hero Section */}
-        <Hero />
+        {/* <Hero /> */}
 
         {/* Marquee Trust Banner */}
         <section className="trust-banner">
