@@ -42,6 +42,7 @@ export default function Navbar({ onOpenSearch, onOpenAdmin, currentUser, onOpenL
   }, []);
 
   const totalItemsCount = cart.reduce((acc, item) => acc + (item.quantity || 1), 0);
+  const isAdmin = currentUser && (currentUser.role === 'admin' || currentUser.email === 'chetranicky@gmail.com' || currentUser.email === 'admin@synapse.ai');
 
   return (
     <>
@@ -111,8 +112,8 @@ export default function Navbar({ onOpenSearch, onOpenAdmin, currentUser, onOpenL
             {/* Auth / Account Controls */}
             {currentUser ? (
               <div className="auth-user-group">
-                {/* ONLY SHOW ADMIN BUTTON WHEN ROLE === 'ADMIN' */}
-                {currentUser.role === 'admin' && (
+                {/* ONLY SHOW ADMIN BUTTON WHEN USER IS ADMIN */}
+                {isAdmin && (
                   <button 
                     className="btn-admin-nav"
                     onClick={onOpenAdmin}
@@ -204,7 +205,7 @@ export default function Navbar({ onOpenSearch, onOpenAdmin, currentUser, onOpenL
                 <HelpCircle size={18} /> FAQ
               </a>
               <div className="mobile-actions-stack">
-                {currentUser?.role === 'admin' && (
+                {isAdmin && (
                   <button 
                     className="btn btn-secondary btn-full text-cyan"
                     onClick={() => {

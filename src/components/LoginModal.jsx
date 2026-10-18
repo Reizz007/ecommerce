@@ -34,6 +34,16 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }) {
     return () => clearInterval(timer);
   }, [resendCooldown]);
 
+  // Pre-fill admin email if arriving from #admin or /admin
+  useEffect(() => {
+    if (isOpen) {
+      const isTargetingAdmin = typeof window !== 'undefined' && (window.location.hash === '#admin' || window.location.pathname === '/admin');
+      if (isTargetingAdmin && !email) {
+        setEmail('chetranicky@gmail.com');
+      }
+    }
+  }, [isOpen, email]);
+
   if (!isOpen) return null;
 
   const resetModal = () => {

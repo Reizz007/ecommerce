@@ -54,6 +54,7 @@ function MainContent() {
     }
   });
   const searchInputRef = useRef(null);
+  const wasAdminOpen = useRef(isAdminOpen);
 
   // Sync admin state to localStorage and URL hash
   useEffect(() => {
@@ -64,13 +65,15 @@ function MainContent() {
       }
     } else {
       localStorage.removeItem('synapse_admin_active');
-      if (window.location.hash === '#admin') {
-        window.history.replaceState(null, '', window.location.pathname);
+      // Only remove #admin from the URL if the admin panel was actually open and then closed
+      if (wasAdminOpen.current && (window.location.hash === '#admin' || window.location.pathname === '/admin')) {
+        window.history.replaceState(null, '', window.location.pathname.replace(/\/admin$/, '') || '/');
       }
     }
+    wasAdminOpen.current = isAdminOpen;
   }, [isAdminOpen]);
 
-  // Check URL pathname or hash for /login or #login or #admin
+  // Check URL pathname or hash for /login, #login, /admin, or #admin
   useEffect(() => {
     const checkRoute = () => {
       const path = window.location.pathname;
@@ -86,8 +89,14 @@ function MainContent() {
         if (isAdmin) {
           setIsAdminOpen(true);
           setIsLoginOpen(false);
-        } else if (!currentUser) {
+          if (window.location.hash !== '#admin') {
+            window.history.replaceState(null, '', '#admin');
+          }
+        } else {
           setIsLoginOpen(true);
+          if (window.location.hash !== '#admin') {
+            window.history.replaceState(null, '', '#admin');
+          }
           addToast('Please sign in as Administrator to access Admin Control Center', 'info');
         }
       }
@@ -118,12 +127,17 @@ function MainContent() {
     }
     setCurrentUser(user);
     const isAdmin = user && (user.role === 'admin' || user.email === 'chetranicky@gmail.com' || user.email === 'admin@synapse.ai');
-    if (isAdmin && shouldOpenAdmin) {
+    
+    // If user is admin and either shouldOpenAdmin is requested or hash/path targets #admin
+    const isTargetingAdmin = shouldOpenAdmin || window.location.hash === '#admin' || window.location.pathname === '/admin';
+    if (isAdmin && isTargetingAdmin) {
       setIsAdminOpen(true);
       setIsLoginOpen(false);
-    }
-    if (window.location.pathname === '/login' || window.location.hash === '#login') {
-      window.history.replaceState(null, '', '/');
+      window.history.replaceState(null, '', '#admin');
+    } else {
+      if (window.location.pathname === '/login' || window.location.hash === '#login' || window.location.hash === '#admin' || window.location.pathname === '/admin') {
+        window.history.replaceState(null, '', '/');
+      }
     }
   };
 
@@ -134,8 +148,8 @@ function MainContent() {
     setCurrentUser(null);
     setIsAdminOpen(false);
     setIsLoginOpen(false);
-    if (window.location.hash === '#admin') {
-      window.history.replaceState(null, '', window.location.pathname);
+    if (window.location.hash === '#admin' || window.location.pathname === '/admin') {
+      window.history.replaceState(null, '', '/');
     }
     addToast('Signed out successfully', 'info');
   };
@@ -145,7 +159,9 @@ function MainContent() {
     if (isAdmin) {
       setIsAdminOpen(true);
       setIsLoginOpen(false);
+      window.history.replaceState(null, '', '#admin');
     } else {
+      window.history.replaceState(null, '', '#admin');
       setIsLoginOpen(true);
       addToast('Administrator login required', 'info');
     }
@@ -268,7 +284,7 @@ function MainContent() {
         isOpen={isLoginOpen} 
         onClose={() => {
           setIsLoginOpen(false);
-          if (window.location.pathname === '/login' || window.location.hash === '#login') {
+          if (window.location.pathname === '/login' || window.location.hash === '#login' || window.location.hash === '#admin' || window.location.pathname === '/admin') {
             window.history.replaceState(null, '', '/');
           }
         }} 
