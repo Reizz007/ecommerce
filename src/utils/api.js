@@ -8,7 +8,7 @@
  *    requests automatically target the remote backend host.
  */
 
-const RAW_BASE = import.meta.env.VITE_API_BASE_URL || 'https://backend-1-lawx.onrender.com';
+const RAW_BASE = import.meta.env.VITE_API_BASE_URL || (import.meta.env.DEV ? 'http://127.0.0.1:8000' : 'https://backend-1-lawx.onrender.com');
 export const API_BASE_URL = RAW_BASE.replace(/\/+$/, '');
 
 /**
