@@ -526,7 +526,7 @@ Thank you for building with SYNAPSE.AI!
                             rel="noopener noreferrer"
                             className="btn btn-khqr-primary btn-glow"
                             onClick={(e) => handleOpenKhqr(e)}
-                            id="btn-pay-now-khqr"
+                            id="btn-open-fullscreen-khqr"
                           >
                             <Zap size={18} />
                             <span>Open Fullscreen KHQR Gateway</span>
@@ -542,6 +542,11 @@ Thank you for building with SYNAPSE.AI!
                             <RefreshCw size={14} className={khqrLoading ? "spin-icon mr-1" : "mr-1"} />
                             <span>Refresh / New QR</span>
                           </button>
+                        </div>
+
+                        <div className="khqr-mobile-tip">
+                          <SmartphoneNfc size={15} className="inline mr-1 text-cyan shrink-0" />
+                          <span><strong>Mobile Tip:</strong> Tap <em>"Pay via KHQR"</em> below to open in your banking app, or screenshot the QR to pay via ABA / Bakong.</span>
                         </div>
 
                         <button
