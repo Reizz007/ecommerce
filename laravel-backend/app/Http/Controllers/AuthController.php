@@ -87,13 +87,27 @@ class AuthController extends Controller
                     throw new \Exception('Resend HTTPS API error: ' . $res->body());
                 }
             } else {
-                // Short timeout to avoid hanging when SMTP ports are blocked in cloud environments
-                config(['mail.mailers.smtp.timeout' => 4]);
-                Mail::html($htmlContent, function ($message) use ($email, $otp) {
-                    $message->to($email)
-                            ->subject("{$otp} is your Synapse AI Verification Code");
-                });
-                $mailSent = true;
+                $smtpHost = config('mail.mailers.smtp.host', 'smtp.gmail.com');
+                $smtpPort = (int) config('mail.mailers.smtp.port', 587);
+                $canConnect = false;
+
+                // Quick 1.5s TCP probe so we never hang when cloud hosts (like Render) block outbound SMTP
+                $socket = @fsockopen($smtpHost, $smtpPort, $errno, $errstr, 1.5);
+                if ($socket) {
+                    $canConnect = true;
+                    fclose($socket);
+                }
+
+                if ($canConnect) {
+                    config(['mail.mailers.smtp.timeout' => 4]);
+                    Mail::html($htmlContent, function ($message) use ($email, $otp) {
+                        $message->to($email)
+                                ->subject("{$otp} is your Synapse AI Verification Code");
+                    });
+                    $mailSent = true;
+                } else {
+                    Log::info("Outbound SMTP to {$smtpHost}:{$smtpPort} blocked or unreachable. Providing direct OTP code.");
+                }
             }
         } catch (\Throwable $e) {
             $mailError = $e->getMessage();
@@ -186,7 +200,12 @@ class AuthController extends Controller
      */
     protected function saveOtp(string $email, string $otp): void
     {
-        Cache::put('otp_' . $email, $otp, now()->addMinutes(10));
+        try {
+            Cache::put('otp_' . $email, $otp, now()->addMinutes(10));
+        } catch (\Throwable $e) {
+            Log::warning('Cache::put failed: ' . $e->getMessage());
+        }
+
         try {
             $path = storage_path('app/otps.json');
             $dir = dirname($path);
@@ -207,9 +226,13 @@ class AuthController extends Controller
      */
     protected function checkOtp(string $email, string $otp): bool
     {
-        $cached = Cache::get('otp_' . $email);
-        if ($cached && (string) $cached === (string) $otp) {
-            return true;
+        try {
+            $cached = Cache::get('otp_' . $email);
+            if ($cached && (string) $cached === (string) $otp) {
+                return true;
+            }
+        } catch (\Throwable $e) {
+            Log::warning('Cache::get failed: ' . $e->getMessage());
         }
 
         try {
@@ -233,7 +256,10 @@ class AuthController extends Controller
      */
     protected function clearOtp(string $email): void
     {
-        Cache::forget('otp_' . $email);
+        try {
+            Cache::forget('otp_' . $email);
+        } catch (\Throwable $e) {}
+
         try {
             $path = storage_path('app/otps.json');
             if (file_exists($path)) {
