@@ -8035,7 +8035,17 @@ input:checked+.slider:before {
     max-width: min(440px, 100vw) !important;
   }
 
-  /* Checkout Modal */
+  /* ========================================================================
+     CHECKOUT & PAYMENT MODAL RESPONSIVE (MOBILE <= 768px)
+     ======================================================================== */
+  .modal-backdrop {
+    padding: 0.5rem !important;
+    align-items: center !important;
+    justify-content: center !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+
   .checkout-modal-container {
     width: 100% !important;
     max-width: 100% !important;
@@ -8046,19 +8056,22 @@ input:checked+.slider:before {
     overflow: hidden !important;
     display: flex !important;
     flex-direction: column !important;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.75) !important;
   }
 
   .checkout-modal-container .modal-close {
-    top: 0.75rem !important;
-    right: 0.75rem !important;
-    width: 28px !important;
-    height: 28px !important;
-    z-index: 20 !important;
+    top: 0.65rem !important;
+    right: 0.65rem !important;
+    width: 32px !important;
+    height: 32px !important;
+    z-index: 25 !important;
+    background: rgba(255, 255, 255, 0.08) !important;
+    border-radius: 50% !important;
   }
 
   .checkout-header {
-    padding: 0.85rem 2.5rem 0.85rem 1rem !important;
-    background: rgba(8, 12, 20, 0.95) !important;
+    padding: 0.75rem 2.5rem 0.75rem 1rem !important;
+    background: rgba(8, 12, 20, 0.98) !important;
     border-bottom: 1px solid var(--border-light) !important;
     flex-shrink: 0 !important;
   }
@@ -8067,10 +8080,12 @@ input:checked+.slider:before {
     gap: 0.25rem !important;
     justify-content: space-between !important;
     width: 100% !important;
+    max-width: 300px !important;
+    margin: 0 auto !important;
   }
 
   .step-indicator {
-    gap: 0.35rem !important;
+    gap: 0.3rem !important;
     font-size: 0.75rem !important;
   }
 
@@ -8082,39 +8097,81 @@ input:checked+.slider:before {
 
   .step-line {
     flex: 1 !important;
-    min-width: 10px !important;
+    min-width: 8px !important;
   }
 
   .checkout-step-panel {
-    padding: 1rem 0.85rem !important;
+    padding: 0.85rem 0.75rem !important;
     overflow-y: auto !important;
     -webkit-overflow-scrolling: touch !important;
     flex: 1 !important;
+    min-height: 0 !important;
   }
 
   .step-title {
-    font-size: 1.2rem !important;
+    font-size: 1.15rem !important;
     margin-bottom: 0.25rem !important;
     line-height: 1.25 !important;
   }
 
   .step-sub {
-    font-size: 0.82rem !important;
+    font-size: 0.8rem !important;
     margin-bottom: 0.5rem !important;
-    line-height: 1.45 !important;
+    line-height: 1.4 !important;
   }
 
+  /* Step 1: Customer Info & Order Summary Mobile */
+  .order-summary-box {
+    padding: 0.75rem 0.85rem !important;
+    margin: 0.85rem 0 !important;
+    border-radius: var(--radius-md) !important;
+  }
+
+  .summary-item-line {
+    font-size: 0.82rem !important;
+    padding: 0.35rem 0 !important;
+  }
+
+  .checkout-total-line {
+    font-size: 1rem !important;
+    padding-top: 0.55rem !important;
+    margin-top: 0.35rem !important;
+  }
+
+  .checkout-actions {
+    display: flex !important;
+    flex-direction: column-reverse !important;
+    gap: 0.6rem !important;
+    width: 100% !important;
+    margin-top: 1rem !important;
+  }
+
+  .checkout-actions .btn {
+    width: 100% !important;
+    justify-content: center !important;
+    padding: 0.85rem 1rem !important;
+    font-size: 0.9rem !important;
+  }
+
+  /* Step 2: KHQR Payment Card Mobile */
   .khqr-checkout-header-row {
     display: flex !important;
     flex-direction: column !important;
     align-items: flex-start !important;
-    gap: 0.65rem !important;
-    margin-bottom: 1rem !important;
-    padding-bottom: 0.75rem !important;
+    gap: 0.5rem !important;
+    margin-bottom: 0.75rem !important;
+    padding-bottom: 0.65rem !important;
+    border-bottom: 1px solid var(--border-light) !important;
+  }
+
+  .khqr-single-method-badge {
+    align-self: flex-start !important;
+    padding: 0.25rem 0.6rem !important;
+    font-size: 0.72rem !important;
   }
 
   .khqr-pay-card {
-    padding: 0.85rem 0.75rem !important;
+    padding: 0.75rem !important;
     border-radius: var(--radius-md) !important;
     margin-bottom: 0.75rem !important;
   }
@@ -8123,29 +8180,45 @@ input:checked+.slider:before {
     display: flex !important;
     flex-direction: column !important;
     align-items: stretch !important;
-    gap: 0.65rem !important;
-    padding-bottom: 0.75rem !important;
-    margin-bottom: 0.85rem !important;
+    gap: 0.55rem !important;
+    padding-bottom: 0.65rem !important;
+    margin-bottom: 0.75rem !important;
   }
 
   .khqr-branding {
     display: flex !important;
     align-items: center !important;
-    gap: 0.65rem !important;
+    gap: 0.55rem !important;
     width: 100% !important;
   }
 
+  .khqr-logo-box {
+    width: 36px !important;
+    height: 36px !important;
+    min-width: 36px !important;
+    border-radius: 6px !important;
+  }
+
+  .khqr-logo-text {
+    font-size: 0.75rem !important;
+  }
+
   .khqr-title {
-    font-size: 0.95rem !important;
+    font-size: 0.88rem !important;
     font-weight: 700 !important;
     line-height: 1.25 !important;
-    margin-bottom: 0.25rem !important;
+    margin-bottom: 0.2rem !important;
   }
 
   .khqr-sub-tags {
     display: flex !important;
     flex-wrap: wrap !important;
-    gap: 0.3rem !important;
+    gap: 0.25rem !important;
+  }
+
+  .khqr-bank-tag {
+    font-size: 0.65rem !important;
+    padding: 0.12rem 0.4rem !important;
   }
 
   .khqr-amount-wrap {
@@ -8153,7 +8226,7 @@ input:checked+.slider:before {
     display: flex !important;
     align-items: baseline !important;
     justify-content: space-between !important;
-    background: rgba(0, 0, 0, 0.4) !important;
+    background: rgba(0, 0, 0, 0.45) !important;
     padding: 0.45rem 0.75rem !important;
     border-radius: var(--radius-sm) !important;
     border: 1px solid rgba(255, 255, 255, 0.08) !important;
@@ -8162,11 +8235,14 @@ input:checked+.slider:before {
 
   .khqr-amount-label {
     font-size: 0.72rem !important;
+    color: #94a3b8 !important;
+    font-weight: 600 !important;
   }
 
   .khqr-amount-value {
-    font-size: 1.3rem !important;
+    font-size: 1.25rem !important;
     font-weight: 800 !important;
+    color: #38bdf8 !important;
     padding: 0 !important;
     background: none !important;
     border: none !important;
@@ -8176,38 +8252,58 @@ input:checked+.slider:before {
     display: flex !important;
     flex-direction: column !important;
     align-items: center !important;
-    gap: 1rem !important;
+    gap: 0.85rem !important;
     width: 100% !important;
   }
 
   .khqr-embed-col {
     width: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
     align-items: center !important;
-    margin-bottom: 0.5rem !important;
+    margin-bottom: 0.25rem !important;
   }
 
   .khqr-iframe-card {
     width: 100% !important;
-    max-width: min(290px, 100%) !important;
-    height: 410px !important;
+    max-width: 280px !important;
+    height: 375px !important;
     margin: 0 auto !important;
-    border-radius: 14px !important;
+    border-radius: 12px !important;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4) !important;
+    overflow: hidden !important;
+  }
+
+  .khqr-scan-caption {
+    font-size: 0.72rem !important;
+    margin-top: 0.45rem !important;
+    color: #94a3b8 !important;
+    text-align: center !important;
+    padding: 0 0.5rem !important;
   }
 
   .khqr-info-col {
     width: 100% !important;
   }
 
+  .khqr-instructions-box {
+    padding: 0.75rem !important;
+    background: rgba(255, 255, 255, 0.02) !important;
+    border: 1px solid var(--border-light) !important;
+    border-radius: var(--radius-md) !important;
+    width: 100% !important;
+  }
+
   .khqr-lead-text {
-    font-size: 0.82rem !important;
-    line-height: 1.45 !important;
-    margin-bottom: 0.75rem !important;
+    font-size: 0.8rem !important;
+    line-height: 1.4 !important;
+    margin-bottom: 0.65rem !important;
   }
 
   .khqr-action-buttons-stack {
     display: flex !important;
     flex-direction: column !important;
-    gap: 0.55rem !important;
+    gap: 0.5rem !important;
     width: 100% !important;
   }
 
@@ -8217,21 +8313,106 @@ input:checked+.slider:before {
     justify-content: center !important;
     padding: 0.75rem 1rem !important;
     font-size: 0.88rem !important;
+    text-align: center !important;
   }
 
-  .checkout-actions {
+  .khqr-direct-link-btn {
+    font-size: 0.74rem !important;
+    text-align: center !important;
+    width: 100% !important;
+    display: block !important;
+    margin-top: 0.4rem !important;
+    padding: 0.35rem !important;
+    color: var(--text-muted) !important;
+  }
+
+  .khqr-opened-banner {
+    margin-top: 0.75rem !important;
+    padding: 0.75rem 0.85rem !important;
+    font-size: 0.8rem !important;
+    border-radius: var(--radius-sm) !important;
+    display: flex !important;
+    align-items: flex-start !important;
+    gap: 0.6rem !important;
+  }
+
+  .checkout-actions-aba-wrap {
+    position: relative !important;
+    bottom: auto !important;
+    background: transparent !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
     display: flex !important;
     flex-direction: column-reverse !important;
-    gap: 0.65rem !important;
+    align-items: stretch !important;
+    gap: 0.6rem !important;
     width: 100% !important;
-    margin-top: 1.25rem !important;
+    margin: 1rem 0 0 0 !important;
+    padding: 0.85rem 0 0.25rem 0 !important;
+    border-top: 1px solid var(--border-light) !important;
+    z-index: 1 !important;
   }
 
-  .checkout-actions .btn {
+  .aba-dual-actions {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0.55rem !important;
+    width: 100% !important;
+  }
+
+  .aba-dual-actions .btn,
+  .btn-aba-pay-primary,
+  .btn-khqr-primary,
+  .checkout-actions-aba-wrap .btn {
     width: 100% !important;
     justify-content: center !important;
-    padding: 0.8rem 1rem !important;
-    font-size: 0.88rem !important;
+    padding: 0.85rem 1rem !important;
+    font-size: 0.9rem !important;
+    text-align: center !important;
+  }
+
+  /* Step 3: Activation & Order Success Mobile */
+  .success-screen {
+    padding: 1rem 0.5rem !important;
+  }
+
+  .success-icon-wrap {
+    width: 56px !important;
+    height: 56px !important;
+    margin: 0 auto 0.75rem !important;
+  }
+
+  .success-title {
+    font-size: 1.3rem !important;
+    line-height: 1.25 !important;
+    margin-bottom: 0.3rem !important;
+  }
+
+  .success-sub {
+    font-size: 0.82rem !important;
+    line-height: 1.45 !important;
+    margin-bottom: 0.85rem !important;
+  }
+
+  .activation-link-ready-box,
+  .activation-link-pending-box {
+    padding: 0.85rem !important;
+    margin: 0.85rem 0 !important;
+    border-radius: var(--radius-md) !important;
+  }
+
+  .activation-ready-title,
+  .activation-pending-title {
+    font-size: 1rem !important;
+    line-height: 1.3 !important;
+    margin-bottom: 0.35rem !important;
+  }
+
+  .activation-ready-desc,
+  .activation-pending-desc {
+    font-size: 0.8rem !important;
+    line-height: 1.45 !important;
+    margin-bottom: 0.75rem !important;
   }
 
   .activation-url-display-row {
@@ -8241,6 +8422,9 @@ input:checked+.slider:before {
     gap: 0.5rem !important;
     padding: 0.65rem 0.75rem !important;
     width: 100% !important;
+    background: rgba(0, 0, 0, 0.4) !important;
+    border-radius: var(--radius-sm) !important;
+    border: 1px solid var(--border-light) !important;
   }
 
   .activation-direct-link {
@@ -8253,6 +8437,21 @@ input:checked+.slider:before {
   .btn-copy-activation-link {
     width: 100% !important;
     justify-content: center !important;
+    padding: 0.55rem !important;
+  }
+
+  .success-actions {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0.6rem !important;
+    width: 100% !important;
+    margin-top: 1.15rem !important;
+  }
+
+  .success-actions .btn {
+    width: 100% !important;
+    justify-content: center !important;
+    padding: 0.85rem 1rem !important;
   }
 
   /* Account Dashboard Mobile Adaptations */
@@ -8534,8 +8733,8 @@ input:checked+.slider:before {
   }
 
   .khqr-iframe-card {
-    max-width: min(290px, 100%) !important;
-    height: 420px;
+    max-width: 275px !important;
+    height: 365px !important;
   }
 
   .tool-card-footer {
@@ -8630,6 +8829,7 @@ input:checked+.slider:before {
   }
 
   .khqr-iframe-card {
-    height: 380px;
+    max-width: 245px !important;
+    height: 335px !important;
   }
 }
