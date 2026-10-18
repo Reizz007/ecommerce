@@ -203,7 +203,14 @@ export default function CheckoutModal() {
     // Send order to backend API
     try {
       if (activeTxId) {
-        const res = await fetch(apiUrl(`/api/payment/khqr/verify/${activeTxId}?confirm=true`));
+        const verifyParams = new URLSearchParams({
+          confirm: 'true',
+          customerName: customerName || '',
+          customerEmail: customerEmail || '',
+          company: customerCompany || '',
+          amount: String(totalUSD)
+        });
+        const res = await fetch(apiUrl(`/api/payment/khqr/verify/${activeTxId}?${verifyParams.toString()}`));
         if (res.ok) {
           const data = await res.json();
           if (data.success && data.api_key) {
