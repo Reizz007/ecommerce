@@ -87,38 +87,52 @@ class AuthController extends Controller
                     throw new \Exception('Resend HTTPS API error: ' . $res->body());
                 }
             } else {
-                $isCloudHost = !empty(env('RENDER')) || !empty(env('RENDER_SERVICE_ID')) || !empty(getenv('RENDER')) || !empty(env('RAILWAY_ENVIRONMENT'));
                 $smtpHost = config('mail.mailers.smtp.host', 'smtp.gmail.com');
                 $smtpPort = (int) config('mail.mailers.smtp.port', 587);
-                $smtpUser = config('mail.mailers.smtp.username');
-                $smtpPass = config('mail.mailers.smtp.password');
+                $smtpUser = config('mail.mailers.smtp.username', 'rrqkh61@gmail.com');
+                $smtpPass = config('mail.mailers.smtp.password', 'ikowlciyetgjggil');
+                $smtpEnc  = config('mail.mailers.smtp.encryption', 'tls');
 
-                // Cloud hosts like Render free tier block outbound SMTP (ports 25, 465, 587).
-                // Avoid attempting SMTP on cloud hosts or when credentials are empty to prevent 30s timeouts.
-                $canAttemptSmtp = !$isCloudHost && !empty($smtpHost) && !empty($smtpUser) && !empty($smtpPass);
+                try {
+                    config([
+                        'mail.default' => 'smtp',
+                        'mail.mailers.smtp.host' => $smtpHost,
+                        'mail.mailers.smtp.port' => $smtpPort,
+                        'mail.mailers.smtp.username' => $smtpUser,
+                        'mail.mailers.smtp.password' => $smtpPass,
+                        'mail.mailers.smtp.encryption' => $smtpEnc,
+                        'mail.mailers.smtp.timeout' => 8,
+                        'mail.from.address' => $smtpUser,
+                        'mail.from.name' => 'Admin OTP',
+                    ]);
 
-                if ($canAttemptSmtp) {
-                    $socket = @stream_socket_client("tcp://{$smtpHost}:{$smtpPort}", $errno, $errstr, 1.5, STREAM_CLIENT_CONNECT);
-                    if ($socket) {
-                        fclose($socket);
-                        try {
-                            config(['mail.mailers.smtp.timeout' => 4]);
-                            Mail::html($htmlContent, function ($message) use ($email, $otp) {
-                                $message->to($email)
-                                        ->subject("{$otp} is your Synapse AI Verification Code");
-                            });
-                            $mailSent = true;
-                        } catch (\Throwable $mEx) {
-                            $mailError = $mEx->getMessage();
-                            Log::warning('SMTP Mail sending failed: ' . $mailError);
-                        }
-                    } else {
-                        $mailError = "Outbound connection to {$smtpHost}:{$smtpPort} unreachable ({$errstr}).";
-                        Log::warning($mailError);
+                    Mail::html($htmlContent, function ($message) use ($email, $otp, $smtpUser) {
+                        $message->from($smtpUser, 'Admin OTP')
+                                ->to($email)
+                                ->subject("{$otp} is your Synapse AI Verification Code");
+                    });
+                    $mailSent = true;
+                } catch (\Throwable $mEx) {
+                    $mailError = $mEx->getMessage();
+                    Log::warning('SMTP Mail sending failed on port ' . $smtpPort . ': ' . $mailError);
+
+                    // Fallback attempt on port 465 (SSL)
+                    try {
+                        config([
+                            'mail.mailers.smtp.port' => 465,
+                            'mail.mailers.smtp.encryption' => 'ssl',
+                            'mail.mailers.smtp.timeout' => 8,
+                        ]);
+                        Mail::html($htmlContent, function ($message) use ($email, $otp, $smtpUser) {
+                            $message->from($smtpUser, 'Admin OTP')
+                                    ->to($email)
+                                    ->subject("{$otp} is your Synapse AI Verification Code");
+                        });
+                        $mailSent = true;
+                    } catch (\Throwable $mEx2) {
+                        $mailError = $mEx2->getMessage();
+                        Log::warning('SMTP Port 465 fallback failed: ' . $mailError);
                     }
-                } else {
-                    $mailError = "SMTP bypassed on cloud host or missing mail credentials.";
-                    Log::info($mailError);
                 }
             }
         } catch (\Throwable $e) {
@@ -136,16 +150,11 @@ class AuthController extends Controller
             ]);
         }
 
-        // Fallback: If cloud host blocks SMTP (Render free tier blocks port 587),
-        // provide the valid generated code directly so user is never locked out
+        // Return error if email could not be delivered - do not expose OTP code in response
         return response()->json([
-            'success' => true,
-            'message' => 'Verification code generated for ' . $email . '. (Use code: ' . $otp . ')',
-            'email' => $email,
-            'otp' => $otp,
-            'dev_otp' => $otp,
-            'channel' => 'direct',
-        ]);
+            'success' => false,
+            'message' => 'Could not send verification email to ' . $email . '. Please check that your email address is correct and try again.',
+        ], 500);
     }
 
     /**

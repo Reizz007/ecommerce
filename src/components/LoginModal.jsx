@@ -132,41 +132,13 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }) {
       if (res.ok && data.success) {
         setStep('otp');
         setResendCooldown(30);
-
-        if (data.channel === 'email') {
-          addToast(`📨 Verification code sent to ${cleanEmail}! Please check your inbox.`, 'success');
-        } else if (data.otp || data.dev_otp) {
-          const code = data.otp || data.dev_otp;
-          addToast(`🔑 Verification code: ${code}`, 'success');
-        } else {
-          addToast(`📨 Verification code sent to ${cleanEmail}! Please check your inbox.`, 'success');
-        }
+        addToast(`📨 Verification code sent to ${cleanEmail}! Please check your inbox.`, 'success');
       } else {
-        // If server returns direct code even on error or message
-        if (data.otp || data.dev_otp) {
-          const code = data.otp || data.dev_otp;
-          setStep('otp');
-          setResendCooldown(30);
-          addToast(`🔑 Verification code: ${code}`, 'success');
-        } else {
-          setErrorMessage(data.message || 'Failed to send verification code. Please try again.');
-        }
+        setErrorMessage(data.message || 'Failed to send verification code. Please check your email address and try again.');
       }
     } catch (err) {
       clearTimeout(timeoutId);
-      // Resilient fallback: If remote server is sleeping on free tier or slow to respond,
-      // generate a secure verification code so user is never locked out
-      const fallbackOtp = Math.floor(100000 + Math.random() * 900000).toString();
-      try {
-        sessionStorage.setItem('synapse_offline_otp_' + cleanEmail, JSON.stringify({
-          otp: fallbackOtp,
-          expiresAt: Date.now() + 10 * 60 * 1000
-        }));
-      } catch (e) {}
-
-      setStep('otp');
-      setResendCooldown(30);
-      addToast(`🔑 Direct Verification Code: ${fallbackOtp}`, 'success');
+      setErrorMessage('Could not connect to authentication server. Please check your network and try again.');
     } finally {
       setIsLoading(false);
     }
