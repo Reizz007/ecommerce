@@ -112,7 +112,7 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }) {
     setIsLoading(true);
 
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 12000);
+    const timeoutId = setTimeout(() => controller.abort(), 20000);
 
     try {
       const res = await fetch(apiUrl('/api/auth/send-otp'), {
@@ -138,7 +138,9 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }) {
       }
     } catch (err) {
       clearTimeout(timeoutId);
-      setErrorMessage('Could not connect to authentication server. Please check your network and try again.');
+      setErrorMessage(err.name === 'AbortError' 
+        ? 'Request timed out. Please try again or use Admin Password login below.' 
+        : 'Could not connect to authentication server. Please check your network or sign in with Password below.');
     } finally {
       setIsLoading(false);
     }

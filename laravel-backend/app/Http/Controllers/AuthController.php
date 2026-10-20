@@ -93,46 +93,36 @@ class AuthController extends Controller
                 $smtpPass = config('mail.mailers.smtp.password', 'ikowlciyetgjggil');
                 $smtpEnc  = config('mail.mailers.smtp.encryption', 'tls');
 
-                try {
-                    config([
-                        'mail.default' => 'smtp',
-                        'mail.mailers.smtp.host' => $smtpHost,
-                        'mail.mailers.smtp.port' => $smtpPort,
-                        'mail.mailers.smtp.username' => $smtpUser,
-                        'mail.mailers.smtp.password' => $smtpPass,
-                        'mail.mailers.smtp.encryption' => $smtpEnc,
-                        'mail.mailers.smtp.timeout' => 8,
-                        'mail.from.address' => $smtpUser,
-                        'mail.from.name' => 'Admin OTP',
-                    ]);
-
-                    Mail::html($htmlContent, function ($message) use ($email, $otp, $smtpUser) {
-                        $message->from($smtpUser, 'Admin OTP')
-                                ->to($email)
-                                ->subject("{$otp} is your Synapse AI Verification Code");
-                    });
-                    $mailSent = true;
-                } catch (\Throwable $mEx) {
-                    $mailError = $mEx->getMessage();
-                    Log::warning('SMTP Mail sending failed on port ' . $smtpPort . ': ' . $mailError);
-
-                    // Fallback attempt on port 465 (SSL)
+                // Quick socket probe (1.5s) to check if SMTP port is open and not blackholed by cloud firewall
+                $socket = @stream_socket_client("tcp://{$smtpHost}:{$smtpPort}", $errno, $errstr, 1.5, STREAM_CLIENT_CONNECT);
+                if ($socket) {
+                    fclose($socket);
                     try {
                         config([
-                            'mail.mailers.smtp.port' => 465,
-                            'mail.mailers.smtp.encryption' => 'ssl',
-                            'mail.mailers.smtp.timeout' => 8,
+                            'mail.default' => 'smtp',
+                            'mail.mailers.smtp.host' => $smtpHost,
+                            'mail.mailers.smtp.port' => $smtpPort,
+                            'mail.mailers.smtp.username' => $smtpUser,
+                            'mail.mailers.smtp.password' => $smtpPass,
+                            'mail.mailers.smtp.encryption' => $smtpEnc,
+                            'mail.mailers.smtp.timeout' => 5,
+                            'mail.from.address' => $smtpUser,
+                            'mail.from.name' => 'Admin OTP',
                         ]);
+
                         Mail::html($htmlContent, function ($message) use ($email, $otp, $smtpUser) {
                             $message->from($smtpUser, 'Admin OTP')
                                     ->to($email)
                                     ->subject("{$otp} is your Synapse AI Verification Code");
                         });
                         $mailSent = true;
-                    } catch (\Throwable $mEx2) {
-                        $mailError = $mEx2->getMessage();
-                        Log::warning('SMTP Port 465 fallback failed: ' . $mailError);
+                    } catch (\Throwable $mEx) {
+                        $mailError = $mEx->getMessage();
+                        Log::warning('SMTP Mail sending failed on port ' . $smtpPort . ': ' . $mailError);
                     }
+                } else {
+                    $mailError = "Outbound SMTP port {$smtpPort} is blocked by cloud hosting firewall. Please use 'Sign in with Password' below or add RESEND_API_KEY.";
+                    Log::warning($mailError);
                 }
             }
         } catch (\Throwable $e) {
@@ -153,7 +143,7 @@ class AuthController extends Controller
         // Return error if email could not be delivered - do not expose OTP code in response
         return response()->json([
             'success' => false,
-            'message' => 'Could not send verification email to ' . $email . '. Please check that your email address is correct and try again.',
+            'message' => $mailError ?: ('Could not send verification email to ' . $email . '. Please try again.'),
         ], 500);
     }
 
