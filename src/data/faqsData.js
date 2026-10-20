@@ -9,11 +9,11 @@ export const FAQS_DATA = [
   },
   {
     question: 'How do the API keys and rate limits work after checkout?',
-    answer: 'The moment your payment completes, production API keys are generated cryptographically and displayed on screen with 1-click copy and receipt download. You can also generate additional keys, set IP whitelists, monitor token usage, and configure webhooks in your Synapse Dashboard.'
+    answer: 'The moment your payment completes, production API keys are generated cryptographically and displayed on screen with 1-click copy and receipt download. You can also generate additional keys, set IP whitelists, monitor token usage, and configure webhooks in your Dyzzstore Dashboard.'
   },
   {
     question: 'Do I own 100% commercial rights to everything generated?',
-    answer: 'Yes. All text, code, audio, 3D assets, and photorealistic imagery created with Synapse AI tools are 100% owned by you. You have unrestricted commercial rights to sell, license, trademark, monetize, and distribute them without paying any royalties.'
+    answer: 'Yes. All text, code, audio, 3D assets, and photorealistic imagery created with Dyzzstore AI tools are 100% owned by you. You have unrestricted commercial rights to sell, license, trademark, monetize, and distribute them without paying any royalties.'
   },
   {
     question: 'What payment methods do you accept?',
@@ -32,7 +32,7 @@ export const TESTIMONIALS_DATA = [
     role: 'CTO, HyperScale Digital',
     avatar: 'AC',
     rating: 5,
-    body: 'We were paying over $450/month across OpenAI, Midjourney, ElevenLabs, and GitHub Copilot for our team of five. Synapse.AI Pro Suite consolidated everything into $49/mo with zero latency drop. An absolute no-brainer for any fast-moving startup.',
+    body: 'We were paying over $450/month across OpenAI, Midjourney, ElevenLabs, and GitHub Copilot for our team of five. Dyzzstore Pro Suite consolidated everything into $49/mo with zero latency drop. An absolute no-brainer for any fast-moving startup.',
     highlight: false
   },
   {

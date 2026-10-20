@@ -142,7 +142,7 @@ export default function Hero() {
             <div className="hero-image-wrap">
               <img 
                 src="/assets/images/hero.jpg" 
-                alt="Synapse AI Store Featured Tool" 
+                alt="Dyzzstore Featured Tool" 
                 className="hero-img"
                 loading="eager"
               />
@@ -176,7 +176,7 @@ export default function Hero() {
                   <ShieldCheck size={16} />
                 </div>
                 <div className="badge-info">
-                  <span className="f-title">Official Synapse Store</span>
+                  <span className="f-title">Official Dyzzstore</span>
                   <span className="f-sub">Instant KHQR & Card Access</span>
                 </div>
               </div>

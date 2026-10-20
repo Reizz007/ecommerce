@@ -15,7 +15,7 @@ export default function Testimonials() {
             Loved By Builders <span className="gradient-text">Around The Globe</span>
           </h2>
           <p className="section-desc">
-            See how high-growth startups, indie hackers, and creative agencies build 10x faster with Synapse.AI.
+            See how high-growth startups, indie hackers, and creative agencies build 10x faster with Dyzzstore.
           </p>
         </div>
 

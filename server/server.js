@@ -79,7 +79,7 @@ app.post('/api/auth/verify-otp', (req, res) => {
 
   otps.delete(cleanEmail);
 
-  const isAdmin = cleanEmail === 'admin@synapse.ai' || cleanEmail === 'chetranicky@gmail.com';
+  const isAdmin = cleanEmail === 'admin@synapse.ai' || cleanEmail === 'admin@dyzzstore.com' || cleanEmail === 'chetranicky@gmail.com';
   const user = {
     id: isAdmin ? 'admin_master' : `user_${Date.now()}`,
     name: isAdmin ? 'Master Admin' : cleanEmail.split('@')[0],
@@ -104,7 +104,7 @@ app.post('/api/auth/login', (req, res) => {
   }
 
   const cleanEmail = email.toLowerCase().trim();
-  const isAdminEmail = cleanEmail === 'admin@synapse.ai' || cleanEmail === 'admin' || cleanEmail === 'chetranicky@gmail.com';
+  const isAdminEmail = cleanEmail === 'admin@synapse.ai' || cleanEmail === 'admin@dyzzstore.com' || cleanEmail === 'admin' || cleanEmail === 'chetranicky@gmail.com';
 
   // Check Admin Credentials
   if (isAdminEmail && password === 'admin123') {
@@ -136,7 +136,7 @@ app.post('/api/auth/login', (req, res) => {
     });
   }
 
-  return res.status(401).json({ success: false, message: 'Invalid credentials. For Admin use admin@synapse.ai or chetranicky@gmail.com / admin123' });
+  return res.status(401).json({ success: false, message: 'Invalid credentials. ' });
 });
 
 // Test Telegram endpoint
@@ -152,7 +152,7 @@ app.post('/api/settings/test-telegram', async (req, res) => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         chat_id: chatId,
-        text: '🚀 <b>Synapse AI Control Center</b>\n\nTelegram notification channel verified successfully!\nYou will now receive live alerts for KHQR payments, orders, and security events.',
+        text: '🚀 <b>Dyzzstore Control Center</b>\n\nTelegram notification channel verified successfully!\nYou will now receive live alerts for KHQR payments, orders, and security events.',
         parse_mode: 'HTML'
       })
     });
@@ -168,7 +168,7 @@ app.post('/api/settings/test-telegram', async (req, res) => {
 
 // Health check
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', service: 'Synapse Backend API', timestamp: new Date().toISOString() });
+  res.json({ status: 'ok', service: 'Dyzzstore Backend API', timestamp: new Date().toISOString() });
 });
 
 // Stats overview for Admin Panel
@@ -588,5 +588,5 @@ if (fs.existsSync(DIST_DIR)) {
 
 const HOST = '0.0.0.0';
 app.listen(PORT, HOST, () => {
-  console.log(`🚀 Synapse Backend Server running on http://${HOST}:${PORT}`);
+  console.log(`🚀 Dyzzstore Backend Server running on http://${HOST}:${PORT}`);
 });

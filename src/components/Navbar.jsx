@@ -42,7 +42,7 @@ export default function Navbar({ onOpenSearch, onOpenAdmin, currentUser, onOpenL
   }, []);
 
   const totalItemsCount = cart.reduce((acc, item) => acc + (item.quantity || 1), 0);
-  const isAdmin = currentUser && (currentUser.role === 'admin' || currentUser.email === 'chetranicky@gmail.com' || currentUser.email === 'admin@synapse.ai');
+  const isAdmin = currentUser && (currentUser.role === 'admin' || currentUser.email === 'chetranicky@gmail.com' || currentUser.email === 'admin@synapse.ai' || currentUser.email === 'admin@dyzzstore.com');
 
   return (
     <>
@@ -58,7 +58,7 @@ export default function Navbar({ onOpenSearch, onOpenAdmin, currentUser, onOpenL
               <Brain size={22} className="logo-icon" />
               <span className="pulse-dot"></span>
             </div>
-            <span className="logo-text">SYNAPSE<span className="logo-gradient">.AI</span></span>
+            <span className="logo-text">Dyzz<span className="logo-gradient">store</span></span>
           </a>
 
           {/* Desktop Nav Links */}

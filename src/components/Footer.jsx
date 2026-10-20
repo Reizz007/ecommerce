@@ -64,7 +64,7 @@ export default function Footer() {
             <div className="logo-symbol">
               <ShoppingBag size={22} className="logo-icon text-cyan" />
             </div>
-            <span className="logo-text">SYNAPSE<span className="logo-gradient"> STORE</span></span>
+            <span className="logo-text">Dyzz<span className="logo-gradient">store</span></span>
           </a>
 
           <p className="footer-bio">
@@ -184,7 +184,7 @@ export default function Footer() {
       {/* Footer Bottom Bar */}
       <div className="footer-bottom">
         <div className="container footer-bottom-inner">
-          <p>&copy; 2026 SYNAPSE.AI Digital Store. All rights reserved. Registered Digital Software Marketplace.</p>
+          <p>&copy; 2026 Dyzzstore. All rights reserved. Registered Digital Software Marketplace.</p>
           
           <div className="footer-trust-tags">
             <span className="footer-trust-tag"><Zap size={13} className="text-cyan" /> Instant Delivery</span>

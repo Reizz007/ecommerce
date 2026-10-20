@@ -79,7 +79,7 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }) {
         localStorage.setItem('synapse_user', JSON.stringify(data.user));
         if (data.token) localStorage.setItem('synapse_token', data.token);
 
-        const isAdmin = data.user.role === 'admin' || cleanEmail === 'chetranicky@gmail.com' || cleanEmail === 'admin@synapse.ai';
+        const isAdmin = data.user.role === 'admin' || cleanEmail === 'chetranicky@gmail.com' || cleanEmail === 'admin@synapse.ai' || cleanEmail === 'admin@dyzzstore.com';
         if (isAdmin) {
           addToast('👑 Welcome Administrator! Access granted to Control Center.', 'success');
           onLoginSuccess(data.user, true);
@@ -205,7 +205,7 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }) {
           const stored = JSON.parse(raw);
           if (stored.otp === cleanOtp && stored.expiresAt > Date.now()) {
             sessionStorage.removeItem('synapse_offline_otp_' + cleanEmail);
-            const isAdmin = cleanEmail === 'chetranicky@gmail.com' || cleanEmail === 'admin@synapse.ai';
+            const isAdmin = cleanEmail === 'chetranicky@gmail.com' || cleanEmail === 'admin@synapse.ai' || cleanEmail === 'admin@dyzzstore.com';
             verifiedUser = {
               id: isAdmin ? 'admin_master' : `user_${Date.now()}`,
               name: isAdmin ? 'Master Admin' : cleanEmail.split('@')[0],
@@ -222,7 +222,7 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }) {
       localStorage.setItem('synapse_user', JSON.stringify(verifiedUser));
       if (verifiedToken) localStorage.setItem('synapse_token', verifiedToken);
 
-      const isAdmin = verifiedUser.role === 'admin' || cleanEmail === 'chetranicky@gmail.com' || cleanEmail === 'admin@synapse.ai';
+      const isAdmin = verifiedUser.role === 'admin' || cleanEmail === 'chetranicky@gmail.com' || cleanEmail === 'admin@synapse.ai' || cleanEmail === 'admin@dyzzstore.com';
       if (isAdmin) {
         addToast('👑 Welcome Administrator! Access granted to Control Center.', 'success');
         onLoginSuccess(verifiedUser, true);

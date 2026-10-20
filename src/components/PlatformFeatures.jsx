@@ -24,7 +24,7 @@ export default function PlatformFeatures() {
             Engineered For <span className="gradient-text">Extreme Speed & Privacy</span>
           </h2>
           <p className="section-desc">
-            Why 185k+ developers choose Synapse.AI over fragmented model APIs and individual app subscriptions.
+            Why 185k+ developers choose Dyzzstore over fragmented model APIs and individual app subscriptions.
           </p>
         </div>
 

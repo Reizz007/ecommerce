@@ -39,7 +39,7 @@ class AuthController extends Controller
             <div style='font-family: -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, sans-serif; max-width: 520px; margin: 0 auto; padding: 32px 24px; background: #0b0f19; color: #f1f5f9; border-radius: 16px; border: 1px solid #1e293b;'>
                 <div style='text-align: center; margin-bottom: 24px;'>
                     <div style='display: inline-block; padding: 10px 18px; border-radius: 999px; background: rgba(56, 189, 248, 0.1); border: 1px solid rgba(56, 189, 248, 0.25); color: #38bdf8; font-weight: 700; font-size: 13px; letter-spacing: 1px;'>
-                        SYNAPSE.AI AUTH
+                        DYZZSTORE AUTH
                     </div>
                     <h2 style='color: #f8fafc; margin: 16px 0 6px; font-size: 22px; font-weight: 700;'>Login Verification Code</h2>
                     <p style='color: #94a3b8; font-size: 14px; margin: 0;'>Use the code below to complete your sign in</p>
@@ -80,7 +80,7 @@ class AuthController extends Controller
                 $res = Http::timeout(8)->withToken($resendKey)->post('https://api.resend.com/emails', [
                     'from' => "{$fromName} <{$fromAddress}>",
                     'to' => [$email],
-                    'subject' => "{$otp} is your Synapse AI Verification Code",
+                    'subject' => "{$otp} is your Dyzzstore Verification Code",
                     'html' => $htmlContent,
                 ]);
 
@@ -118,7 +118,7 @@ class AuthController extends Controller
                         Mail::html($htmlContent, function ($message) use ($email, $otp, $smtpUser) {
                             $message->from($smtpUser, 'Admin OTP')
                                 ->to($email)
-                                ->subject("{$otp} is your Synapse AI Verification Code");
+                                ->subject("{$otp} is your Dyzzstore Verification Code");
                         });
                         $mailSent = true;
                     } catch (\Throwable $mEx) {
@@ -147,7 +147,7 @@ class AuthController extends Controller
                             Mail::html($htmlContent, function ($message) use ($email, $otp, $smtpUser) {
                                 $message->from($smtpUser, 'Admin OTP')
                                     ->to($email)
-                                    ->subject("{$otp} is your Synapse AI Verification Code");
+                                    ->subject("{$otp} is your Dyzzstore Verification Code");
                             });
                             $mailSent = true;
                         } catch (\Throwable $mEx2) {
@@ -218,7 +218,7 @@ class AuthController extends Controller
 
         // Check if admin email configured in .env or default chetranicky@gmail.com
         $adminEmail = strtolower(trim(env('ADMIN_EMAIL', 'chetranicky@gmail.com')));
-        $isAdmin = ($email === $adminEmail) || ($email === 'chetranicky@gmail.com') || ($email === 'admin@synapse.ai');
+        $isAdmin = ($email === $adminEmail) || ($email === 'chetranicky@gmail.com') || ($email === 'admin@synapse.ai') || ($email === 'admin@dyzzstore.com');
 
         // Find or create User
         $user = User::firstOrNew(['email' => $email]);
@@ -327,7 +327,7 @@ class AuthController extends Controller
 
         $email = strtolower(trim($validated['email']));
         $adminEmail = strtolower(trim(env('ADMIN_EMAIL', 'chetranicky@gmail.com')));
-        $isAdmin = ($email === 'admin@synapse.ai' || $email === 'admin' || $email === $adminEmail || $email === 'chetranicky@gmail.com');
+        $isAdmin = ($email === 'admin@synapse.ai' || $email === 'admin@dyzzstore.com' || $email === 'admin' || $email === $adminEmail || $email === 'chetranicky@gmail.com');
 
         if ($isAdmin && $validated['password'] === 'admin123') {
             $targetEmail = ($email === 'admin') ? 'admin@synapse.ai' : $email;

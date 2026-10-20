@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Payment Successful & Verified — Synapse AI</title>
+  <title>Payment Successful & Verified — Dyzzstore</title>
   <style>
     * {
       box-sizing: border-box;
@@ -204,11 +204,11 @@
       fetch(apiBase + '/api/payment/khqr/verify/' + encodeURIComponent(txId) + '?confirm=true')
         .then(function(res) { return res.json(); })
         .then(function(data) {
-          console.log('[Synapse Payment] Order confirmed & alert triggered:', data);
+          console.log('[Dyzzstore Payment] Order confirmed & alert triggered:', data);
           broadcastSuccess();
         })
         .catch(function(err) {
-          console.warn('[Synapse Payment] Verify sync note:', err);
+          console.warn('[Dyzzstore Payment] Verify sync note:', err);
         });
     }
 

@@ -76,7 +76,7 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
     khqrGatewayUrl: 'https://khqr.cc/api/payment/requestv2/tW6PHjgPyzISFi3KK22hKZ57rag1cWHS',
     khqrProfileId: 'tW6PHjgPyzISFi3KK22hKZ57rag1cWHS',
     khqrSecretKey: 'zsFq7SWHV4gYFSAdfg2ud8WV747tBOei',
-    announcementText: 'Synapse Omni-LLM 4.5 & VideoGen 4D are now live! Get 20% OFF all annual subscriptions with code NEURON20',
+    announcementText: 'Dyzzstore Flagship Models are now live! Get 20% OFF all annual subscriptions with code NEURON20',
     maintenanceMode: false,
     telegramBotToken: '',
     telegramChatId: '',
@@ -213,7 +213,7 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
 
   const handleOpenActivateModal = (order) => {
     setActivatingOrder(order);
-    setActivationInput(order.activation_link || `https://t.me/synapse_ai_bot?start=act_${order.order_number || order.id}`);
+    setActivationInput(order.activation_link || `https://t.me/dyzzstore_bot?start=act_${order.order_number || order.id}`);
     setActivationNoteInput(order.activation_note || 'Your premium workspace license has been activated! Click above to access your tools.');
     setIsActivateModalOpen(true);
   };
@@ -637,7 +637,7 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
               <Database size={20} />
             </div>
             <div>
-              <span className="admin-title">SYNAPSE CONTROL CENTER</span>
+              <span className="admin-title">DYZZSTORE CONTROL CENTER</span>
               <span className="admin-sub-tag">Laravel 12 REST API & Database Control</span>
             </div>
           </div>
@@ -1693,7 +1693,7 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
                       required
                       value={toolFormData.name}
                       onChange={(e) => setToolFormData({ ...toolFormData, name: e.target.value })}
-                      placeholder="e.g. Synapse Quantum LLM"
+                      placeholder="e.g. Dyzzstore Quantum LLM"
                     />
                   </div>
 
@@ -1950,14 +1950,14 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
                     <button
                       type="button"
                       className="btn-preset-chip"
-                      onClick={() => setActivationInput(`https://t.me/synapse_ai_bot?start=act_${activatingOrder.order_number || activatingOrder.id}`)}
+                      onClick={() => setActivationInput(`https://t.me/dyzzstore_bot?start=act_${activatingOrder.order_number || activatingOrder.id}`)}
                     >
                       🤖 Telegram Bot Link
                     </button>
                     <button
                       type="button"
                       className="btn-preset-chip"
-                      onClick={() => setActivationInput(`https://app.synapse.ai/activate?token=act_${activatingOrder.order_number || activatingOrder.id}`)}
+                      onClick={() => setActivationInput(`https://app.dyzzstore.com/activate?token=act_${activatingOrder.order_number || activatingOrder.id}`)}
                     >
                       🌐 Web Portal Link
                     </button>
@@ -1972,7 +1972,7 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
                   <input
                     type="text"
                     className="form-input"
-                    placeholder="e.g. https://t.me/my_bot?start=xxx or https://app.synapse.ai/activate/xxx"
+                    placeholder="e.g. https://t.me/my_bot?start=xxx or https://app.dyzzstore.com/activate/xxx"
                     value={activationInput}
                     onChange={(e) => setActivationInput(e.target.value)}
                     required

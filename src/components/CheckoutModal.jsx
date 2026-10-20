@@ -371,7 +371,7 @@ export default function CheckoutModal() {
     const paymentMethodDisplay = `KHQR DIRECT GATEWAY (TX: ${khqrPayment?.transaction_id || 'N/A'})`;
 
     const receiptContent = `=====================================================
-SYNAPSE.AI — OFFICIAL LICENSE & TAX INVOICE
+DYZZSTORE — OFFICIAL LICENSE & TAX INVOICE
 =====================================================
 Order ID: ${activeTxId}
 Date: ${new Date().toLocaleDateString()}
@@ -387,21 +387,21 @@ GATEWAY SIGNATURE: ${activeHash}
 
 CREDENTIALS ISSUED:
 Production API Key: ${issuedApiKey}
-Access Endpoint: https://api.synapse.ai/v1
+Access Endpoint: https://api.dyzzstore.com/v1
 Zero Data Retention: Guaranteed
 
 SUPPORT & SLA:
-24/7 Priority Discord: https://discord.gg/synapse-ai
-Documentation: https://docs.synapse.ai
+24/7 Priority Discord: https://discord.gg/dyzzstore
+Documentation: https://docs.dyzzstore.com
 =====================================================
-Thank you for building with SYNAPSE.AI!
+Thank you for building with Dyzzstore!
 `;
 
     const blob = new Blob([receiptContent], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `Synapse_Receipt_${Date.now()}.txt`;
+    a.download = `Dyzzstore_Receipt_${Date.now()}.txt`;
     a.click();
     URL.revokeObjectURL(url);
     addToast('Receipt downloaded!', 'success');
@@ -738,7 +738,7 @@ Thank you for building with SYNAPSE.AI!
 
               <h3 className="success-title">Order Successful & Verified!</h3>
               <p className="success-sub">
-                Welcome to Synapse.AI! Your payment via <strong>Cambodia National KHQR Gateway</strong> has been recorded.
+                Welcome to Dyzzstore! Your payment via <strong>Cambodia National KHQR Gateway</strong> has been recorded.
               </p>
 
               {/* Dedicated Customer Activation Link Box */}

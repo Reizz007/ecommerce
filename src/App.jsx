@@ -29,7 +29,7 @@ function MainContent() {
       const saved = localStorage.getItem('synapse_user');
       if (!saved) return null;
       const user = JSON.parse(saved);
-      if (user && (user.email === 'chetranicky@gmail.com' || user.email === 'admin@synapse.ai')) {
+      if (user && (user.email === 'chetranicky@gmail.com' || user.email === 'admin@synapse.ai' || user.email === 'admin@dyzzstore.com')) {
         user.role = 'admin';
         localStorage.setItem('synapse_user', JSON.stringify(user));
       }
@@ -47,7 +47,7 @@ function MainContent() {
       const wasActive = localStorage.getItem('synapse_admin_active') === 'true';
       const hash = typeof window !== 'undefined' ? window.location.hash : '';
       const path = typeof window !== 'undefined' ? window.location.pathname : '';
-      const isAdmin = user && (user.role === 'admin' || user.email === 'chetranicky@gmail.com' || user.email === 'admin@synapse.ai');
+      const isAdmin = user && (user.role === 'admin' || user.email === 'chetranicky@gmail.com' || user.email === 'admin@synapse.ai' || user.email === 'admin@dyzzstore.com');
       return Boolean(isAdmin && (wasActive || hash === '#admin' || path === '/admin'));
     } catch {
       return false;
@@ -79,7 +79,7 @@ function MainContent() {
       const path = window.location.pathname;
       const hash = window.location.hash;
 
-      const isAdmin = currentUser && (currentUser.role === 'admin' || currentUser.email === 'chetranicky@gmail.com' || currentUser.email === 'admin@synapse.ai');
+      const isAdmin = currentUser && (currentUser.role === 'admin' || currentUser.email === 'chetranicky@gmail.com' || currentUser.email === 'admin@synapse.ai' || currentUser.email === 'admin@dyzzstore.com');
 
       if (path === '/login' || hash === '#login') {
         if (!isAdmin) {
@@ -122,11 +122,11 @@ function MainContent() {
   };
 
   const handleLoginSuccess = (user, shouldOpenAdmin) => {
-    if (user && (user.email === 'chetranicky@gmail.com' || user.email === 'admin@synapse.ai')) {
+    if (user && (user.email === 'chetranicky@gmail.com' || user.email === 'admin@synapse.ai' || user.email === 'admin@dyzzstore.com')) {
       user.role = 'admin';
     }
     setCurrentUser(user);
-    const isAdmin = user && (user.role === 'admin' || user.email === 'chetranicky@gmail.com' || user.email === 'admin@synapse.ai');
+    const isAdmin = user && (user.role === 'admin' || user.email === 'chetranicky@gmail.com' || user.email === 'admin@synapse.ai' || user.email === 'admin@dyzzstore.com');
     
     // If user is admin and either shouldOpenAdmin is requested or hash/path targets #admin
     const isTargetingAdmin = shouldOpenAdmin || window.location.hash === '#admin' || window.location.pathname === '/admin';
@@ -155,7 +155,7 @@ function MainContent() {
   };
 
   const handleOpenAdmin = () => {
-    const isAdmin = currentUser && (currentUser.role === 'admin' || currentUser.email === 'chetranicky@gmail.com' || currentUser.email === 'admin@synapse.ai');
+    const isAdmin = currentUser && (currentUser.role === 'admin' || currentUser.email === 'chetranicky@gmail.com' || currentUser.email === 'admin@synapse.ai' || currentUser.email === 'admin@dyzzstore.com');
     if (isAdmin) {
       setIsAdminOpen(true);
       setIsLoginOpen(false);
@@ -179,7 +179,7 @@ function MainContent() {
   }, []);
 
   // If Admin Panel is open AND user has role === 'admin' or admin email, render dedicated control center
-  if (isAdminOpen && (currentUser?.role === 'admin' || currentUser?.email === 'chetranicky@gmail.com' || currentUser?.email === 'admin@synapse.ai')) {
+  if (isAdminOpen && (currentUser?.role === 'admin' || currentUser?.email === 'chetranicky@gmail.com' || currentUser?.email === 'admin@synapse.ai' || currentUser?.email === 'admin@dyzzstore.com')) {
     return (
       <div className="admin-root-container">
         <AdminPanel 
@@ -254,7 +254,7 @@ function MainContent() {
                 </span>
                 <h2>Start Supercharging Your Workflow with 45+ AI Engines</h2>
                 <p>
-                  Join 185,000+ engineers, designers, and founders who replaced monthly AI subscriptions with Synapse.AI perpetual licenses.
+                  Join 185,000+ engineers, designers, and founders who replaced monthly AI subscriptions with Dyzzstore perpetual licenses.
                 </p>
                 <div className="cta-action-row">
                   <a href="#tools" className="btn btn-primary btn-xl btn-glow">
