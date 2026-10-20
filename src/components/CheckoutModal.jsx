@@ -689,24 +689,7 @@ Thank you for building with Dyzzstore!
               <div className="aba-dual-actions">
                 
 
-                <button
-                  type="button"
-                  className={`btn ${hasOpenedKhqr ? 'btn-success btn-glow' : 'btn-outline-glow'}`}
-                  onClick={handleCompleteOrder}
-                  disabled={isProcessing}
-                  id="btn-confirm-payment"
-                >
-                  {isProcessing ? (
-                    <>
-                      <RefreshCw size={16} className="spin-icon" />
-                      <span>Activating License...</span>
-                    </>
-                  ) : (
-                    <>
-                     
-                    </>
-                  )}
-                </button>
+               
               </div>
             </div>
           </div>
