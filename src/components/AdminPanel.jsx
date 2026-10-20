@@ -67,23 +67,8 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
     abaOrdersCount: 3
   });
 
-  const [tools, setTools] = useState(() => {
-    try {
-      const saved = localStorage.getItem('synapse_custom_tools');
-      if (saved) return JSON.parse(saved);
-    } catch {}
-    return [];
-  });
-  const [categories, setCategories] = useState(() => {
-    try {
-      const saved = localStorage.getItem('synapse_custom_categories');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed)) return parsed;
-      }
-    } catch {}
-    return [];
-  });
+  const [tools, setTools] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [orders, setOrders] = useState([]);
   const [subscribers, setSubscribers] = useState([]);
   const [settings, setSettings] = useState({
@@ -182,15 +167,11 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
       if (statsRes?.stats) setStats(statsRes.stats);
       if (toolsRes?.products || toolsRes?.tools) {
         const list = toolsRes.products || toolsRes.tools;
-        let deleted = [];
-        try {
-          deleted = JSON.parse(localStorage.getItem('synapse_deleted_tools') || '[]');
-        } catch {}
-        const filtered = list.filter(t => !deleted.some(d => String(d) === String(t.id) || (t.slug && String(d) === String(t.slug)) || (t.product_id && String(d) === String(t.product_id))));
-        setTools(filtered);
-        localStorage.setItem('synapse_custom_tools', JSON.stringify(filtered));
+        setTools(list);
       }
-      if (categoriesRes?.categories) setCategories(categoriesRes.categories);
+      if (categoriesRes?.categories) {
+        setCategories(categoriesRes.categories);
+      }
       if (ordersRes?.orders) setOrders(ordersRes.orders);
       if (subsRes?.subscribers) setSubscribers(subsRes.subscribers);
       if (settingsRes?.settings) setSettings(settingsRes.settings);
@@ -325,8 +306,9 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
         }
       }
       setIsCategoryModalOpen(false);
-      loadBackendData();
+      await loadBackendData();
       if (refreshCategories) refreshCategories();
+      if (refreshTools) refreshTools();
     } catch (err) {
       addToast('Error saving category to database', 'error');
     }
@@ -335,25 +317,14 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
   const handleDeleteCategory = async (id, name) => {
     if (!window.confirm(`Are you sure you want to delete category "${name}"? Associated products will become uncategorized.`)) return;
     try {
-      const res = await fetch(apiUrl(`/api/categories/${id}`), { method: 'DELETE' });
-      setCategories(prev => {
-        const updated = prev.filter(c => String(c.id) !== String(id) && c.slug !== id);
-        try {
-          localStorage.setItem('synapse_custom_categories', JSON.stringify(updated));
-        } catch {}
-        return updated;
-      });
-      loadBackendData();
+      await fetch(apiUrl(`/api/categories/${id}`), { method: 'DELETE' });
+      setCategories(prev => prev.filter(c => String(c.id) !== String(id) && c.slug !== id));
+      await loadBackendData();
       if (refreshCategories) refreshCategories();
+      if (refreshTools) refreshTools();
       addToast(`Category "${name}" deleted from database`, 'info');
     } catch (err) {
-      setCategories(prev => {
-        const updated = prev.filter(c => String(c.id) !== String(id) && c.slug !== id);
-        try {
-          localStorage.setItem('synapse_custom_categories', JSON.stringify(updated));
-        } catch {}
-        return updated;
-      });
+      setCategories(prev => prev.filter(c => String(c.id) !== String(id) && c.slug !== id));
       addToast(`Category "${name}" removed from view`, 'info');
     }
   };
@@ -376,14 +347,15 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
 
   const handleOpenEditTool = (tool) => {
     setEditingTool(tool);
+    const catObj = (tool.category && typeof tool.category === 'object') ? tool.category : null;
     setToolFormData({
       name: tool.name,
-      category: tool.category || tool.category_slug || 'llm',
-      badge: tool.badge,
-      priceMonthly: tool.priceMonthly || tool.price_monthly,
-      priceLifetime: tool.priceLifetime || tool.price_lifetime,
-      shortDesc: tool.shortDesc || tool.short_desc,
-      capabilities: Array.isArray(tool.capabilities) ? tool.capabilities.join(', ') : tool.capabilities,
+      category: tool.category_slug || catObj?.slug || (typeof tool.category === 'string' ? tool.category : (categories[0]?.slug || 'llm')),
+      badge: tool.badge || 'PRO',
+      priceMonthly: tool.priceMonthly || tool.price_monthly || 29,
+      priceLifetime: tool.priceLifetime || tool.price_lifetime || 199,
+      shortDesc: tool.shortDesc || tool.short_desc || '',
+      capabilities: Array.isArray(tool.capabilities) ? tool.capabilities.join(', ') : (tool.capabilities || ''),
       status: tool.status || 'Active'
     });
     setIsToolModalOpen(true);
@@ -408,7 +380,8 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
         });
         const data = await res.json();
         if (data.success) {
-          setTools(prev => prev.map(t => t.id === editingTool.id ? (data.product || data.tool) : t));
+          const updatedTool = data.product || data.tool;
+          setTools(prev => prev.map(t => t.id === editingTool.id ? updatedTool : t));
           addToast(`Updated ${payload.name} in Laravel database!`, 'success');
         }
       } else {
@@ -420,12 +393,15 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
         });
         const data = await res.json();
         if (data.success) {
-          setTools(prev => [(data.product || data.tool), ...prev]);
+          const newTool = data.product || data.tool;
+          setTools(prev => [newTool, ...prev]);
           addToast(`Added new product to Laravel database: ${payload.name}`, 'success');
         }
       }
       setIsToolModalOpen(false);
-      loadBackendData();
+      await loadBackendData();
+      if (refreshTools) refreshTools();
+      if (refreshCategories) refreshCategories();
     } catch (err) {
       addToast('Error saving product to Laravel database', 'error');
     }
@@ -435,23 +411,10 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
     if (!window.confirm(`Are you sure you want to delete "${name}" from the database?`)) return;
     try {
       await fetch(apiUrl(`/api/products/${id}`), { method: 'DELETE' });
-      // Persist deleted tool ID locally so refresh never restores it
-      let deleted = [];
-      try {
-        deleted = JSON.parse(localStorage.getItem('synapse_deleted_tools') || '[]');
-      } catch {}
-      if (!deleted.includes(id)) {
-        deleted.push(id);
-        localStorage.setItem('synapse_deleted_tools', JSON.stringify(deleted));
-      }
-      setTools(prev => {
-        const updated = prev.filter(t => String(t.id) !== String(id) && t.slug !== id && t.product_id !== id);
-        try {
-          localStorage.setItem('synapse_custom_tools', JSON.stringify(updated));
-        } catch {}
-        return updated;
-      });
+      setTools(prev => prev.filter(t => String(t.id) !== String(id) && t.slug !== id && t.product_id !== id));
+      await loadBackendData();
       if (refreshTools) refreshTools();
+      if (refreshCategories) refreshCategories();
       addToast(`Deleted "${name}" from database`, 'info');
     } catch (err) {
       addToast('Error deleting product', 'error');
@@ -998,13 +961,14 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
                         <th>License Price</th>
                         <th>Rating</th>
                         <th>Status</th>
+                        <th>Date Created</th>
                         <th>Actions</th>
                       </tr>
                     </thead>
                     <tbody>
                       {filteredTools.length === 0 ? (
                         <tr>
-                          <td colSpan="6" style={{ textAlign: 'center', padding: '3rem 1rem', color: 'var(--text-muted)' }}>
+                          <td colSpan="7" style={{ textAlign: 'center', padding: '3rem 1rem', color: 'var(--text-muted)' }}>
                             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem' }}>
                               <Boxes size={36} style={{ color: 'var(--text-muted)', opacity: 0.5 }} />
                               <div style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--text-main)' }}>No Products Found</div>
@@ -1048,6 +1012,11 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
                               <td>
                                 <span className={`status-pill ${(tool.status || 'Active').toLowerCase()}`}>
                                   {tool.status || 'Active'}
+                                </span>
+                              </td>
+                              <td>
+                                <span className="text-muted" style={{ fontSize: '0.82rem' }}>
+                                  {tool.created_at ? new Date(tool.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Recent'}
                                 </span>
                               </td>
                               <td>
@@ -1137,6 +1106,11 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
                           <span className="cat-count-pill">
                             <Boxes size={13} className="inline mr-1" /> {prodCount} {prodCount === 1 ? 'Product' : 'Products'}
                           </span>
+                          {cat.created_at && (
+                            <span className="text-muted" style={{ fontSize: '0.72rem', opacity: 0.8 }}>
+                              {new Date(cat.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                            </span>
+                          )}
                           <span className="cat-color-dot-indicator" style={{ backgroundColor: cat.color }}></span>
                         </div>
                       </div>

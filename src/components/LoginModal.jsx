@@ -132,7 +132,11 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }) {
       if (res.ok && data.success) {
         setStep('otp');
         setResendCooldown(30);
-        addToast(`📨 Verification code sent to ${cleanEmail}! Please check your inbox.`, 'success');
+        if (data.otp) {
+          addToast(`🔑 Verification code: ${data.otp}`, 'success');
+        } else {
+          addToast(`📨 Verification code sent to ${cleanEmail}! Please check your inbox.`, 'success');
+        }
       } else {
         setErrorMessage(data.message || 'Failed to send verification code. Please check your email address and try again.');
       }
@@ -140,7 +144,7 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }) {
       clearTimeout(timeoutId);
       setErrorMessage(err.name === 'AbortError' 
         ? 'Request timed out. Please try again or use Admin Password login below.' 
-        : 'Could not connect to authentication server. Please check your network or sign in with Password below.');
+        : `Could not connect to authentication server (${apiUrl('')}). Please make sure the Laravel backend server is running or sign in with Password below.`);
     } finally {
       setIsLoading(false);
     }

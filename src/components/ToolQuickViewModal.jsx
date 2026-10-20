@@ -50,9 +50,16 @@ export default function ToolQuickViewModal() {
 
         <div className="tool-details-header">
           <div className="tool-header-left">
-            <span className="tool-badge-pill" style={{ color: tool.color || '#8b5cf6', borderColor: `${tool.color || '#8b5cf6'}50` }}>
-              {tool.badge || 'PRO'}
-            </span>
+            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap', marginBottom: '0.4rem' }}>
+              <span className="tool-badge-pill" style={{ color: tool.color || '#8b5cf6', borderColor: `${tool.color || '#8b5cf6'}50` }}>
+                {tool.badge || 'PRO'}
+              </span>
+              {tool.created_at && (
+                <span className="text-muted" style={{ fontSize: '0.75rem' }}>
+                  Released {new Date(tool.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                </span>
+              )}
+            </div>
             <h2>{tool.name}</h2>
             <div className="tool-rating-line">
               <Star size={15} className="fill-warning text-warning" />

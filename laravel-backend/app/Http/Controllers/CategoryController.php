@@ -40,9 +40,16 @@ class CategoryController extends Controller
             $slug = $baseSlug;
             $count = 1;
             while (Category::where('slug', $slug)->exists()) {
-                $slug = $baseSlug . '-' . $count++;
+                $slug = $baseSlug.'-'.$count++;
             }
             $validated['slug'] = $slug;
+        }
+
+        if (! isset($validated['display_order'])) {
+            $validated['display_order'] = Category::count() + 1;
+        }
+        if (! isset($validated['is_active'])) {
+            $validated['is_active'] = true;
         }
 
         $category = Category::create($validated);
@@ -74,7 +81,7 @@ class CategoryController extends Controller
 
         $validated = $request->validate([
             'name' => 'sometimes|required|string|max:255',
-            'slug' => 'sometimes|nullable|string|max:255|unique:categories,slug,' . $category->id,
+            'slug' => 'sometimes|nullable|string|max:255|unique:categories,slug,'.$category->id,
             'description' => 'nullable|string',
             'icon' => 'nullable|string',
             'color' => 'nullable|string',
@@ -96,15 +103,20 @@ class CategoryController extends Controller
         ]);
     }
 
-    public function destroy($id): JsonResponse
+    public function destroy(Request $request, $id): JsonResponse
     {
         $category = Category::where('id', $id)->orWhere('slug', $id)->firstOrFail();
 
-        // Nullify foreign key on products
-        $category->products()->update([
-            'category_id' => null,
-            'category_slug' => 'uncategorized',
-        ]);
+        // If requested to delete products or if cascade is set, delete them
+        if ($request->boolean('delete_products') || $request->input('cascade') === true) {
+            $category->products()->delete();
+        } else {
+            // Nullify foreign key on products
+            $category->products()->update([
+                'category_id' => null,
+                'category_slug' => 'uncategorized',
+            ]);
+        }
 
         $category->delete();
 

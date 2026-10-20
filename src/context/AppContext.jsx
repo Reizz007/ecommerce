@@ -33,63 +33,55 @@ export function AppProvider({ children }) {
     }
   }, [cart]);
 
-  // Tools state with persistent database sync & localStorage cache
-  const [tools, setTools] = useState(() => {
+  // Clean up legacy localStorage cache keys once so stale records don't persist
+  useEffect(() => {
     try {
-      const saved = localStorage.getItem('synapse_custom_tools');
-      if (saved !== null) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed)) return parsed;
-      }
+      localStorage.removeItem('synapse_custom_tools');
+      localStorage.removeItem('synapse_custom_categories');
+      localStorage.removeItem('synapse_deleted_tools');
     } catch {}
-    return [];
-  });
+  }, []);
+
+  // Tools state — purely live list from Laravel database API
+  const [tools, setTools] = useState([]);
+  const [toolsLoading, setToolsLoading] = useState(true);
 
   const refreshTools = useCallback(async () => {
     try {
+      setToolsLoading(true);
       const res = await fetch(apiUrl('/api/products'));
       if (res.ok) {
         const data = await res.json();
         const list = data.products || data.tools;
         if (Array.isArray(list)) {
-          let deleted = [];
-          try {
-            deleted = JSON.parse(localStorage.getItem('synapse_deleted_tools') || '[]');
-          } catch {}
-          const filtered = list.filter(t => !deleted.some(d => String(d) === String(t.id) || (t.slug && String(d) === String(t.slug)) || (t.product_id && String(d) === String(t.product_id))));
-          setTools(filtered);
-          localStorage.setItem('synapse_custom_tools', JSON.stringify(filtered));
+          setTools(list);
         }
       }
     } catch (e) {
-      // offline or server error fallback
+      console.warn('Could not fetch products from database API:', e);
+    } finally {
+      setToolsLoading(false);
     }
   }, []);
 
-  // Categories state with persistent database sync & localStorage cache
-  const [categories, setCategories] = useState(() => {
-    try {
-      const saved = localStorage.getItem('synapse_custom_categories');
-      if (saved !== null) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed)) return parsed;
-      }
-    } catch {}
-    return [];
-  });
+  // Categories state — purely live list from Laravel database API
+  const [categories, setCategories] = useState([]);
+  const [categoriesLoading, setCategoriesLoading] = useState(true);
 
   const refreshCategories = useCallback(async () => {
     try {
+      setCategoriesLoading(true);
       const res = await fetch(apiUrl('/api/categories'));
       if (res.ok) {
         const data = await res.json();
         if (Array.isArray(data.categories)) {
           setCategories(data.categories);
-          localStorage.setItem('synapse_custom_categories', JSON.stringify(data.categories));
         }
       }
     } catch (e) {
-      // offline or server error fallback
+      console.warn('Could not fetch categories from database API:', e);
+    } finally {
+      setCategoriesLoading(false);
     }
   }, []);
 
@@ -341,9 +333,11 @@ export function AppProvider({ children }) {
         purchasedLicenses,
         setPurchasedLicenses,
         tools,
+        toolsLoading,
         setTools,
         refreshTools,
         categories,
+        categoriesLoading,
         setCategories,
         refreshCategories,
         theme,

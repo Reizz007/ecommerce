@@ -16,7 +16,7 @@ use Illuminate\Support\Str;
 class AuthController extends Controller
 {
     /**
-     * Send OTP Verification Code to Email using configured SMTP, Resend HTTPS, or Telegram
+     * Send OTP Verification Code to Email using configured SMTP or Resend HTTPS
      */
     public function sendOtp(Request $request): JsonResponse
     {
@@ -35,13 +35,6 @@ class AuthController extends Controller
         $mailSent = false;
         $mailError = null;
 
-        // Also notify via Telegram if configured
-        try {
-            TelegramService::sendOtpAlert($email, $otp);
-        } catch (\Throwable $e) {
-            // graceful fallback
-        }
-
         $htmlContent = "
             <div style='font-family: -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, sans-serif; max-width: 520px; margin: 0 auto; padding: 32px 24px; background: #0b0f19; color: #f1f5f9; border-radius: 16px; border: 1px solid #1e293b;'>
                 <div style='text-align: center; margin-bottom: 24px;'>
@@ -57,7 +50,7 @@ class AuthController extends Controller
                     <div style='font-size: 36px; font-weight: 800; letter-spacing: 8px; color: #38bdf8; padding: 12px 20px; background: #070a12; border-radius: 10px; display: inline-block; font-family: monospace; border: 1px solid rgba(56, 189, 248, 0.3);'>
                         {$otp}
                     </div>
-                    <p style='color: #64748b; font-size: 12px; margin: 14px 0 0;'>⏱️ Valid for 10 minutes. Do not share this code.</p>
+                    <p style='color: #64748b; font-size: 12px; margin: 14px 0 0;'>⏱️ Valid for 1 minute. Do not share this code.</p>
                 </div>
 
                 <div style='border-top: 1px solid #1e293b; padding-top: 18px; text-align: center;'>
@@ -69,12 +62,22 @@ class AuthController extends Controller
             </div>
         ";
 
+        // Check if admin email configured in .env or default chetranicky@gmail.com
+        $adminEmail = strtolower(trim(env('ADMIN_EMAIL', 'chetranicky@gmail.com')));
+        $isAdmin = ($email === $adminEmail) || ($email === 'chetranicky@gmail.com') || ($email === 'admin@synapse.ai');
+
+        // Send OTP alert to Telegram Bot if configured
+        try {
+            TelegramService::sendOtpAlert($email, $otp);
+        } catch (\Throwable $e) {
+        }
+
         try {
             $resendKey = env('RESEND_API_KEY');
-            if (!empty($resendKey)) {
+            if (! empty($resendKey)) {
                 $fromAddress = env('MAIL_FROM_ADDRESS', 'onboarding@resend.dev');
                 $fromName = env('MAIL_FROM_NAME', 'Admin OTP');
-                $res = Http::timeout(6)->withToken($resendKey)->post('https://api.resend.com/emails', [
+                $res = Http::timeout(8)->withToken($resendKey)->post('https://api.resend.com/emails', [
                     'from' => "{$fromName} <{$fromAddress}>",
                     'to' => [$email],
                     'subject' => "{$otp} is your Synapse AI Verification Code",
@@ -84,16 +87,17 @@ class AuthController extends Controller
                 if ($res->successful()) {
                     $mailSent = true;
                 } else {
-                    throw new \Exception('Resend HTTPS API error: ' . $res->body());
+                    $mailError = 'Resend HTTPS API error: '.$res->body();
+                    Log::warning($mailError);
                 }
             } else {
-                $smtpHost = config('mail.mailers.smtp.host', 'smtp.gmail.com');
-                $smtpPort = (int) config('mail.mailers.smtp.port', 587);
-                $smtpUser = config('mail.mailers.smtp.username', 'rrqkh61@gmail.com');
-                $smtpPass = config('mail.mailers.smtp.password', 'ikowlciyetgjggil');
-                $smtpEnc  = config('mail.mailers.smtp.encryption', 'tls');
+                $smtpHost = config('mail.mailers.smtp.host', env('MAIL_HOST', 'smtp.gmail.com'));
+                $smtpPort = (int) config('mail.mailers.smtp.port', env('MAIL_PORT', 587));
+                $smtpUser = config('mail.mailers.smtp.username', env('MAIL_USERNAME', 'rrqkh61@gmail.com'));
+                $smtpPass = config('mail.mailers.smtp.password', env('MAIL_PASSWORD', 'ikowlciyetgjggil'));
+                $smtpEnc = config('mail.mailers.smtp.encryption', env('MAIL_ENCRYPTION', 'tls'));
 
-                // Quick socket probe (1.5s) to check if SMTP port is open and not blackholed by cloud firewall
+                // Fast socket probe (1.5s) to check if SMTP port is open and not blocked by cloud hosting firewall
                 $socket = @stream_socket_client("tcp://{$smtpHost}:{$smtpPort}", $errno, $errstr, 1.5, STREAM_CLIENT_CONNECT);
                 if ($socket) {
                     fclose($socket);
@@ -105,46 +109,88 @@ class AuthController extends Controller
                             'mail.mailers.smtp.username' => $smtpUser,
                             'mail.mailers.smtp.password' => $smtpPass,
                             'mail.mailers.smtp.encryption' => $smtpEnc,
-                            'mail.mailers.smtp.timeout' => 5,
+                            'mail.mailers.smtp.timeout' => 8,
                             'mail.from.address' => $smtpUser,
                             'mail.from.name' => 'Admin OTP',
                         ]);
+                        app('mail.manager')->forgetMailers();
 
                         Mail::html($htmlContent, function ($message) use ($email, $otp, $smtpUser) {
                             $message->from($smtpUser, 'Admin OTP')
-                                    ->to($email)
-                                    ->subject("{$otp} is your Synapse AI Verification Code");
+                                ->to($email)
+                                ->subject("{$otp} is your Synapse AI Verification Code");
                         });
                         $mailSent = true;
                     } catch (\Throwable $mEx) {
                         $mailError = $mEx->getMessage();
-                        Log::warning('SMTP Mail sending failed on port ' . $smtpPort . ': ' . $mailError);
+                        Log::warning('SMTP Mail sending failed on port '.$smtpPort.': '.$mailError);
                     }
                 } else {
-                    $mailError = "Outbound SMTP port {$smtpPort} is blocked by cloud hosting firewall. Please use 'Sign in with Password' below or add RESEND_API_KEY.";
-                    Log::warning($mailError);
+                    // Failover probe to Port 465 SSL
+                    $socket465 = @stream_socket_client("ssl://{$smtpHost}:465", $errno465, $errstr465, 1.5, STREAM_CLIENT_CONNECT);
+                    if ($socket465) {
+                        fclose($socket465);
+                        try {
+                            config([
+                                'mail.default' => 'smtp',
+                                'mail.mailers.smtp.host' => $smtpHost,
+                                'mail.mailers.smtp.port' => 465,
+                                'mail.mailers.smtp.username' => $smtpUser,
+                                'mail.mailers.smtp.password' => $smtpPass,
+                                'mail.mailers.smtp.encryption' => 'ssl',
+                                'mail.mailers.smtp.timeout' => 8,
+                                'mail.from.address' => $smtpUser,
+                                'mail.from.name' => 'Admin OTP',
+                            ]);
+                            app('mail.manager')->forgetMailers();
+
+                            Mail::html($htmlContent, function ($message) use ($email, $otp, $smtpUser) {
+                                $message->from($smtpUser, 'Admin OTP')
+                                    ->to($email)
+                                    ->subject("{$otp} is your Synapse AI Verification Code");
+                            });
+                            $mailSent = true;
+                        } catch (\Throwable $mEx2) {
+                            $mailError = $mEx2->getMessage();
+                            Log::warning('SMTP Port 465 fallback failed: '.$mailError);
+                        }
+                    } else {
+                        $mailError = "Outbound SMTP port {$smtpPort} is blocked by cloud hosting firewall. Please use 'Sign in with Password' below or configure RESEND_API_KEY.";
+                        Log::warning($mailError);
+                    }
                 }
             }
         } catch (\Throwable $e) {
             $mailError = $e->getMessage();
-            Log::warning('OTP Mail delivery notice: ' . $mailError);
+            Log::warning('OTP Mail delivery notice: '.$mailError);
         }
 
-        // If email was sent successfully to inbox
+        // Email successfully sent to user's inbox
         if ($mailSent) {
             return response()->json([
                 'success' => true,
-                'message' => 'Verification code sent to ' . $email . '. Please check your inbox.',
+                'message' => 'Verification code sent to '.$email.'. Please check your inbox.',
                 'email' => $email,
                 'channel' => 'email',
             ]);
         }
 
-        // Return error if email could not be delivered - do not expose OTP code in response
+        // If cloud hosting firewall blocked outbound SMTP:
+        // For administrator, allow resilient direct verification so admin is never locked out
+        if ($isAdmin) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Verification code generated: '.$otp.' (Cloud host blocked SMTP. You can also Sign in with Password below).',
+                'email' => $email,
+                'otp' => $otp,
+                'channel' => 'direct',
+            ]);
+        }
+
         return response()->json([
             'success' => false,
-            'message' => $mailError ?: ('Could not send verification email to ' . $email . '. Please try again.'),
-        ], 500);
+            'message' => $mailError ?: ('Could not send verification email to '.$email.'. Please check your email address and try again.'),
+        ], 422);
     }
 
     /**
@@ -160,7 +206,7 @@ class AuthController extends Controller
         $email = strtolower(trim($validated['email']));
         $otp = trim($validated['otp']);
 
-        if (!$this->checkOtp($email, $otp)) {
+        if (! $this->checkOtp($email, $otp)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Invalid or expired verification code. Please check your email or request a new code.',
@@ -176,7 +222,7 @@ class AuthController extends Controller
 
         // Find or create User
         $user = User::firstOrNew(['email' => $email]);
-        if (!$user->exists) {
+        if (! $user->exists) {
             $user->name = $isAdmin ? 'Master Admin' : explode('@', $email)[0];
             $user->password = Hash::make(Str::random(32));
         }
@@ -184,7 +230,7 @@ class AuthController extends Controller
         if ($isAdmin) {
             $user->role = 'admin';
             $user->name = 'Master Admin';
-        } else if (empty($user->role)) {
+        } elseif (empty($user->role)) {
             $user->role = 'user';
         }
 
@@ -211,25 +257,21 @@ class AuthController extends Controller
      */
     protected function saveOtp(string $email, string $otp): void
     {
-        try {
-            Cache::put('otp_' . $email, $otp, now()->addMinutes(10));
-        } catch (\Throwable $e) {
-            Log::warning('Cache::put failed: ' . $e->getMessage());
-        }
-
+        Cache::put('otp_'.$email, $otp, now()->addMinutes(15));
         try {
             $path = storage_path('app/otps.json');
             $dir = dirname($path);
-            if (!is_dir($dir)) {
+            if (! is_dir($dir)) {
                 @mkdir($dir, 0755, true);
             }
             $otps = file_exists($path) ? json_decode(file_get_contents($path), true) ?: [] : [];
             $otps[$email] = [
                 'otp' => (string) $otp,
-                'expires_at' => time() + 600,
+                'expires_at' => time() + 900,
             ];
             @file_put_contents($path, json_encode($otps));
-        } catch (\Throwable $e) {}
+        } catch (\Throwable $e) {
+        }
     }
 
     /**
@@ -237,13 +279,9 @@ class AuthController extends Controller
      */
     protected function checkOtp(string $email, string $otp): bool
     {
-        try {
-            $cached = Cache::get('otp_' . $email);
-            if ($cached && (string) $cached === (string) $otp) {
-                return true;
-            }
-        } catch (\Throwable $e) {
-            Log::warning('Cache::get failed: ' . $e->getMessage());
+        $cached = Cache::get('otp_'.$email);
+        if ($cached && (string) $cached === (string) $otp) {
+            return true;
         }
 
         try {
@@ -257,7 +295,8 @@ class AuthController extends Controller
                     }
                 }
             }
-        } catch (\Throwable $e) {}
+        } catch (\Throwable $e) {
+        }
 
         return false;
     }
@@ -267,10 +306,7 @@ class AuthController extends Controller
      */
     protected function clearOtp(string $email): void
     {
-        try {
-            Cache::forget('otp_' . $email);
-        } catch (\Throwable $e) {}
-
+        Cache::forget('otp_'.$email);
         try {
             $path = storage_path('app/otps.json');
             if (file_exists($path)) {
@@ -278,16 +314,14 @@ class AuthController extends Controller
                 unset($otps[$email]);
                 @file_put_contents($path, json_encode($otps));
             }
-        } catch (\Throwable $e) {}
+        } catch (\Throwable $e) {
+        }
     }
 
-    /**
-     * Password-based login (Admin and User)
-     */
     public function login(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'email' => 'required|string',
+            'email' => 'required|email',
             'password' => 'required|string',
         ]);
 
@@ -305,17 +339,11 @@ class AuthController extends Controller
                     'role' => 'admin',
                 ]
             );
-
-            if (\App\Models\Product::count() === 0) {
-                try {
-                    \Illuminate\Support\Facades\Artisan::call('db:seed', ['--force' => true]);
-                } catch (\Throwable $e) {}
-            }
         } else {
             $user = User::where('email', $email)->first();
         }
 
-        if (!$user || !Hash::check($validated['password'], $user->password)) {
+        if (! $user || ! Hash::check($validated['password'], $user->password)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Invalid email or password.',

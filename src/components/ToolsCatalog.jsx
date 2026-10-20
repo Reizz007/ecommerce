@@ -83,14 +83,9 @@ const DEFAULT_CATEGORIES = [
 ];
 
 export default function ToolsCatalog({ searchRef }) {
-  const { addToCart, formatPrice, setSelectedToolModal, tools: catalogTools, categories: adminCategories } = useApp();
+  const { addToCart, formatPrice, setSelectedToolModal, tools: catalogTools, toolsLoading, categories: adminCategories } = useApp();
   const sourceTools = useMemo(() => {
-    let deleted = [];
-    try {
-      deleted = JSON.parse(localStorage.getItem('synapse_deleted_tools') || '[]');
-    } catch {}
-    const list = Array.isArray(catalogTools) ? catalogTools : [];
-    return list.filter(t => !deleted.some(d => String(d) === String(t.id) || (t.slug && String(d) === String(t.slug)) || (t.product_id && String(d) === String(t.product_id))));
+    return Array.isArray(catalogTools) ? catalogTools : [];
   }, [catalogTools]);
 
   // Dynamically derive category pills from Admin Panel / Laravel Database
@@ -121,15 +116,16 @@ export default function ToolsCatalog({ searchRef }) {
 
     // 2. Also ensure any extra category present on tools in sourceTools is included
     for (const t of sourceTools) {
-      const catSlug = String(t.category_slug || (typeof t.category === 'object' ? t.category?.slug : t.category) || '').toLowerCase().trim();
+      const catObj = (t.category && typeof t.category === 'object') ? t.category : null;
+      const catSlug = String(t.category_slug || catObj?.slug || (typeof t.category === 'string' ? t.category : '') || '').toLowerCase().trim();
       if (catSlug && !seenIds.has(catSlug)) {
         seenIds.add(catSlug);
-        const catName = typeof t.category === 'object' && t.category?.name 
-          ? t.category.name 
+        const catName = catObj?.name 
+          ? catObj.name 
           : catSlug.split(/[-_]/).map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
         pills.push({
           id: catSlug,
-          rawId: t.category_id,
+          rawId: t.category_id || catObj?.id,
           slug: catSlug,
           label: catName,
           icon: getIconForCategory(catSlug),
@@ -154,17 +150,22 @@ export default function ToolsCatalog({ searchRef }) {
 
   const filteredTools = useMemo(() => {
     return sourceTools.filter((tool) => {
-      // Category filter - robust matching by slug, id, or name
+      // Category filter - robust matching by slug, id, or relation
       if (activeCategory !== 'all') {
-        const catSlug = String(tool.category_slug || (typeof tool.category === 'object' ? tool.category?.slug : tool.category) || '').toLowerCase().trim();
-        const catId = String(tool.category_id || (typeof tool.category === 'object' ? tool.category?.id : '') || '').trim();
-        const catName = String(typeof tool.category === 'object' ? tool.category?.name : '').toLowerCase().trim();
+        const catObj = (tool.category && typeof tool.category === 'object') ? tool.category : null;
+        const catSlug = String(tool.category_slug || catObj?.slug || (typeof tool.category === 'string' ? tool.category : '') || '').toLowerCase().trim();
+        const catId = String(tool.category_id || catObj?.id || '').trim();
+        const catName = String(catObj?.name || '').toLowerCase().trim();
         const activeLower = String(activeCategory).toLowerCase().trim();
+
+        const selectedPill = categoryList.find(p => String(p.id).toLowerCase() === activeLower || String(p.slug).toLowerCase() === activeLower);
 
         const matches = 
           catSlug === activeLower ||
           catId === activeLower ||
-          catName === activeLower;
+          catName === activeLower ||
+          (selectedPill?.rawId && catId === String(selectedPill.rawId)) ||
+          (selectedPill?.slug && catSlug === String(selectedPill.slug).toLowerCase());
 
         if (!matches) {
           return false;
@@ -191,7 +192,7 @@ export default function ToolsCatalog({ searchRef }) {
       if (sortBy === 'price-desc') return priceB - priceA;
       return (b.reviewsCount || b.reviews_count || 0) - (a.reviewsCount || a.reviews_count || 0);
     });
-  }, [sourceTools, activeCategory, searchQuery, sortBy]);
+  }, [sourceTools, activeCategory, categoryList, searchQuery, sortBy]);
 
   const handleAddToolToCart = (tool) => {
     const price = tool.priceLifetime || tool.price_lifetime || tool.priceMonthly || tool.price_monthly || 0;
@@ -229,11 +230,12 @@ export default function ToolsCatalog({ searchRef }) {
               const count = cat.id === 'all' 
                 ? sourceTools.length 
                 : sourceTools.filter(t => {
-                    const slug = String(t.category_slug || (typeof t.category === 'object' ? t.category?.slug : t.category) || '').toLowerCase().trim();
-                    const id = String(t.category_id || (typeof t.category === 'object' ? t.category?.id : '') || '').trim();
-                    const name = String(typeof t.category === 'object' ? t.category?.name : '').toLowerCase().trim();
+                    const catObj = (t.category && typeof t.category === 'object') ? t.category : null;
+                    const slug = String(t.category_slug || catObj?.slug || (typeof t.category === 'string' ? t.category : '') || '').toLowerCase().trim();
+                    const id = String(t.category_id || catObj?.id || '').trim();
+                    const name = String(catObj?.name || '').toLowerCase().trim();
                     const target = String(cat.id).toLowerCase().trim();
-                    return slug === target || id === target || name === target || (cat.rawId && id === String(cat.rawId));
+                    return slug === target || id === target || name === target || (cat.rawId && id === String(cat.rawId)) || (cat.slug && slug === String(cat.slug).toLowerCase());
                   }).length;
 
               const isActive = activeCategory === cat.id;
@@ -359,6 +361,12 @@ export default function ToolsCatalog({ searchRef }) {
           <div className="tools-grid">
             {filteredTools.map((tool) => {
               const IconComponent = ICON_MAP[tool.icon] || Brain;
+              const toolCatObj = (tool.category && typeof tool.category === 'object') ? tool.category : null;
+              const toolCatSlug = tool.category_slug || toolCatObj?.slug || (typeof tool.category === 'string' ? tool.category : '');
+              const matchedCat = adminCategories?.find(c => String(c.id) === String(tool.category_id) || c.slug === toolCatSlug) || toolCatObj;
+              const catLabel = matchedCat?.name || (toolCatSlug ? toolCatSlug.charAt(0).toUpperCase() + toolCatSlug.slice(1) : '');
+              const catColor = matchedCat?.color || tool.color || '#8b5cf6';
+
               return (
                 <div 
                   key={tool.id} 
@@ -372,9 +380,30 @@ export default function ToolsCatalog({ searchRef }) {
                     <div className="tool-icon-wrapper" style={{ color: tool.color, borderColor: `${tool.color}40`, backgroundColor: `${tool.color}15` }}>
                       <IconComponent size={24} />
                     </div>
-                    <span className="tool-badge-pill" style={{ borderColor: `${tool.color}50`, color: tool.color }}>
-                      {tool.badge}
-                    </span>
+                    <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+                      {catLabel && (
+                        <span 
+                          className="tool-cat-pill" 
+                          style={{ 
+                            fontSize: '0.68rem', 
+                            padding: '2px 8px', 
+                            borderRadius: '12px', 
+                            backgroundColor: `${catColor}20`, 
+                            color: catColor, 
+                            border: `1px solid ${catColor}50`, 
+                            fontWeight: 600,
+                            letterSpacing: '0.02em'
+                          }}
+                        >
+                          {catLabel}
+                        </span>
+                      )}
+                      {tool.badge && (
+                        <span className="tool-badge-pill" style={{ borderColor: `${tool.color}50`, color: tool.color }}>
+                          {tool.badge}
+                        </span>
+                      )}
+                    </div>
                   </div>
 
                   <h3 className="tool-name">{tool.name}</h3>
@@ -388,6 +417,12 @@ export default function ToolsCatalog({ searchRef }) {
                       <Zap size={13} className="text-accent" /> {tool.usersCount || tool.users_count || '1k+'} Active Users
                     </span>
                   </div>
+
+                  {tool.created_at && (
+                    <div className="tool-date-row" style={{ fontSize: '0.72rem', color: 'var(--text-muted, #94a3b8)', marginTop: '0.2rem', marginBottom: '0.35rem' }}>
+                      Added {new Date(tool.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                    </div>
+                  )}
 
                   <p className="tool-description">{tool.shortDesc || tool.short_desc || tool.description || ''}</p>
 
@@ -441,6 +476,16 @@ export default function ToolsCatalog({ searchRef }) {
                 </div>
               );
             })}
+          </div>
+        ) : toolsLoading && sourceTools.length === 0 ? (
+          <div className="empty-state" style={{ padding: '4.5rem 1.5rem' }}>
+            <div className="empty-icon spin" style={{ animation: 'spin 1.2s linear infinite', color: '#06b6d4' }}>
+              <Zap size={36} />
+            </div>
+            <h3 style={{ marginTop: '1rem', fontSize: '1.25rem' }}>Loading AI Tools & Engines...</h3>
+            <p style={{ color: 'var(--text-muted, #94a3b8)', fontSize: '0.9rem' }}>
+              Fetching real-time catalog directly from database API...
+            </p>
           </div>
         ) : (
           <div className="empty-state">

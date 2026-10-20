@@ -18,17 +18,20 @@ class ProductController extends Controller
             $cat = $request->category;
             $query->where(function ($q) use ($cat) {
                 $q->where('category_slug', $cat)
-                  ->orWhereHas('category', function ($sub) use ($cat) {
-                      $sub->where('slug', $cat)->orWhere('id', $cat);
-                  });
+                    ->orWhere('category_id', $cat)
+                    ->orWhereHas('category', function ($sub) use ($cat) {
+                        $sub->where('slug', $cat)
+                            ->orWhere('id', $cat)
+                            ->orWhere('name', $cat);
+                    });
             });
         }
 
-        if ($request->has('search') && !empty($request->search)) {
+        if ($request->has('search') && ! empty($request->search)) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('short_desc', 'like', "%{$search}%");
+                    ->orWhere('short_desc', 'like', "%{$search}%");
             });
         }
 
@@ -44,19 +47,23 @@ class ProductController extends Controller
     public function store(Request $request): JsonResponse
     {
         $input = $request->all();
-        if (isset($input['priceMonthly']) && !isset($input['price_monthly'])) {
+        if (isset($input['priceMonthly']) && ! isset($input['price_monthly'])) {
             $input['price_monthly'] = $input['priceMonthly'];
         }
-        if (isset($input['priceLifetime']) && !isset($input['price_lifetime'])) {
+        if (isset($input['priceLifetime']) && ! isset($input['price_lifetime'])) {
             $input['price_lifetime'] = $input['priceLifetime'];
         }
-        if (isset($input['shortDesc']) && !isset($input['short_desc'])) {
+        if (isset($input['shortDesc']) && ! isset($input['short_desc'])) {
             $input['short_desc'] = $input['shortDesc'];
         }
-        if (isset($input['category']) && !isset($input['category_slug'])) {
-            $input['category_slug'] = $input['category'];
+        if (isset($input['category'])) {
+            if (is_numeric($input['category'])) {
+                $input['category_id'] = (int) $input['category'];
+            } elseif (! isset($input['category_slug'])) {
+                $input['category_slug'] = (string) $input['category'];
+            }
         }
-        if (isset($input['includedInSub']) && !isset($input['included_in_sub'])) {
+        if (isset($input['includedInSub']) && ! isset($input['included_in_sub'])) {
             $input['included_in_sub'] = $input['includedInSub'];
         }
         $request->merge($input);
@@ -89,7 +96,7 @@ class ProductController extends Controller
             $slug = $baseSlug;
             $count = 1;
             while (Product::where('slug', $slug)->exists()) {
-                $slug = $baseSlug . '-' . $count++;
+                $slug = $baseSlug.'-'.$count++;
             }
             $validated['slug'] = $slug;
         }
@@ -97,16 +104,19 @@ class ProductController extends Controller
             $validated['product_id'] = $validated['slug'];
         }
 
-        // Resolve Category
-        if (!empty($validated['category_id'])) {
+        // Resolve Category robustly by ID or Slug
+        if (! empty($validated['category_id'])) {
             $cat = Category::find($validated['category_id']);
             if ($cat) {
                 $validated['category_slug'] = $cat->slug;
             }
-        } elseif (!empty($validated['category_slug'])) {
-            $cat = Category::where('slug', $validated['category_slug'])->first();
+        } elseif (! empty($validated['category_slug'])) {
+            $cat = is_numeric($validated['category_slug'])
+                ? Category::find($validated['category_slug'])
+                : Category::where('slug', $validated['category_slug'])->first();
             if ($cat) {
                 $validated['category_id'] = $cat->id;
+                $validated['category_slug'] = $cat->slug;
             }
         }
 
@@ -148,26 +158,30 @@ class ProductController extends Controller
             ->firstOrFail();
 
         $input = $request->all();
-        if (isset($input['priceMonthly']) && !isset($input['price_monthly'])) {
+        if (isset($input['priceMonthly']) && ! isset($input['price_monthly'])) {
             $input['price_monthly'] = $input['priceMonthly'];
         }
-        if (isset($input['priceLifetime']) && !isset($input['price_lifetime'])) {
+        if (isset($input['priceLifetime']) && ! isset($input['price_lifetime'])) {
             $input['price_lifetime'] = $input['priceLifetime'];
         }
-        if (isset($input['shortDesc']) && !isset($input['short_desc'])) {
+        if (isset($input['shortDesc']) && ! isset($input['short_desc'])) {
             $input['short_desc'] = $input['shortDesc'];
         }
-        if (isset($input['category']) && !isset($input['category_slug'])) {
-            $input['category_slug'] = $input['category'];
+        if (isset($input['category'])) {
+            if (is_numeric($input['category'])) {
+                $input['category_id'] = (int) $input['category'];
+            } elseif (! isset($input['category_slug'])) {
+                $input['category_slug'] = (string) $input['category'];
+            }
         }
-        if (isset($input['includedInSub']) && !isset($input['included_in_sub'])) {
+        if (isset($input['includedInSub']) && ! isset($input['included_in_sub'])) {
             $input['included_in_sub'] = $input['includedInSub'];
         }
         $request->merge($input);
 
         $validated = $request->validate([
             'name' => 'sometimes|required|string|max:255',
-            'slug' => 'sometimes|nullable|string|max:255|unique:products,slug,' . $product->id,
+            'slug' => 'sometimes|nullable|string|max:255|unique:products,slug,'.$product->id,
             'category_id' => 'nullable|exists:categories,id',
             'category_slug' => 'nullable|string',
             'badge' => 'nullable|string',
@@ -187,15 +201,18 @@ class ProductController extends Controller
             'status' => 'nullable|string',
         ]);
 
-        if (!empty($validated['category_id'])) {
+        if (! empty($validated['category_id'])) {
             $cat = Category::find($validated['category_id']);
             if ($cat) {
                 $validated['category_slug'] = $cat->slug;
             }
-        } elseif (!empty($validated['category_slug'])) {
-            $cat = Category::where('slug', $validated['category_slug'])->first();
+        } elseif (! empty($validated['category_slug'])) {
+            $cat = is_numeric($validated['category_slug'])
+                ? Category::find($validated['category_slug'])
+                : Category::where('slug', $validated['category_slug'])->first();
             if ($cat) {
                 $validated['category_id'] = $cat->id;
+                $validated['category_slug'] = $cat->slug;
             }
         }
 
@@ -225,6 +242,44 @@ class ProductController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Product deleted successfully',
+        ]);
+    }
+
+    /**
+     * Delete all uncategorized products
+     */
+    public function destroyUncategorized(): JsonResponse
+    {
+        $deleted = Product::whereNull('category_id')
+            ->orWhere('category_slug', 'uncategorized')
+            ->orWhere('category_slug', '')
+            ->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => "Successfully deleted {$deleted} uncategorized products",
+            'deleted_count' => $deleted,
+        ]);
+    }
+
+    /**
+     * Bulk delete products
+     */
+    public function bulkDestroy(Request $request): JsonResponse
+    {
+        $ids = $request->input('ids', []);
+        if (! empty($ids) && is_array($ids)) {
+            Product::whereIn('id', $ids)
+                ->orWhereIn('slug', $ids)
+                ->orWhereIn('product_id', $ids)
+                ->delete();
+        } elseif ($request->input('all') === true) {
+            Product::query()->delete();
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Products deleted successfully',
         ]);
     }
 }

@@ -72,7 +72,15 @@ class Product extends Model
 
     public function getCategoryAttribute()
     {
-        return $this->attributes['category_slug'] ?? ($this->category ? $this->category->slug : 'llm');
+        if (! empty($this->attributes['category_slug'])) {
+            return $this->attributes['category_slug'];
+        }
+
+        if ($this->relationLoaded('category') && $this->getRelation('category')) {
+            return $this->getRelation('category')->slug;
+        }
+
+        return 'llm';
     }
 
     public function category(): BelongsTo
