@@ -687,18 +687,7 @@ Thank you for building with Dyzzstore!
               </button>
 
               <div className="aba-dual-actions">
-                <a
-                  href={khqrPayment?.checkout_url || '#'}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="btn btn-khqr-primary btn-glow"
-                  onClick={(e) => handleOpenKhqr(e)}
-                  id="btn-pay-now-khqr"
-                >
-                  <Zap size={18} />
-                  <span>Pay via KHQR ({formatPrice(totalUSD)})</span>
-                  <ExternalLink size={16} />
-                </a>
+                
 
                 <button
                   type="button"
@@ -714,12 +703,7 @@ Thank you for building with Dyzzstore!
                     </>
                   ) : (
                     <>
-                      <CheckCircle2 size={16} />
-                      <span>
-                        {hasOpenedKhqr
-                          ? "I've Paid — Activate License"
-                          : "Already Paid? Activate License"}
-                      </span>
+                     
                     </>
                   )}
                 </button>
