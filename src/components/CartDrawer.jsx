@@ -122,32 +122,6 @@ export default function CartDrawer() {
 
         {/* Cart Footer & Totals */}
         {cart.length > 0 && (
-          <div className="cart-footer">
-            {/* Promo Code Box */}
-            <div className="promo-box">
-              <div className="promo-input-wrap">
-                <Tag size={16} className="text-muted ml-2" />
-                <input
-                  type="text"
-                  placeholder="Promo code (try NEURON20)"
-                  value={inputPromo}
-                  onChange={(e) => setInputPromo(e.target.value)}
-                />
-                <button
-                  className="btn btn-secondary btn-sm"
-                  onClick={() => applyPromo(inputPromo)}
-                >
-                  Apply
-                </button>
-              </div>
-
-              {promoMessage && (
-                <div className={`promo-feedback ${promoMessage.type}`}>
-                  {promoMessage.type === 'success' ? <Check size={14} /> : <X size={14} />}
-                  <span>{promoMessage.text}</span>
-                </div>
-              )}
-            </div>
 
             {/* Price Breakdown */}
             <div className="cart-summary">
