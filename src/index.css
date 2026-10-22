@@ -535,6 +535,14 @@ a {
   color: #a78bfa;
 }
 
+.logo-icon-img {
+  width: 26px;
+  height: 26px;
+  object-fit: contain;
+  border-radius: 50%;
+  filter: drop-shadow(0 0 6px rgba(139, 92, 246, 0.45));
+}
+
 .pulse-dot {
   position: absolute;
   top: -2px;

@@ -53,9 +53,9 @@ export default function Navbar({ onOpenSearch, onOpenAdmin, currentUser, onOpenL
       <header className={`site-header ${isScrolled ? 'scrolled' : ''}`}>
         <div className="container header-container">
           {/* Brand Logo */}
-          <a href="#" className="brand-logo">
+          <a href="#" className="brand-logo" aria-label="Dyzzstore Home">
             <div className="logo-symbol">
-              <Brain size={22} className="logo-icon" />
+              <img src="/favicon.svg" alt="Dyzzstore Logo" className="logo-icon-img" width="26" height="26" />
               <span className="pulse-dot"></span>
             </div>
             <span className="logo-text">Dyzz<span className="logo-gradient">store</span></span>

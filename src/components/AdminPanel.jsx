@@ -634,7 +634,7 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
         <header className="admin-top-nav">
           <div className="admin-badge-logo">
             <div className="logo-symbol-admin">
-              <Database size={20} />
+              <img src="/favicon.svg" alt="Dyzzstore Logo" width="22" height="22" style={{ borderRadius: '50%' }} />
             </div>
             <div>
               <span className="admin-title">DYZZSTORE CONTROL CENTER</span>

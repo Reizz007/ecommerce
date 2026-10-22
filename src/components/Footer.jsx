@@ -60,9 +60,9 @@ export default function Footer() {
       <div className="container footer-container">
         {/* Brand & Store Overview Column */}
         <div className="footer-col brand-col">
-          <a href="#" className="brand-logo footer-logo">
+          <a href="#" className="brand-logo footer-logo" aria-label="Dyzzstore Home">
             <div className="logo-symbol">
-              <ShoppingBag size={22} className="logo-icon text-cyan" />
+              <img src="/favicon.svg" alt="Dyzzstore Logo" className="logo-icon-img" width="26" height="26" />
             </div>
             <span className="logo-text">Dyzz<span className="logo-gradient">store</span></span>
           </a>
