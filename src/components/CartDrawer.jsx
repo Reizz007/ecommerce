@@ -124,7 +124,7 @@ export default function CartDrawer() {
         {cart.length > 0 && (
           <div className="cart-footer">
             {/* Promo Code Box */}
-            <div className="promo-box">
+            {/* <div className="promo-box">
               <div className="promo-input-wrap">
                 <Tag size={16} className="text-muted ml-2" />
                 <input
@@ -147,7 +147,7 @@ export default function CartDrawer() {
                   <span>{promoMessage.text}</span>
                 </div>
               )}
-            </div>
+            </div> */}
 
             {/* Price Breakdown */}
             <div className="cart-summary">
