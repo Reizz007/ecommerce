@@ -14,6 +14,7 @@ import ToastContainer from './components/ToastContainer';
 import Footer from './components/Footer';
 import AdminPanel from './components/AdminPanel';
 import LoginModal from './components/LoginModal';
+import AiChatBot from './components/AiChatBot';
 import { Sparkles, ArrowRight, ShieldCheck, Zap } from 'lucide-react';
 
 function MainContent() {
@@ -291,6 +292,7 @@ function MainContent() {
         onLoginSuccess={handleLoginSuccess}
       />
       <ToastContainer />
+      <AiChatBot />
     </div>
   );
 }

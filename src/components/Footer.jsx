@@ -1,10 +1,8 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useApp } from '../context/AppContext';
 import { 
   ShoppingBag, 
-  ArrowRight, 
   Lock, 
-  Check, 
   ShieldCheck,
   Smartphone,
   Zap,
@@ -44,16 +42,7 @@ const DiscordIcon = () => (
 );
 
 export default function Footer() {
-  const { addToast, setIsCartOpen } = useApp();
-  const [newsletterEmail, setNewsletterEmail] = useState('');
-  const [subscribed, setSubscribed] = useState(false);
-
-  const handleNewsletterSubmit = (e) => {
-    e.preventDefault();
-    if (!newsletterEmail) return;
-    setSubscribed(true);
-    addToast('🎉 VIP Store discount code NEURON20 sent to your email!', 'success');
-  };
+  const { setIsCartOpen } = useApp();
 
   return (
     <footer className="site-footer">
@@ -124,39 +113,6 @@ export default function Footer() {
             <li><a href="#faq">Commercial Licensing Rights</a></li>
             <li><a href="#testimonials">Customer Reviews & Proof</a></li>
           </ul>
-        </div>
-
-        {/* VIP Store Deals & Newsletter Signup */}
-        <div className="footer-col">
-          <h4 className="footer-heading">VIP Deals & Discounts</h4>
-          <p className="newsletter-sub">
-            Join 25,000+ buyers to receive secret flash discounts, bundle coupons, and new AI tool releases.
-          </p>
-
-          {subscribed ? (
-            <div className="newsletter-success-box">
-              <Check size={18} className="text-success inline mr-2" />
-              <span>You are on the VIP discount list! Use code <strong>NEURON20</strong> for 20% off.</span>
-            </div>
-          ) : (
-            <form className="newsletter-form" onSubmit={handleNewsletterSubmit}>
-              <input
-                type="email"
-                placeholder="buyer@company.com"
-                required
-                value={newsletterEmail}
-                onChange={(e) => setNewsletterEmail(e.target.value)}
-              />
-              <button type="submit" className="btn btn-primary btn-sm">
-                <span>Get VIP Deals</span>
-                <ArrowRight size={14} />
-              </button>
-            </form>
-          )}
-
-          <span className="spam-free-note">
-            <Lock size={12} className="inline mr-1" /> No spam. 100% verified discounts. Unsubscribe anytime.
-          </span>
         </div>
       </div>
 
