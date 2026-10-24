@@ -18,7 +18,9 @@ import {
   Search, 
   RefreshCw, 
   ExternalLink, 
+  Smartphone,
   SmartphoneNfc, 
+  MessageSquare,
   ArrowLeft, 
   ArrowRight,
   DollarSign, 
@@ -80,10 +82,19 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
     maintenanceMode: false,
     telegramBotToken: '',
     telegramChatId: '',
-    telegramEnabled: false
+    telegramEnabled: false,
+    plasgatePrivateKey: '',
+    plasgateSecretKey: '',
+    plasgateSenderId: 'SMS Info',
+    plasgateEnabled: false
   });
   const [showSecretKey, setShowSecretKey] = useState(false);
   const [showTelegramToken, setShowTelegramToken] = useState(false);
+  const [showPlasgatePrivate, setShowPlasgatePrivate] = useState(false);
+  const [showPlasgateSecret, setShowPlasgateSecret] = useState(false);
+  const [plasgateTestPhone, setPlasgateTestPhone] = useState('012345678');
+  const [plasgateTesting, setPlasgateTesting] = useState(false);
+  const [plasgateTestResult, setPlasgateTestResult] = useState(null);
   const [khqrTestResult, setKhqrTestResult] = useState(null);
   const [khqrTesting, setKhqrTesting] = useState(false);
   const [telegramTesting, setTelegramTesting] = useState(false);
@@ -641,6 +652,46 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
       addToast('Failed to connect to backend server', 'error');
     } finally {
       setTelegramTesting(false);
+    }
+  };
+
+  const handleTestPlasgate = async () => {
+    if (!settings.plasgatePrivateKey || !settings.plasgateSecretKey) {
+      addToast('Please enter both Plasgate Private Key and Secret Key in settings', 'error');
+      return;
+    }
+    if (!plasgateTestPhone) {
+      addToast('Please enter a phone number to test SMS sending', 'error');
+      return;
+    }
+    setPlasgateTesting(true);
+    setPlasgateTestResult(null);
+
+    try {
+      const res = await fetch(apiUrl('/api/settings/test-plasgate'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          phone: plasgateTestPhone,
+          private_key: settings.plasgatePrivateKey,
+          secret_key: settings.plasgateSecretKey,
+          sender: settings.plasgateSenderId || 'SMS Info'
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setPlasgateTestResult({ success: true, message: data.message, phone: data.normalized_phone });
+        addToast('🎉 Plasgate test SMS sent successfully!', 'success');
+      } else {
+        setPlasgateTestResult({ success: false, message: data.message || 'Failed to send test SMS', phone: data.normalized_phone });
+        addToast(data.message || 'Plasgate SMS test failed', 'error');
+      }
+    } catch (err) {
+      console.error('Plasgate test request failed:', err);
+      setPlasgateTestResult({ success: false, message: 'Could not connect to backend server' });
+      addToast('Failed to connect to backend server', 'error');
+    } finally {
+      setPlasgateTesting(false);
     }
   };
 
@@ -1725,6 +1776,147 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
                           <div className="test-result-row">
                             <span>Message:</span>
                             <span className="text-xs">{telegramTestResult.message}</span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* CARD 3: PLASGATE SMS GATEWAY (CAMBODIA) */}
+                  <div className="settings-card plasgate-admin-settings-card mt-4">
+                    <div className="settings-card-header">
+                      <div className="telegram-mini-badge-admin" style={{ background: 'rgba(16, 185, 129, 0.15)', borderColor: 'rgba(16, 185, 129, 0.3)', color: '#10b981' }}>
+                        <Smartphone size={15} />
+                        <span>Plasgate SMS</span>
+                      </div>
+                      <div>
+                        <h4>Plasgate Cambodia SMS Gateway (+Gate)</h4>
+                        <span className="text-xs text-muted">
+                          Direct REST API integration (<code>https://cloudapi.plasgate.com/api/send</code>) for sending OTP by mobile number
+                        </span>
+                      </div>
+                      <div className="telegram-header-controls ml-auto">
+                        <span className={`status-badge-inline ${settings.plasgateEnabled ? 'active' : 'inactive'}`}>
+                          {settings.plasgateEnabled ? 'SMS OTP ACTIVE' : 'DISABLED'}
+                        </span>
+                        <label className="toggle-switch-compact" title="Toggle Plasgate SMS Gateway">
+                          <input
+                            type="checkbox"
+                            checked={Boolean(settings.plasgateEnabled)}
+                            onChange={(e) => setSettings({ ...settings, plasgateEnabled: e.target.checked })}
+                          />
+                          <span className="slider-compact round"></span>
+                        </label>
+                      </div>
+                    </div>
+
+                    <div className="form-grid">
+                      <div className="form-group">
+                        <label>Plasgate Private Key (?private_key=...) *</label>
+                        <div className="input-with-action">
+                          <input
+                            type={showPlasgatePrivate ? "text" : "password"}
+                            value={settings.plasgatePrivateKey || ''}
+                            onChange={(e) => setSettings({ ...settings, plasgatePrivateKey: e.target.value })}
+                            placeholder="Enter your Plasgate Private Key..."
+                          />
+                          <button
+                            type="button"
+                            className="btn-toggle-eye"
+                            onClick={() => setShowPlasgatePrivate(!showPlasgatePrivate)}
+                            title={showPlasgatePrivate ? "Hide private key" : "Show private key"}
+                          >
+                            {showPlasgatePrivate ? <EyeOff size={16} /> : <Eye size={16} />}
+                          </button>
+                        </div>
+                        <span className="input-hint">
+                          Passed as secure query parameter to <code>https://cloudapi.plasgate.com/api/send</code>
+                        </span>
+                      </div>
+
+                      <div className="form-group">
+                        <label>Plasgate Secret Key (X-Secret Header) *</label>
+                        <div className="input-with-action">
+                          <input
+                            type={showPlasgateSecret ? "text" : "password"}
+                            value={settings.plasgateSecretKey || ''}
+                            onChange={(e) => setSettings({ ...settings, plasgateSecretKey: e.target.value })}
+                            placeholder="Enter your Plasgate X-Secret key..."
+                          />
+                          <button
+                            type="button"
+                            className="btn-toggle-eye"
+                            onClick={() => setShowPlasgateSecret(!showPlasgateSecret)}
+                            title={showPlasgateSecret ? "Hide secret key" : "Show secret key"}
+                          >
+                            {showPlasgateSecret ? <EyeOff size={16} /> : <Eye size={16} />}
+                          </button>
+                        </div>
+                        <span className="input-hint">
+                          Sent in <code>X-Secret</code> authentication header with JSON payload.
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="form-group mt-3">
+                      <label>Sender Name / ID (sender)</label>
+                      <input
+                        type="text"
+                        value={settings.plasgateSenderId || 'SMS Info'}
+                        onChange={(e) => setSettings({ ...settings, plasgateSenderId: e.target.value })}
+                        placeholder="e.g. SMS Info, DyzzStore, or Brand Name"
+                      />
+                      <span className="input-hint">
+                        Registered alphanumeric or numeric sender name assigned in your Plasgate account.
+                      </span>
+                    </div>
+
+                    {/* Plasgate SMS Live Tester Panel */}
+                    <div className="khqr-test-panel mt-3">
+                      <div className="khqr-test-header">
+                        <Smartphone size={15} className="text-success" />
+                        <strong>Live Plasgate SMS Gateway Tester:</strong>
+                      </div>
+
+                      <div style={{ display: 'flex', gap: '10px', marginTop: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+                        <div style={{ flex: '1 1 200px' }}>
+                          <input
+                            type="tel"
+                            className="form-control-sm"
+                            style={{ width: '100%', padding: '7px 12px', background: '#0a0f1d', border: '1px solid #1e293b', borderRadius: '8px', color: '#fff', fontSize: '13px' }}
+                            placeholder="Phone number e.g. 012345678 or 855..."
+                            value={plasgateTestPhone}
+                            onChange={(e) => setPlasgateTestPhone(e.target.value)}
+                          />
+                        </div>
+                        <button
+                          type="button"
+                          className="btn btn-secondary btn-sm"
+                          onClick={handleTestPlasgate}
+                          disabled={plasgateTesting}
+                        >
+                          {plasgateTesting ? <RefreshCw size={13} className="spin-icon inline mr-1" /> : <Send size={13} className="inline mr-1" />}
+                          {plasgateTesting ? 'Sending SMS...' : 'Send Test SMS'}
+                        </button>
+                      </div>
+
+                      {plasgateTestResult && (
+                        <div className={`khqr-test-result-box mt-3 ${plasgateTestResult.success ? 'telegram-result-success' : 'telegram-result-error'}`}>
+                          <div className="test-result-row">
+                            <span>Status:</span>
+                            <span className={plasgateTestResult.success ? "text-success font-semibold" : "text-danger font-semibold"}>
+                              {plasgateTestResult.success ? '✓ Sent Successfully' : '✗ Failed to Send'}
+                            </span>
+                          </div>
+                          {plasgateTestResult.phone && (
+                            <div className="test-result-row">
+                              <span>Recipient (Normalized):</span>
+                              <code>+{plasgateTestResult.phone}</code>
+                            </div>
+                          )}
+                          <div className="test-result-row">
+                            <span>API Message:</span>
+                            <span className="text-xs">{plasgateTestResult.message}</span>
                           </div>
                         </div>
                       )}

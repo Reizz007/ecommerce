@@ -10,7 +10,8 @@ import {
   RotateCw, 
   ArrowLeft,
   Lock,
-  ShieldCheck
+  ShieldCheck,
+  Smartphone
 } from 'lucide-react';
 
 export default function LoginModal({ isOpen, onClose, onLoginSuccess }) {
@@ -18,9 +19,12 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }) {
 
   // Mode: 'otp' | 'password'
   const [loginMode, setLoginMode] = useState('otp');
+  // OTP channel: 'email' | 'phone'
+  const [otpChannel, setOtpChannel] = useState('email');
   // OTP step: 'email' | 'otp'
   const [step, setStep] = useState('email');
   const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [otp, setOtp] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -40,9 +44,11 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }) {
 
   const resetModal = () => {
     setLoginMode('otp');
+    setOtpChannel('email');
     setStep('email');
     setOtp('');
     setPassword('');
+    setPhone('');
     setErrorMessage('');
     setIsLoading(false);
   };
@@ -99,13 +105,29 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }) {
     }
   };
 
-  // Step 1: Send OTP to Email
+  // Step 1: Send OTP to Email or Phone (Plasgate SMS)
   const handleSendOtp = async (e) => {
     if (e) e.preventDefault();
-    const cleanEmail = email.trim().toLowerCase();
-    if (!cleanEmail || !cleanEmail.includes('@')) {
-      setErrorMessage('Please enter a valid email address.');
-      return;
+
+    let identifier = '';
+    let payload = {};
+
+    if (otpChannel === 'phone') {
+      const cleanPhone = phone.trim().replace(/[^\d+]/g, '');
+      if (cleanPhone.length < 8) {
+        setErrorMessage('Please enter a valid mobile phone number (at least 8 digits).');
+        return;
+      }
+      identifier = cleanPhone;
+      payload = { phone: cleanPhone, identifier: cleanPhone };
+    } else {
+      const cleanEmail = email.trim().toLowerCase();
+      if (!cleanEmail || !cleanEmail.includes('@')) {
+        setErrorMessage('Please enter a valid email address.');
+        return;
+      }
+      identifier = cleanEmail;
+      payload = { email: cleanEmail, identifier: cleanEmail };
     }
 
     setErrorMessage('');
@@ -121,7 +143,7 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }) {
           'Content-Type': 'application/json',
           'Accept': 'application/json'
         },
-        body: JSON.stringify({ email: cleanEmail }),
+        body: JSON.stringify(payload),
         signal: controller.signal
       });
 
@@ -134,11 +156,13 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }) {
         setResendCooldown(30);
         if (data.otp) {
           addToast(`🔑 Verification code: ${data.otp}`, 'success');
+        } else if (otpChannel === 'phone') {
+          addToast(`📱 Verification code sent via SMS to ${data.phone || identifier}!`, 'success');
         } else {
-          addToast(`📨 Verification code sent to ${cleanEmail}! Please check your inbox.`, 'success');
+          addToast(`📨 Verification code sent to ${identifier}! Please check your inbox.`, 'success');
         }
       } else {
-        setErrorMessage(data.message || 'Failed to send verification code. Please check your email address and try again.');
+        setErrorMessage(data.message || 'Failed to send verification code. Please check your details and try again.');
       }
     } catch (err) {
       clearTimeout(timeoutId);
@@ -161,7 +185,7 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }) {
 
     setErrorMessage('');
     setIsLoading(true);
-    const cleanEmail = email.trim().toLowerCase();
+    const targetIdentifier = otpChannel === 'phone' ? phone.trim().replace(/[^\d+]/g, '') : email.trim().toLowerCase();
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 15000);
@@ -176,7 +200,12 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }) {
           'Content-Type': 'application/json',
           'Accept': 'application/json'
         },
-        body: JSON.stringify({ email: cleanEmail, otp: cleanOtp }),
+        body: JSON.stringify({ 
+          identifier: targetIdentifier,
+          email: targetIdentifier,
+          phone: targetIdentifier,
+          otp: cleanOtp 
+        }),
         signal: controller.signal
       });
 
@@ -260,6 +289,8 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }) {
                 <Lock size={26} className="text-cyan" />
               ) : step === 'otp' ? (
                 <KeyRound size={26} className="text-cyan" />
+              ) : otpChannel === 'phone' ? (
+                <Smartphone size={26} className="text-success" />
               ) : (
                 <Mail size={26} className="text-cyan" />
               )}
@@ -270,16 +301,16 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }) {
               ) : step === 'otp' ? (
                 <span>Verify <span className="gradient-text">OTP Code</span></span>
               ) : (
-                <span>Sign In with <span className="gradient-text">OTP</span></span>
+                <span>Sign In with <span className="gradient-text">{otpChannel === 'phone' ? 'SMS Code' : 'OTP'}</span></span>
               )}
             </h2>
             <p className="login-subtitle">
               {loginMode === 'password' ? (
                 <>Sign in with your administrator email and password.</>
               ) : step === 'otp' ? (
-                <>Enter the 6-digit code sent to <strong className="text-cyan">{email}</strong></>
+                <>Enter the 6-digit code sent to <strong className="text-cyan">{otpChannel === 'phone' ? phone : email}</strong></>
               ) : (
-                <>Passwordless secure login. Enter your email to receive a one-time verification code.</>
+                <>Passwordless secure login. Get an instant verification code via {otpChannel === 'phone' ? 'SMS' : 'email'}.</>
               )}
             </p>
           </div>
@@ -345,28 +376,100 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }) {
                   style={{ background: 'none', border: 'none', color: '#94a3b8', fontSize: '0.8rem', cursor: 'pointer', textDecoration: 'underline' }}
                   onClick={() => { setLoginMode('otp'); setErrorMessage(''); }}
                 >
-                  Sign in with Email OTP Code instead
+                  Sign in with OTP Code instead
                 </button>
               </div>
             </form>
           ) : step === 'email' ? (
             <form onSubmit={handleSendOtp} className="login-form" autoComplete="off">
-              <div className="form-group">
-                <label htmlFor="loginEmail">Email Address</label>
-                <div className="input-with-icon-wrap">
-                  <Mail size={16} className="input-field-icon" />
-                  <input
-                    id="loginEmail"
-                    type="email"
-                    autoComplete="off"
-                    required
-                    autoFocus
-                    placeholder="yourname@gmail.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                  />
-                </div>
+              {/* Channel Selector: Email vs Phone SMS (Plasgate) */}
+              <div style={{ display: 'flex', gap: '6px', background: '#0a0f1d', padding: '4px', borderRadius: '10px', border: '1px solid #1e293b', marginBottom: '1.2rem' }}>
+                <button
+                  type="button"
+                  style={{
+                    flex: 1,
+                    padding: '8px 10px',
+                    borderRadius: '8px',
+                    border: 'none',
+                    background: otpChannel === 'email' ? 'rgba(56, 189, 248, 0.2)' : 'transparent',
+                    color: otpChannel === 'email' ? '#38bdf8' : '#94a3b8',
+                    fontWeight: otpChannel === 'email' ? '600' : '400',
+                    cursor: 'pointer',
+                    fontSize: '0.82rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '6px',
+                    transition: 'all 0.2s'
+                  }}
+                  onClick={() => { setOtpChannel('email'); setErrorMessage(''); }}
+                >
+                  <Mail size={14} />
+                  <span>Email Code</span>
+                </button>
+                <button
+                  type="button"
+                  style={{
+                    flex: 1,
+                    padding: '8px 10px',
+                    borderRadius: '8px',
+                    border: 'none',
+                    background: otpChannel === 'phone' ? 'rgba(16, 185, 129, 0.2)' : 'transparent',
+                    color: otpChannel === 'phone' ? '#10b981' : '#94a3b8',
+                    fontWeight: otpChannel === 'phone' ? '600' : '400',
+                    cursor: 'pointer',
+                    fontSize: '0.82rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '6px',
+                    transition: 'all 0.2s'
+                  }}
+                  onClick={() => { setOtpChannel('phone'); setErrorMessage(''); }}
+                >
+                  <Smartphone size={14} />
+                  <span>SMS (Plasgate)</span>
+                </button>
               </div>
+
+              {otpChannel === 'phone' ? (
+                <div className="form-group">
+                  <label htmlFor="loginPhone">Cambodian Mobile Phone Number</label>
+                  <div className="input-with-icon-wrap">
+                    <Smartphone size={16} className="input-field-icon text-success" />
+                    <input
+                      id="loginPhone"
+                      type="tel"
+                      autoComplete="tel"
+                      required
+                      autoFocus
+                      placeholder="e.g. 012 345 678 or 855..."
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                    />
+                  </div>
+                  <span style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '5px', display: 'block' }}>
+                    Instant SMS delivery via <strong>Plasgate Gateway</strong> (Smart, Cellcard, Metfone).
+                  </span>
+                </div>
+              ) : (
+                <div className="form-group">
+                  <label htmlFor="loginEmail">Email Address</label>
+                  <div className="input-with-icon-wrap">
+                    <Mail size={16} className="input-field-icon" />
+                    <input
+                      id="loginEmail"
+                      type="email"
+                      autoComplete="off"
+                      required
+                      autoFocus
+                      placeholder="yourname@gmail.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                    />
+                  </div>
+                </div>
+              )}
 
               <button
                 type="submit"
