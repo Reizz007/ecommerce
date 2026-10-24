@@ -113,7 +113,9 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
     icon: 'Brain',
     color: '#8b5cf6',
     badge: 'Flagship',
-    display_order: 1
+    display_order: 1,
+    is_active: true,
+    status: 'Active'
   });
 
   // Activation Modal State
@@ -149,6 +151,7 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
   // Filters
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategoryFilter, setSelectedCategoryFilter] = useState('all');
+  const [selectedStatusFilter, setSelectedStatusFilter] = useState('all'); // 'all' | 'Active' | 'Inactive'
   const [copiedLink, setCopiedLink] = useState(false);
 
   // Fetch all backend data from Laravel API
@@ -258,13 +261,16 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
       icon: 'Boxes',
       color: '#8b5cf6',
       badge: 'New Suite',
-      display_order: categories.length + 1
+      display_order: categories.length + 1,
+      is_active: true,
+      status: 'Active'
     });
     setIsCategoryModalOpen(true);
   };
 
   const handleOpenEditCategory = (cat) => {
     setEditingCategory(cat);
+    const isActive = cat.is_active !== undefined ? Boolean(cat.is_active) : (cat.status !== 'Inactive');
     setCategoryFormData({
       name: cat.name,
       slug: cat.slug,
@@ -272,9 +278,56 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
       icon: cat.icon || 'Boxes',
       color: cat.color || '#8b5cf6',
       badge: cat.badge || '',
-      display_order: cat.display_order || 1
+      display_order: cat.display_order || 1,
+      is_active: isActive,
+      status: isActive ? 'Active' : 'Inactive'
     });
     setIsCategoryModalOpen(true);
+  };
+
+  const handleToggleCategoryStatus = async (cat) => {
+    const currentActive = cat.is_active !== undefined ? Boolean(cat.is_active) : (cat.status !== 'Inactive');
+    const nextActive = !currentActive;
+    const nextStatus = nextActive ? 'Active' : 'Inactive';
+    try {
+      const res = await fetch(apiUrl(`/api/categories/${cat.id}`), {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ is_active: nextActive, status: nextStatus })
+      });
+      const data = await res.json();
+      if (data.success) {
+        const updated = data.category;
+        setCategories(prev => prev.map(c => c.id === cat.id ? updated : c));
+        addToast(`Category "${cat.name}" is now ${nextStatus}!`, 'success');
+        if (refreshCategories) refreshCategories();
+        if (refreshTools) refreshTools();
+      }
+    } catch (err) {
+      addToast('Failed to toggle category status', 'error');
+    }
+  };
+
+  const handleToggleToolStatus = async (tool) => {
+    const currentActive = tool.is_active !== undefined ? Boolean(tool.is_active) : (tool.status === 'Active');
+    const nextActive = !currentActive;
+    const nextStatus = nextActive ? 'Active' : 'Inactive';
+    try {
+      const res = await fetch(apiUrl(`/api/products/${tool.id}`), {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: nextStatus, is_active: nextActive })
+      });
+      const data = await res.json();
+      if (data.success) {
+        const updatedTool = data.product || data.tool;
+        setTools(prev => prev.map(t => t.id === tool.id ? updatedTool : t));
+        addToast(`Product "${tool.name}" status changed to ${nextStatus}!`, 'success');
+        if (refreshTools) refreshTools();
+      }
+    } catch (err) {
+      addToast('Failed to update product status', 'error');
+    }
   };
 
   const handleSaveCategory = async (e) => {
@@ -348,6 +401,7 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
   const handleOpenEditTool = (tool) => {
     setEditingTool(tool);
     const catObj = (tool.category && typeof tool.category === 'object') ? tool.category : null;
+    const toolStatus = tool.status || (tool.is_active !== false ? 'Active' : 'Inactive');
     setToolFormData({
       name: tool.name,
       category: tool.category_slug || catObj?.slug || (typeof tool.category === 'string' ? tool.category : (categories[0]?.slug || 'llm')),
@@ -356,7 +410,7 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
       priceLifetime: tool.priceLifetime || tool.price_lifetime || 199,
       shortDesc: tool.shortDesc || tool.short_desc || '',
       capabilities: Array.isArray(tool.capabilities) ? tool.capabilities.join(', ') : (tool.capabilities || ''),
-      status: tool.status || 'Active'
+      status: toolStatus
     });
     setIsToolModalOpen(true);
   };
@@ -365,6 +419,8 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
     e.preventDefault();
     const payload = {
       ...toolFormData,
+      status: toolFormData.status || 'Active',
+      is_active: toolFormData.status === 'Active',
       capabilities: toolFormData.capabilities.split(',').map(s => s.trim()).filter(Boolean),
       priceMonthly: Number(toolFormData.priceMonthly),
       priceLifetime: Number(toolFormData.priceLifetime)
@@ -599,7 +655,12 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
     const selectedCat = String(selectedCategoryFilter || 'all').toLowerCase();
     const matchesCat = selectedCat === 'all' || toolCat === selectedCat || String(t.category_id) === selectedCat;
 
-    return matchesSearch && matchesCat;
+    const toolActive = t.is_active !== undefined ? Boolean(t.is_active) : (String(t.status || 'Active').toLowerCase() === 'active');
+    const matchesStatus = selectedStatusFilter === 'all' ||
+      (selectedStatusFilter === 'Active' && toolActive) ||
+      (selectedStatusFilter === 'Inactive' && !toolActive);
+
+    return matchesSearch && matchesCat && matchesStatus;
   });
 
   const getCategoryDetails = (catVal) => {
@@ -949,6 +1010,19 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
                     </select>
                   </div>
 
+                  <div className="admin-filter-group">
+                    <label>Filter by Status:</label>
+                    <select
+                      className="admin-select"
+                      value={selectedStatusFilter}
+                      onChange={(e) => setSelectedStatusFilter(e.target.value)}
+                    >
+                      <option value="all">All Statuses ({tools.length})</option>
+                      <option value="Active">Active ({tools.filter(t => t.is_active !== false && String(t.status || 'Active').toLowerCase() === 'active').length})</option>
+                      <option value="Inactive">Inactive ({tools.filter(t => t.is_active === false || String(t.status || '').toLowerCase() === 'inactive').length})</option>
+                    </select>
+                  </div>
+
                   <span className="results-label">Showing {filteredTools.length} of {tools.length} Products</span>
                 </div>
 
@@ -973,9 +1047,9 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
                               <Boxes size={36} style={{ color: 'var(--text-muted)', opacity: 0.5 }} />
                               <div style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--text-main)' }}>No Products Found</div>
                               <p style={{ margin: 0, fontSize: '0.85rem' }}>
-                                {searchTerm ? `No tools match "${searchTerm}".` : 'No products found in this category.'}
+                                {searchTerm ? `No tools match "${searchTerm}".` : 'No products found matching filters.'}
                               </p>
-                              <button className="btn btn-secondary btn-sm mt-1" onClick={() => { setSearchTerm(''); setSelectedCategoryFilter('all'); }}>
+                              <button className="btn btn-secondary btn-sm mt-1" onClick={() => { setSearchTerm(''); setSelectedCategoryFilter('all'); setSelectedStatusFilter('all'); }}>
                                 Clear Filters
                               </button>
                             </div>
@@ -984,6 +1058,7 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
                       ) : (
                         filteredTools.map(tool => {
                           const cat = getCategoryDetails(tool.category || tool.category_slug || tool.category_id);
+                          const currentStatus = tool.status || (tool.is_active !== false ? 'Active' : 'Inactive');
                           return (
                             <tr key={tool.id}>
                               <td>
@@ -1010,9 +1085,15 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
                               <td><strong>${tool.priceLifetime || tool.price_lifetime || tool.price || 199}</strong></td>
                               <td>★ {tool.rating || '4.95'}</td>
                               <td>
-                                <span className={`status-pill ${(tool.status || 'Active').toLowerCase()}`}>
-                                  {tool.status || 'Active'}
-                                </span>
+                                <button
+                                  type="button"
+                                  className={`status-pill clickable-toggle ${currentStatus.toLowerCase()}`}
+                                  onClick={() => handleToggleToolStatus(tool)}
+                                  title={`Status: ${currentStatus}. Click to toggle Active / Inactive`}
+                                >
+                                  <span className="status-dot-mini"></span>
+                                  {currentStatus}
+                                </button>
                               </td>
                               <td>
                                 <span className="text-muted" style={{ fontSize: '0.82rem' }}>
@@ -1072,6 +1153,15 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
                             <FolderKanban size={22} />
                           </div>
                           <div className="cat-card-actions">
+                            <button
+                              type="button"
+                              className={`status-pill clickable-toggle ${cat.is_active !== false ? 'active' : 'inactive'}`}
+                              onClick={() => handleToggleCategoryStatus(cat)}
+                              title={`Category status: ${cat.is_active !== false ? 'Active' : 'Inactive'}. Click to toggle.`}
+                            >
+                              <span className="status-dot-mini"></span>
+                              {cat.is_active !== false ? 'Active' : 'Inactive'}
+                            </button>
                             <button
                               className="btn-table-action edit"
                               onClick={() => handleOpenEditCategory(cat)}
@@ -1134,6 +1224,7 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
                           <th>Theme Color</th>
                           <th>Products Count</th>
                           <th>Badge</th>
+                          <th>Status</th>
                           <th>Actions</th>
                         </tr>
                       </thead>
@@ -1161,6 +1252,17 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
                               </td>
                               <td>
                                 {cat.badge ? <span className="cat-badge">{cat.badge}</span> : <span className="text-muted">—</span>}
+                              </td>
+                              <td>
+                                <button
+                                  type="button"
+                                  className={`status-pill clickable-toggle ${cat.is_active !== false ? 'active' : 'inactive'}`}
+                                  onClick={() => handleToggleCategoryStatus(cat)}
+                                  title={`Status: ${cat.is_active !== false ? 'Active' : 'Inactive'}. Click to toggle.`}
+                                >
+                                  <span className="status-dot-mini"></span>
+                                  {cat.is_active !== false ? 'Active' : 'Inactive'}
+                                </button>
                               </td>
                               <td>
                                 <div className="table-actions-group">
@@ -1732,14 +1834,27 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
                   </div>
                 </div>
 
-                <div className="form-group">
-                  <label>Badge / Highlight Tag</label>
-                  <input
-                    type="text"
-                    value={toolFormData.badge}
-                    onChange={(e) => setToolFormData({ ...toolFormData, badge: e.target.value })}
-                    placeholder="e.g. 8K Photorealism, Flagship, Fast"
-                  />
+                <div className="form-grid">
+                  <div className="form-group">
+                    <label>Badge / Highlight Tag</label>
+                    <input
+                      type="text"
+                      value={toolFormData.badge}
+                      onChange={(e) => setToolFormData({ ...toolFormData, badge: e.target.value })}
+                      placeholder="e.g. 8K Photorealism, Flagship, Fast"
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label>Status (Active / Inactive) *</label>
+                    <select
+                      value={toolFormData.status || 'Active'}
+                      onChange={(e) => setToolFormData({ ...toolFormData, status: e.target.value })}
+                    >
+                      <option value="Active">Active (Visible in Storefront)</option>
+                      <option value="Inactive">Inactive (Hidden from Storefront)</option>
+                    </select>
+                  </div>
                 </div>
 
                 <div className="form-group">
@@ -1841,23 +1956,42 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
                   </div>
 
                   <div className="form-group">
-                    <label>Theme Color *</label>
-                    <div className="color-picker-row">
-                      <input
-                        type="color"
-                        value={categoryFormData.color}
-                        onChange={(e) => setCategoryFormData({ ...categoryFormData, color: e.target.value })}
-                        className="color-input"
-                      />
-                      <input
-                        type="text"
-                        value={categoryFormData.color}
-                        onChange={(e) => setCategoryFormData({ ...categoryFormData, color: e.target.value })}
-                        className="color-text-input"
-                      />
-                    </div>
-                    {/* Quick Swatches */}
-                    <div className="quick-color-swatches">
+                    <label>Status (Active / Inactive) *</label>
+                    <select
+                      value={categoryFormData.is_active ? 'Active' : 'Inactive'}
+                      onChange={(e) => {
+                        const active = e.target.value === 'Active';
+                        setCategoryFormData({
+                          ...categoryFormData,
+                          is_active: active,
+                          status: e.target.value
+                        });
+                      }}
+                    >
+                      <option value="Active">Active (Visible in Storefront)</option>
+                      <option value="Inactive">Inactive (Hidden from Storefront)</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="form-group">
+                  <label>Theme Color *</label>
+                  <div className="color-picker-row">
+                    <input
+                      type="color"
+                      value={categoryFormData.color}
+                      onChange={(e) => setCategoryFormData({ ...categoryFormData, color: e.target.value })}
+                      className="color-input"
+                    />
+                    <input
+                      type="text"
+                      value={categoryFormData.color}
+                      onChange={(e) => setCategoryFormData({ ...categoryFormData, color: e.target.value })}
+                      className="color-text-input"
+                    />
+                  </div>
+                  {/* Quick Swatches */}
+                  <div className="quick-color-swatches">
                       {['#8b5cf6', '#ec4899', '#06b6d4', '#10b981', '#f59e0b', '#3b82f6'].map(col => (
                         <button
                           key={col}

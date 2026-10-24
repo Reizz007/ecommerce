@@ -98,6 +98,9 @@ export default function ToolsCatalog({ searchRef }) {
     if (Array.isArray(adminCategories) && adminCategories.length > 0) {
       const sortedAdmin = [...adminCategories].sort((a, b) => (a.display_order || 0) - (b.display_order || 0));
       for (const cat of sortedAdmin) {
+        if (cat.is_active === false || String(cat.status || '').toLowerCase() === 'inactive') {
+          continue;
+        }
         const id = String(cat.slug || cat.id).toLowerCase().trim();
         if (!seenIds.has(id)) {
           seenIds.add(id);
@@ -116,6 +119,9 @@ export default function ToolsCatalog({ searchRef }) {
 
     // 2. Also ensure any extra category present on tools in sourceTools is included
     for (const t of sourceTools) {
+      if (t.is_active === false || String(t.status || '').toLowerCase() === 'inactive') {
+        continue;
+      }
       const catObj = (t.category && typeof t.category === 'object') ? t.category : null;
       const catSlug = String(t.category_slug || catObj?.slug || (typeof t.category === 'string' ? t.category : '') || '').toLowerCase().trim();
       if (catSlug && !seenIds.has(catSlug)) {
@@ -150,6 +156,24 @@ export default function ToolsCatalog({ searchRef }) {
 
   const filteredTools = useMemo(() => {
     return sourceTools.filter((tool) => {
+      // Hide inactive products from public storefront
+      const isToolActive = tool.is_active !== undefined
+        ? Boolean(tool.is_active)
+        : (String(tool.status || 'Active').toLowerCase() === 'active');
+      if (!isToolActive) {
+        return false;
+      }
+
+      // Hide products whose parent category is inactive
+      const catObj = (tool.category && typeof tool.category === 'object') ? tool.category : null;
+      const catSlug = String(tool.category_slug || catObj?.slug || (typeof tool.category === 'string' ? tool.category : '') || '').toLowerCase().trim();
+      const parentCat = Array.isArray(adminCategories)
+        ? adminCategories.find(c => String(c.slug || c.id).toLowerCase() === catSlug || (c.id && String(c.id) === String(tool.category_id)))
+        : null;
+      if (parentCat && (parentCat.is_active === false || String(parentCat.status || '').toLowerCase() === 'inactive')) {
+        return false;
+      }
+
       // Category filter - robust matching by slug, id, or relation
       if (activeCategory !== 'all') {
         const catObj = (tool.category && typeof tool.category === 'object') ? tool.category : null;
