@@ -1859,15 +1859,15 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
                     </div>
 
                     <div className="form-group mt-3">
-                      <label>Sender Name / ID (sender)</label>
+                      <label>Sender Name / ID (sender) *</label>
                       <input
                         type="text"
                         value={settings.plasgateSenderId || 'SMS Info'}
                         onChange={(e) => setSettings({ ...settings, plasgateSenderId: e.target.value })}
-                        placeholder="e.g. SMS Info, DyzzStore, or Brand Name"
+                        placeholder="e.g. YourApprovedBrandName, DyzzStore, etc."
                       />
-                      <span className="input-hint">
-                        Registered alphanumeric or numeric sender name assigned in your Plasgate account.
+                      <span className="input-hint" style={{ color: '#fbbf24' }}>
+                        ⚠️ Must match the <strong>approved Sender Name</strong> in your Plasgate dashboard (portal.plasgate.com). If unapproved, Plasgate returns <em>400 Invalid Sender</em>.
                       </span>
                     </div>
 
