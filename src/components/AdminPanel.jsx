@@ -1992,16 +1992,15 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
                   </div>
                   {/* Quick Swatches */}
                   <div className="quick-color-swatches">
-                      {['#8b5cf6', '#ec4899', '#06b6d4', '#10b981', '#f59e0b', '#3b82f6'].map(col => (
-                        <button
-                          key={col}
-                          type="button"
-                          className="swatch-btn"
-                          style={{ backgroundColor: col }}
-                          onClick={() => setCategoryFormData({ ...categoryFormData, color: col })}
-                        />
-                      ))}
-                    </div>
+                    {['#8b5cf6', '#ec4899', '#06b6d4', '#10b981', '#f59e0b', '#3b82f6'].map(col => (
+                      <button
+                        key={col}
+                        type="button"
+                        className="swatch-btn"
+                        style={{ backgroundColor: col }}
+                        onClick={() => setCategoryFormData({ ...categoryFormData, color: col })}
+                      />
+                    ))}
                   </div>
                 </div>
 
