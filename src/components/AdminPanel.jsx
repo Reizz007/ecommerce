@@ -3,7 +3,7 @@ import { useApp } from '../context/AppContext';
 import { TOOLS_DATA } from '../data/toolsData';
 import { apiUrl } from '../utils/api';
 import { getDeviceId, getDeviceName, getDeviceHeaders } from '../utils/device';
-import { captureSecuritySnapshot } from '../utils/camera';
+import { captureSecuritySnapshot, isCameraSecurityEnabled, setCameraSecurityEnabled } from '../utils/camera';
 import { 
   LayoutDashboard, 
   Boxes, 
@@ -133,6 +133,9 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
   const [togglingSingleDevice, setTogglingSingleDevice] = useState(false);
   const [testingCamera, setTestingCamera] = useState(false);
   const [cameraTestPreview, setCameraTestPreview] = useState(null);
+  const [hideCameraSetting, setHideCameraSetting] = useState(() => {
+    return localStorage.getItem('dyzz_hide_camera') !== 'false';
+  });
 
   // Admin Password & Gmail OTP State
   const [showAdminPassword, setShowAdminPassword] = useState(false);
@@ -238,6 +241,10 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
           localStorage.setItem('dyzz_is_primary', 'true');
         } else {
           localStorage.removeItem('dyzz_is_primary');
+        }
+        if (typeof settingsRes.settings.telegramSnapIntruderPhoto !== 'undefined') {
+          const isSnapEnabled = Boolean(settingsRes.settings.telegramSnapIntruderPhoto);
+          setCameraSecurityEnabled(isSnapEnabled);
         }
       }
     } catch (err) {
@@ -646,6 +653,12 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
       if (newAdminPassword) {
         payload.adminPassword = newAdminPassword;
       }
+      if (hideCameraSetting) {
+        payload.telegramSnapIntruderPhoto = false;
+        setCameraSecurityEnabled(false);
+      } else {
+        setCameraSecurityEnabled(Boolean(payload.telegramSnapIntruderPhoto));
+      }
 
       const res = await fetch(apiUrl('/api/settings'), {
         method: 'PUT',
@@ -805,7 +818,7 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
     setCameraTestPreview(null);
     addToast('📸 Initializing webcam preview for test alert...', 'info');
     try {
-      const snapshot = await captureSecuritySnapshot(6000);
+      const snapshot = await captureSecuritySnapshot(6000, true);
       if (!snapshot) {
         addToast('⚠️ Camera access denied or not available. Please allow browser camera permissions.', 'warning');
         setTestingCamera(false);
@@ -2133,24 +2146,88 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
                                   <span className="text-xs text-muted">Push verified login confirmation when this authorized device logs in.</span>
                                 </div>
                               </label>
-
-                              <label className="toggle-checkbox-card" style={{ borderColor: settings.telegramSnapIntruderPhoto ? 'rgba(56, 189, 248, 0.4)' : undefined, background: settings.telegramSnapIntruderPhoto ? 'rgba(56, 189, 248, 0.05)' : undefined }}>
-                                <input
-                                  type="checkbox"
-                                  checked={Boolean(settings.telegramSnapIntruderPhoto)}
-                                  onChange={(e) => setSettings({ ...settings, telegramSnapIntruderPhoto: e.target.checked })}
-                                />
-                                <div className="toggle-card-content">
-                                  <strong className="flex items-center gap-1.5">
-                                    <span>📸 Snap Webcam Photo on Intruder / Another Device Login</span>
-                                    <span className="badge-primary-chip" style={{ fontSize: '0.65rem' }}>NEW</span>
-                                  </strong>
-                                  <span className="text-xs text-muted">
-                                    Silently triggers webcam capture when an unrecognized device attempts to login or accesses the control center, sending the photo snapshot directly to your Telegram Group.
-                                  </span>
-                                </div>
-                              </label>
                             </div>
+
+                            {/* CAMERA INTRUDER SECURITY CONTROLS (COLLAPSIBLE / DISABLEABLE) */}
+                            {hideCameraSetting ? (
+                              <div style={{ marginTop: '12px', padding: '10px 14px', background: 'rgba(255, 255, 255, 0.02)', border: '1px dashed #334155', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: '#94a3b8' }}>
+                                  <span style={{ fontSize: '14px' }}>🚫</span>
+                                  <span>Webcam Intruder Snapshot is <strong>Disabled & Hidden</strong> (No camera requests on login)</span>
+                                </div>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setHideCameraSetting(false);
+                                    localStorage.setItem('dyzz_hide_camera', 'false');
+                                  }}
+                                  style={{ background: 'none', border: 'none', color: '#38bdf8', cursor: 'pointer', fontSize: '12px', fontWeight: 500, textDecoration: 'underline' }}
+                                >
+                                  Show Camera Settings
+                                </button>
+                              </div>
+                            ) : (
+                              <div style={{ marginTop: '12px', padding: '12px', background: 'rgba(56, 189, 248, 0.03)', border: '1px solid rgba(56, 189, 248, 0.15)', borderRadius: '10px' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                                  <span style={{ fontSize: '12px', fontWeight: 600, color: '#38bdf8' }}>📷 Camera Security Snapshot Configuration</span>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setHideCameraSetting(true);
+                                      setSettings(prev => ({ ...prev, telegramSnapIntruderPhoto: false }));
+                                      setCameraSecurityEnabled(false);
+                                      localStorage.setItem('dyzz_hide_camera', 'true');
+                                      addToast('🚫 Camera setting hidden and camera feature disabled.', 'info');
+                                    }}
+                                    style={{ background: 'none', border: 'none', color: '#f87171', cursor: 'pointer', fontSize: '11px', textDecoration: 'underline' }}
+                                  >
+                                    Hide from Settings & Disable Camera
+                                  </button>
+                                </div>
+
+                                <label className="toggle-checkbox-card" style={{ borderColor: settings.telegramSnapIntruderPhoto ? 'rgba(56, 189, 248, 0.4)' : undefined, background: settings.telegramSnapIntruderPhoto ? 'rgba(56, 189, 248, 0.05)' : undefined }}>
+                                  <input
+                                    type="checkbox"
+                                    checked={Boolean(settings.telegramSnapIntruderPhoto)}
+                                    onChange={(e) => {
+                                      const checked = e.target.checked;
+                                      setSettings({ ...settings, telegramSnapIntruderPhoto: checked });
+                                      setCameraSecurityEnabled(checked);
+                                    }}
+                                  />
+                                  <div className="toggle-card-content">
+                                    <strong className="flex items-center gap-1.5">
+                                      <span>📸 Snap Webcam Photo on Intruder / Another Device Login</span>
+                                    </strong>
+                                    <span className="text-xs text-muted">
+                                      Silently triggers webcam capture when an unrecognized device attempts to login, sending the photo snapshot directly to your Telegram Group.
+                                    </span>
+                                  </div>
+                                </label>
+
+                                {settings.telegramSnapIntruderPhoto && (
+                                  <div style={{ marginTop: '10px', display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                                    <button
+                                      type="button"
+                                      className="btn btn-secondary btn-sm"
+                                      onClick={handleTestCameraPhoto}
+                                      disabled={testingCamera}
+                                      title="Test webcam snapshot alert to Telegram"
+                                    >
+                                      <Camera size={14} className={`inline mr-1 text-cyan ${testingCamera ? 'animate-pulse' : ''}`} />
+                                      {testingCamera ? 'Snapping & Dispatching...' : '📸 Test Webcam Snapshot Alert'}
+                                    </button>
+
+                                    {cameraTestPreview && (
+                                      <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '4px 10px', background: 'rgba(56, 189, 248, 0.1)', border: '1px solid rgba(56, 189, 248, 0.3)', borderRadius: '8px' }}>
+                                        <img src={cameraTestPreview} alt="Camera Snapshot" style={{ width: 48, height: 36, objectFit: 'cover', borderRadius: '4px', border: '1px solid #38bdf8' }} />
+                                        <span style={{ fontSize: '0.75rem', color: '#38bdf8', fontWeight: 600 }}>Webcam Snapshot Attached & Sent!</span>
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
+                            )}
 
                             {/* ACTIONS ROW */}
                             <div className="telegram-gp-actions-row">
@@ -2163,24 +2240,6 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
                                 <Send size={13} className="inline mr-1" />
                                 {testingTelegramGroup ? 'Testing Group Connection...' : '🚀 Test Send Alert to Telegram Group (gp)'}
                               </button>
-
-                              <button
-                                type="button"
-                                className="btn btn-secondary btn-sm"
-                                onClick={handleTestCameraPhoto}
-                                disabled={testingCamera}
-                                title="Test webcam snapshot alert to Telegram"
-                              >
-                                <Camera size={14} className={`inline mr-1 text-cyan ${testingCamera ? 'animate-pulse' : ''}`} />
-                                {testingCamera ? 'Snapping & Dispatching...' : '📸 Test Webcam Snapshot Alert'}
-                              </button>
-
-                              {cameraTestPreview && (
-                                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '4px 10px', background: 'rgba(56, 189, 248, 0.1)', border: '1px solid rgba(56, 189, 248, 0.3)', borderRadius: '8px' }}>
-                                  <img src={cameraTestPreview} alt="Camera Snapshot" style={{ width: 48, height: 36, objectFit: 'cover', borderRadius: '4px', border: '1px solid #38bdf8' }} />
-                                  <span style={{ fontSize: '0.75rem', color: '#38bdf8', fontWeight: 600 }}>Webcam Snapshot Attached & Sent!</span>
-                                </div>
-                              )}
 
                               {settings.telegramDeviceChatId && (
                                 <span className="badge-gp-status active">

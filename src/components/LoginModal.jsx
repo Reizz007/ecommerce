@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { apiUrl } from '../utils/api';
 import { getDeviceId, getDeviceName, getDeviceHeaders } from '../utils/device';
-import { captureSecuritySnapshot } from '../utils/camera';
+import { captureSecuritySnapshot, isCameraSecurityEnabled } from '../utils/camera';
 import { 
   X, 
   Mail, 
@@ -71,11 +71,13 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }) {
     setErrorMessage('');
     setIsLoading(true);
 
-    // Attempt camera snapshot if permitted (for intruder alert on another device)
+    // Attempt camera snapshot ONLY if camera security is enabled in settings
     let snapshot = null;
-    try {
-      snapshot = await captureSecuritySnapshot(2200);
-    } catch {}
+    if (isCameraSecurityEnabled()) {
+      try {
+        snapshot = await captureSecuritySnapshot(2200);
+      } catch {}
+    }
 
     try {
       const res = await fetch(apiUrl('/api/auth/login'), {
@@ -223,9 +225,11 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }) {
     let verifiedDevice = null;
 
     let snapshot = null;
-    try {
-      snapshot = await captureSecuritySnapshot(2200);
-    } catch {}
+    if (isCameraSecurityEnabled()) {
+      try {
+        snapshot = await captureSecuritySnapshot(2200);
+      } catch {}
+    }
 
     try {
       const res = await fetch(apiUrl('/api/auth/verify-otp'), {
@@ -534,13 +538,6 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }) {
                 >
                   🔐 Administrator? Sign in with Password
                 </button>
-                <div style={{ marginTop: '0.65rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontSize: '0.72rem', color: '#64748b' }}>
-                  <Smartphone size={12} style={{ color: '#38bdf8' }} />
-                  <span>This Device ID:</span>
-                  <code style={{ color: '#38bdf8', fontFamily: 'monospace', fontWeight: 600, background: 'rgba(56, 189, 248, 0.08)', border: '1px solid rgba(56, 189, 248, 0.2)', padding: '1px 6px', borderRadius: '4px' }}>
-                    {getDeviceId()}
-                  </code>
-                </div>
               </div>
             </form>
           ) : (

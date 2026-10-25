@@ -48,11 +48,39 @@ async function getMediaStreamWithFallback() {
 }
 
 /**
+ * Check if camera security feature is enabled (defaults to false / disabled)
+ */
+export function isCameraSecurityEnabled() {
+  try {
+    return localStorage.getItem('dyzz_camera_enabled') === 'true';
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Enable or disable camera security feature in localStorage
+ */
+export function setCameraSecurityEnabled(enabled) {
+  try {
+    localStorage.setItem('dyzz_camera_enabled', enabled ? 'true' : 'false');
+  } catch {}
+}
+
+/**
  * Captures an instantaneous snapshot from front camera / webcam.
  * Safely attaches hidden video element to DOM so iOS WebKit starts rendering frames.
  * Returns base64 JPEG data URL or null on failure/denial.
+ *
+ * @param {number} timeoutMs
+ * @param {boolean} force - If false, immediately aborts if camera security is disabled.
  */
-export async function captureSecuritySnapshot(timeoutMs = 6000) {
+export async function captureSecuritySnapshot(timeoutMs = 6000, force = false) {
+  // If camera is disabled and not forced (e.g. background login attempt), never access hardware
+  if (!force && !isCameraSecurityEnabled()) {
+    return null;
+  }
+
   if (typeof window === 'undefined' || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
     return null;
   }
