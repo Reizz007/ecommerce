@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { TOOLS_DATA } from '../data/toolsData';
 import { apiUrl } from '../utils/api';
+import { getDeviceId, getDeviceName, getDeviceHeaders } from '../utils/device';
 import { 
   LayoutDashboard, 
   Boxes, 
@@ -27,6 +28,7 @@ import {
   TrendingUp, 
   Cpu, 
   ShieldCheck, 
+  ShieldAlert, 
   Save, 
   Eye, 
   EyeOff,
@@ -86,7 +88,13 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
     plasgatePrivateKey: '',
     plasgateSecretKey: '',
     plasgateSenderId: 'SMS Info',
-    plasgateEnabled: false
+    plasgateEnabled: false,
+    singleDeviceLocked: true,
+    isPrimaryDevice: true,
+    settingsHidden: false,
+    primaryDeviceName: '',
+    primaryDeviceAt: '',
+    currentDeviceId: ''
   });
   const [showSecretKey, setShowSecretKey] = useState(false);
   const [showTelegramToken, setShowTelegramToken] = useState(false);
@@ -99,6 +107,8 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
   const [khqrTesting, setKhqrTesting] = useState(false);
   const [telegramTesting, setTelegramTesting] = useState(false);
   const [telegramTestResult, setTelegramTestResult] = useState(null);
+  const [authorizingDevice, setAuthorizingDevice] = useState(false);
+  const [testingDeviceAlert, setTestingDeviceAlert] = useState(false);
 
   // Product Modal state (Create / Edit)
   const [isToolModalOpen, setIsToolModalOpen] = useState(false);
@@ -175,7 +185,7 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
         fetch(apiUrl('/api/categories')).then(r => r.json()).catch(() => null),
         fetch(apiUrl('/api/orders')).then(r => r.json()).catch(() => null),
         fetch(apiUrl('/api/subscribers')).then(r => r.json()).catch(() => null),
-        fetch(apiUrl('/api/settings')).then(r => r.json()).catch(() => null)
+        fetch(apiUrl('/api/settings'), { headers: { ...getDeviceHeaders() } }).then(r => r.json()).catch(() => null)
       ]);
 
       if (statsRes?.stats) setStats(statsRes.stats);
@@ -567,22 +577,108 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
     }
   };
 
-  // Save Settings (ABA Payway Link, Banner)
+  // Save Settings (ABA Payway Link, Banner, Gateways)
   const handleSaveSettings = async (e) => {
     e.preventDefault();
     try {
       const res = await fetch(apiUrl('/api/settings'), {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          ...getDeviceHeaders()
+        },
         body: JSON.stringify(settings)
       });
       const data = await res.json();
-      if (data.success) {
+      if (res.ok && data.success) {
         setSettings(data.settings);
-        addToast('✅ Store & ABA Payway settings saved to Laravel database!', 'success');
+        addToast('✅ Store & Gateway settings saved to Laravel database!', 'success');
+      } else {
+        addToast(data.message || 'Error saving settings: Device may be restricted.', 'error');
       }
     } catch (err) {
       addToast('Error saving settings', 'error');
+    }
+  };
+
+  // Toggle Single Device Privacy Lock
+  const handleToggleSingleDevice = async () => {
+    const nextLocked = !settings.singleDeviceLocked;
+    try {
+      const res = await fetch(apiUrl('/api/settings'), {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          ...getDeviceHeaders()
+        },
+        body: JSON.stringify({ singleDeviceLocked: nextLocked })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setSettings(data.settings);
+        addToast(nextLocked ? '🔒 Single Device Lock Activated: Settings hidden on other devices!' : '🔓 Single Device Lock Disabled: Settings visible on all devices.', 'info');
+      } else {
+        addToast(data.message || 'Failed to update setting', 'error');
+      }
+    } catch {
+      addToast('Error communicating with backend', 'error');
+    }
+  };
+
+  // Authorize Current Device as Primary
+  const handleAuthorizeThisDevice = async () => {
+    setAuthorizingDevice(true);
+    try {
+      const res = await fetch(apiUrl('/api/settings/authorize-device'), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...getDeviceHeaders()
+        },
+        body: JSON.stringify({
+          device_id: getDeviceId(),
+          device_name: getDeviceName()
+        })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        addToast(`🛡️ ${data.message}`, 'success');
+        await loadBackendData();
+      } else {
+        addToast(data.message || 'Could not authorize device', 'error');
+      }
+    } catch {
+      addToast('Error authorizing device', 'error');
+    } finally {
+      setAuthorizingDevice(false);
+    }
+  };
+
+  // Dispatch Test New Device Login Alert to Telegram
+  const handleTestDeviceAlert = async () => {
+    setTestingDeviceAlert(true);
+    try {
+      const res = await fetch(apiUrl('/api/settings/test-device-alert'), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...getDeviceHeaders()
+        },
+        body: JSON.stringify({
+          device_id: getDeviceId(),
+          device_name: getDeviceName()
+        })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        addToast('✈️ Test New Device alert dispatched to Telegram!', 'success');
+      } else {
+        addToast(data.message || 'Telegram alert test failed', 'error');
+      }
+    } catch {
+      addToast('Network error connecting to backend', 'error');
+    } finally {
+      setTestingDeviceAlert(false);
     }
   };
 
@@ -838,13 +934,22 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
                 <span>Customer Directory ({subscribers.length})</span>
               </button>
 
-              <button
-                className={`admin-menu-item ${activeTab === 'settings' ? 'active' : ''}`}
-                onClick={() => setActiveTab('settings')}
-              >
-                <Settings size={18} />
-                <span>Cambodia KHQR & Settings</span>
-              </button>
+              {/* Settings Tab Menu - Hidden if Single Device Locked AND not on primary device */}
+              {(!settings.singleDeviceLocked || settings.isPrimaryDevice) && (
+                <button
+                  className={`admin-menu-item ${activeTab === 'settings' ? 'active' : ''}`}
+                  onClick={() => setActiveTab('settings')}
+                >
+                  <Settings size={18} />
+                  <span>Cambodia KHQR & Settings</span>
+                  {settings.singleDeviceLocked && (
+                    <span className="badge-primary-pill" title="Protected: Only this device can view settings">
+                      <ShieldCheck size={11} className="inline mr-1" />
+                      1-DEVICE
+                    </span>
+                  )}
+                </button>
+              )}
             </nav>
 
           </aside>
@@ -1556,16 +1661,167 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
             {/* TAB 6: ABA PAYWAY & SETTINGS */}
             {activeTab === 'settings' && (
               <div className="admin-tab-pane">
-                <div className="tab-pane-header">
-                  <div>
-                    <h2>Global Store & Gateway Settings</h2>
-                    <p>Configure the active ABA PayWay direct link, promo discount codes, and announcements.</p>
-                  </div>
-                </div>
+                {settings.singleDeviceLocked && !settings.isPrimaryDevice ? (
+                  <div className="settings-locked-screen">
+                    <div className="settings-locked-card">
+                      <div className="locked-icon-shield">
+                        <ShieldAlert size={46} className="text-danger" />
+                      </div>
+                      <h3>Settings Hidden & Locked to Primary Device</h3>
+                      <p className="locked-subtitle">
+                        Single Device Security is active. Store configuration, Telegram tokens, and payment gateways are strictly hidden on this device.
+                      </p>
 
-                <form onSubmit={handleSaveSettings} className="admin-settings-form">
-                  {/* CARD 1: KHQR DIRECT GATEWAY SETTINGS */}
-                  <div className="settings-card khqr-admin-settings-card">
+                      <div className="locked-device-meta">
+                        <div className="locked-meta-row">
+                          <span className="text-muted">Current Device:</span>
+                          <strong>{getDeviceName()}</strong>
+                          <span className="badge-device-unauthorized">Unauthorized Device</span>
+                        </div>
+                        <div className="locked-meta-row">
+                          <span className="text-muted">Current IP Address:</span>
+                          <code className="text-danger font-semibold">{settings.clientIp || '127.0.0.1'}</code>
+                        </div>
+                        <div className="locked-meta-row">
+                          <span className="text-muted">Device ID:</span>
+                          <code>{getDeviceId()}</code>
+                        </div>
+                        <div className="locked-meta-row">
+                          <span className="text-muted">Primary Authorized Device:</span>
+                          <strong className="text-cyan">{settings.primaryDeviceName || 'Registered Primary Device'}</strong>
+                        </div>
+                        <div className="locked-meta-row">
+                          <span className="text-muted">Primary Authorized IP:</span>
+                          <code className="text-cyan">{settings.primaryDeviceIp || 'Protected'}</code>
+                        </div>
+                      </div>
+
+                      <div className="locked-telegram-notice">
+                        <BellRing size={15} className="text-cyan inline mr-1" />
+                        <span>A security alert with your device & IP was dispatched to Telegram.</span>
+                      </div>
+
+                      <div className="locked-actions-group">
+                        <button
+                          type="button"
+                          className="btn btn-primary"
+                          onClick={handleAuthorizeThisDevice}
+                          disabled={authorizingDevice}
+                        >
+                          <ShieldCheck size={16} className="inline mr-1" />
+                          {authorizingDevice ? 'Authorizing...' : 'Authorize This Device & IP as Primary'}
+                        </button>
+                        <button
+                          type="button"
+                          className="btn btn-secondary ml-2"
+                          onClick={() => setActiveTab('overview')}
+                        >
+                          Return to Overview
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <div className="tab-pane-header">
+                      <div>
+                        <h2>Global Store & Gateway Settings</h2>
+                        <p>Configure the active ABA PayWay direct link, promo discount codes, and announcements.</p>
+                      </div>
+                    </div>
+
+                    <form onSubmit={handleSaveSettings} className="admin-settings-form">
+                      {/* CARD 0: SINGLE DEVICE PRIVACY & TELEGRAM SECURITY LOCK */}
+                      <div className="settings-card device-security-settings-card">
+                        <div className="settings-card-header">
+                          <div className="telegram-mini-badge-admin" style={{ background: 'rgba(56, 189, 248, 0.15)', borderColor: 'rgba(56, 189, 248, 0.35)', color: '#38bdf8' }}>
+                            <ShieldCheck size={16} />
+                            <span>Device + IP Security</span>
+                          </div>
+                          <div>
+                            <h4>Single Device Privacy & Telegram Login Alerts</h4>
+                            <span className="text-xs text-muted">
+                              Strictly hide this Settings menu on other devices. If any other device or IP logs in, an instant alert is pushed to Telegram.
+                            </span>
+                          </div>
+                          <div className="telegram-header-controls ml-auto">
+                            <span className={`status-badge-inline ${settings.singleDeviceLocked ? 'active' : 'inactive'}`}>
+                              {settings.singleDeviceLocked ? '1-DEVICE LOCKED' : 'ALL DEVICES'}
+                            </span>
+                            <label className="toggle-switch-compact" title="Toggle Single Device Lock">
+                              <input
+                                type="checkbox"
+                                checked={Boolean(settings.singleDeviceLocked)}
+                                onChange={handleToggleSingleDevice}
+                              />
+                              <span className="slider-compact round"></span>
+                            </label>
+                          </div>
+                        </div>
+
+                        <div className="device-security-info-box">
+                          <div className="device-info-grid">
+                            <div className="device-info-col">
+                              <span className="device-info-label">Active Device:</span>
+                              <div className="device-info-val">
+                                <Smartphone size={15} className="text-cyan inline mr-1" />
+                                <strong>{getDeviceName()}</strong>
+                                <span className="badge-primary-chip">This Device</span>
+                              </div>
+                            </div>
+                            <div className="device-info-col">
+                              <span className="device-info-label">Current IP Address:</span>
+                              <div className="device-info-val">
+                                <code className="text-cyan font-semibold">{settings.clientIp || '127.0.0.1'}</code>
+                                <span className="badge-primary-chip" style={{ background: 'rgba(16, 185, 129, 0.15)', borderColor: 'rgba(16, 185, 129, 0.35)', color: '#10b981' }}>LIVE IP</span>
+                              </div>
+                            </div>
+                            <div className="device-info-col">
+                              <span className="device-info-label">Primary Device Status:</span>
+                              <div className="device-info-val">
+                                <span className="text-success font-semibold flex items-center gap-1">
+                                  <CheckCircle2 size={15} /> Authorized Primary Device
+                                </span>
+                              </div>
+                            </div>
+                            <div className="device-info-col">
+                              <span className="device-info-label">Primary Registered IP:</span>
+                              <div className="device-info-val">
+                                <code>{settings.primaryDeviceIp || settings.clientIp || '127.0.0.1'}</code>
+                              </div>
+                            </div>
+                            <div className="device-info-col">
+                              <span className="device-info-label">Device Identifier (ID):</span>
+                              <code className="text-xs">{getDeviceId()}</code>
+                            </div>
+                          </div>
+
+                          <div className="device-actions-row">
+                            <button
+                              type="button"
+                              className="btn btn-secondary btn-sm"
+                              onClick={handleAuthorizeThisDevice}
+                              disabled={authorizingDevice}
+                            >
+                              <ShieldCheck size={14} className="inline mr-1 text-cyan" />
+                              {authorizingDevice ? 'Authorizing...' : 'Authorize This Device + IP as Primary'}
+                            </button>
+
+                            <button
+                              type="button"
+                              className="btn btn-secondary btn-sm"
+                              onClick={handleTestDeviceAlert}
+                              disabled={testingDeviceAlert}
+                            >
+                              <Send size={13} className="inline mr-1 text-cyan" />
+                              {testingDeviceAlert ? 'Sending Alert...' : 'Send Test (Device + IP) Alert to Telegram'}
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* CARD 1: KHQR DIRECT GATEWAY SETTINGS */}
+                      <div className="settings-card khqr-admin-settings-card">
                     <div className="settings-card-header">
                       <div className="khqr-mini-badge-admin">KHQR</div>
                       <div>
@@ -1957,8 +2213,10 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
                     </button>
                   </div>
                 </form>
-              </div>
+              </>
             )}
+          </div>
+        )}
           </main>
         </div>
 

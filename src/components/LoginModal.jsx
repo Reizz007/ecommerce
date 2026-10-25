@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { apiUrl } from '../utils/api';
+import { getDeviceId, getDeviceName, getDeviceHeaders } from '../utils/device';
 import { 
   X, 
   Mail, 
@@ -74,9 +75,15 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }) {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Accept': 'application/json'
+          'Accept': 'application/json',
+          ...getDeviceHeaders()
         },
-        body: JSON.stringify({ email: cleanEmail, password: password })
+        body: JSON.stringify({ 
+          email: cleanEmail, 
+          password: password,
+          device_id: getDeviceId(),
+          device_name: getDeviceName()
+        })
       });
 
       const data = await res.json().catch(() => ({}));
@@ -84,6 +91,12 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }) {
       if (res.ok && data.success && data.user) {
         localStorage.setItem('synapse_user', JSON.stringify(data.user));
         if (data.token) localStorage.setItem('synapse_token', data.token);
+        if (data.device) {
+          localStorage.setItem('dyzz_device_info', JSON.stringify(data.device));
+          if (data.device.is_another_device) {
+            addToast('🚨 New device detected! Telegram security alert sent. Settings are hidden on this device.', 'warning');
+          }
+        }
 
         const isAdmin = data.user.role === 'admin' || cleanEmail === 'chetranicky@gmail.com' || cleanEmail === 'admin@synapse.ai' || cleanEmail === 'admin@dyzzstore.com';
         if (isAdmin) {
@@ -134,16 +147,21 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }) {
     setIsLoading(true);
 
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 20000);
+    const timeoutId = setTimeout(() => controller.abort(), 25000);
 
     try {
       const res = await fetch(apiUrl('/api/auth/send-otp'), {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
-          'Accept': 'application/json'
+          'Accept': 'application/json',
+          ...getDeviceHeaders()
         },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({
+          ...payload,
+          device_id: getDeviceId(),
+          device_name: getDeviceName()
+        }),
         signal: controller.signal
       });
 
@@ -156,10 +174,12 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }) {
         setResendCooldown(30);
         if (data.otp) {
           addToast(`🔑 Verification code: ${data.otp}`, 'success');
+        } else if (data.channel === 'telegram' || data.telegram_sent) {
+          addToast(`✈️ Verification code sent to your Telegram (@bot) & inbox!`, 'success');
         } else if (otpChannel === 'phone') {
           addToast(`📱 Verification code sent via SMS to ${data.phone || identifier}!`, 'success');
         } else {
-          addToast(`📨 Verification code sent to ${identifier}! Please check your inbox.`, 'success');
+          addToast(`📨 Verification code sent to ${identifier}! Please check your inbox or Telegram.`, 'success');
         }
       } else {
         setErrorMessage(data.message || 'Failed to send verification code. Please check your details and try again.');
@@ -192,19 +212,23 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }) {
 
     let verifiedUser = null;
     let verifiedToken = null;
+    let verifiedDevice = null;
 
     try {
       const res = await fetch(apiUrl('/api/auth/verify-otp'), {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
-          'Accept': 'application/json'
+          'Accept': 'application/json',
+          ...getDeviceHeaders()
         },
         body: JSON.stringify({ 
           identifier: targetIdentifier,
           email: targetIdentifier,
           phone: targetIdentifier,
-          otp: cleanOtp 
+          otp: cleanOtp,
+          device_id: getDeviceId(),
+          device_name: getDeviceName()
         }),
         signal: controller.signal
       });
@@ -216,6 +240,7 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }) {
         if (data.success && data.user) {
           verifiedUser = data.user;
           verifiedToken = data.token;
+          verifiedDevice = data.device || null;
         } else if (data.message) {
           setErrorMessage(data.message);
           setIsLoading(false);
@@ -227,6 +252,7 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }) {
     }
 
     // Verify against offline resilient OTP if remote authentication server failed
+    const cleanEmail = email.trim().toLowerCase();
     if (!verifiedUser) {
       try {
         const raw = sessionStorage.getItem('synapse_offline_otp_' + cleanEmail);
@@ -250,6 +276,12 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }) {
     if (verifiedUser) {
       localStorage.setItem('synapse_user', JSON.stringify(verifiedUser));
       if (verifiedToken) localStorage.setItem('synapse_token', verifiedToken);
+      if (verifiedDevice) {
+        localStorage.setItem('dyzz_device_info', JSON.stringify(verifiedDevice));
+        if (verifiedDevice.is_another_device) {
+          addToast('🚨 New device detected! Telegram security alert dispatched. Settings tab is locked.', 'warning');
+        }
+      }
 
       const isAdmin = verifiedUser.role === 'admin' || cleanEmail === 'chetranicky@gmail.com' || cleanEmail === 'admin@synapse.ai' || cleanEmail === 'admin@dyzzstore.com';
       if (isAdmin) {

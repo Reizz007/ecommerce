@@ -16,6 +16,8 @@ export const API_BASE_URL = RAW_BASE.replace(/\/+$/, '');
  * @param {string} endpoint e.g. '/api/products' or 'api/orders'
  * @returns {string} Fully resolved URL
  */
+import { getDeviceHeaders } from './device';
+
 export function apiUrl(endpoint) {
   if (!endpoint) return API_BASE_URL || '/';
   const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
@@ -24,11 +26,22 @@ export function apiUrl(endpoint) {
 
 /**
  * Convenience wrapper around native fetch that prepends the base API URL
+ * and automatically injects X-Device-Id and X-Device-Name headers.
  * @param {string} endpoint
  * @param {RequestInit} [options]
  * @returns {Promise<Response>}
  */
 export async function apiFetch(endpoint, options = {}) {
   const url = apiUrl(endpoint);
-  return fetch(url, options);
+  const deviceHeaders = getDeviceHeaders();
+  const mergedHeaders = {
+    ...deviceHeaders,
+    ...(options.headers || {})
+  };
+
+  return fetch(url, {
+    ...options,
+    headers: mergedHeaders
+  });
 }
+
