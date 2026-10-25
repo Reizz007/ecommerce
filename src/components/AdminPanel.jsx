@@ -119,6 +119,7 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
   const [telegramGroupTestResult, setTelegramGroupTestResult] = useState(null);
   const [authorizingDevice, setAuthorizingDevice] = useState(false);
   const [testingDeviceAlert, setTestingDeviceAlert] = useState(false);
+  const [togglingSingleDevice, setTogglingSingleDevice] = useState(false);
 
   // Product Modal state (Create / Edit)
   const [isToolModalOpen, setIsToolModalOpen] = useState(false);
@@ -626,9 +627,17 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
     }
   };
 
-  // Toggle Single Device Privacy Lock
+  // Toggle Single Device Privacy Lock (with optimistic state & spam-click prevention)
   const handleToggleSingleDevice = async () => {
-    const nextLocked = !settings.singleDeviceLocked;
+    if (togglingSingleDevice) return;
+
+    const prevLocked = Boolean(settings.singleDeviceLocked);
+    const nextLocked = !prevLocked;
+
+    // 1. Instant optimistic update so UI switch animates with 0ms lag
+    setSettings(prev => ({ ...prev, singleDeviceLocked: nextLocked }));
+    setTogglingSingleDevice(true);
+
     try {
       const res = await fetch(apiUrl('/api/settings'), {
         method: 'PUT',
@@ -640,13 +649,19 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
       });
       const data = await res.json();
       if (res.ok && data.success) {
-        setSettings(data.settings);
+        setSettings(prev => ({ ...prev, ...data.settings, singleDeviceLocked: nextLocked }));
         addToast(nextLocked ? '🔒 Single Device Lock Activated: Settings hidden on other devices!' : '🔓 Single Device Lock Disabled: Settings visible on all devices.', 'info');
       } else {
+        // Rollback state if server returns error
+        setSettings(prev => ({ ...prev, singleDeviceLocked: prevLocked }));
         addToast(data.message || 'Failed to update setting', 'error');
       }
     } catch {
+      // Rollback state if network failed
+      setSettings(prev => ({ ...prev, singleDeviceLocked: prevLocked }));
       addToast('Error communicating with backend', 'error');
+    } finally {
+      setTogglingSingleDevice(false);
     }
   };
 
@@ -1801,8 +1816,9 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
                                 type="checkbox"
                                 checked={Boolean(settings.singleDeviceLocked)}
                                 onChange={handleToggleSingleDevice}
+                                disabled={togglingSingleDevice}
                               />
-                              <span className="slider-compact round"></span>
+                              <span className={`slider-compact round ${togglingSingleDevice ? 'opacity-70' : ''}`}></span>
                             </label>
                           </div>
                         </div>
