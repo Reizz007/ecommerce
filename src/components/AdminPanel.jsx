@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useApp } from '../context/AppContext';
 import { TOOLS_DATA } from '../data/toolsData';
 import { apiUrl } from '../utils/api';
@@ -54,13 +54,16 @@ import {
   Key,
   Lock,
   Mail,
+  ClipboardList,
+  History,
+  Filter,
   X
 } from 'lucide-react';
 
 export default function AdminPanel({ onCloseAdmin, onLogout }) {
   const { addToast, formatPrice, refreshTools, refreshCategories } = useApp();
 
-  const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'tools' | 'categories' | 'orders' | 'subscribers' | 'settings'
+  const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'tools' | 'categories' | 'orders' | 'subscribers' | 'audit' | 'settings'
   const [loading, setLoading] = useState(false);
 
   // Data states from Laravel Backend
@@ -146,6 +149,16 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
   const [testingGmail, setTestingGmail] = useState(false);
   const [gmailTestTarget, setGmailTestTarget] = useState('');
   const [gmailTestResult, setGmailTestResult] = useState(null);
+
+  // Audit Log State
+  const [auditLogs, setAuditLogs] = useState([]);
+  const [auditLogsLoading, setAuditLogsLoading] = useState(false);
+  const [auditStats, setAuditStats] = useState({ total: 0, myDevice: 0, deletes: 0, edits: 0 });
+  const [auditFilterOnlyMyDevice, setAuditFilterOnlyMyDevice] = useState(true);
+  const [auditFilterAction, setAuditFilterAction] = useState('all');
+  const [auditFilterEntity, setAuditFilterEntity] = useState('all');
+  const [auditSearchTerm, setAuditSearchTerm] = useState('');
+  const [expandedLogId, setExpandedLogId] = useState(null);
 
   // Product Modal state (Create / Edit)
   const [isToolModalOpen, setIsToolModalOpen] = useState(false);
@@ -595,6 +608,86 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
     } catch (err) {
       setOrders([]);
       addToast('Orders cleared from view', 'info');
+    }
+  };
+
+  // Fetch Audit Logs from Backend
+  const loadAuditLogs = useCallback(async () => {
+    setAuditLogsLoading(true);
+    try {
+      const params = new URLSearchParams();
+      if (auditFilterOnlyMyDevice) {
+        params.set('only_my_device', '1');
+      }
+      if (auditFilterAction !== 'all') {
+        params.set('action', auditFilterAction);
+      }
+      if (auditFilterEntity !== 'all') {
+        params.set('entity_type', auditFilterEntity);
+      }
+      if (auditSearchTerm) {
+        params.set('search', auditSearchTerm);
+      }
+
+      const res = await fetch(apiUrl(`/api/audit-logs?${params.toString()}`), {
+        headers: { ...getDeviceHeaders() }
+      });
+      const data = await res.json();
+      if (data.success && Array.isArray(data.logs)) {
+        setAuditLogs(data.logs);
+        if (data.stats) setAuditStats(data.stats);
+      }
+    } catch (err) {
+      console.error('Failed to load audit logs:', err);
+    } finally {
+      setAuditLogsLoading(false);
+    }
+  }, [auditFilterOnlyMyDevice, auditFilterAction, auditFilterEntity, auditSearchTerm]);
+
+  // Load audit logs when switching to audit tab or changing filters
+  useEffect(() => {
+    if (activeTab === 'audit') {
+      loadAuditLogs();
+    }
+  }, [activeTab, loadAuditLogs]);
+
+  // Delete a single audit log entry
+  const handleDeleteAuditLog = async (logId) => {
+    try {
+      const res = await fetch(apiUrl(`/api/audit-logs/${logId}`), {
+        method: 'DELETE',
+        headers: { ...getDeviceHeaders() }
+      });
+      const data = await res.json();
+      if (data.success) {
+        setAuditLogs(prev => prev.filter(l => l.id !== logId));
+        addToast('Audit log record deleted', 'info');
+      }
+    } catch {
+      addToast('Failed to delete audit log', 'error');
+    }
+  };
+
+  // Bulk clear audit logs
+  const handleClearAuditLogs = async () => {
+    const scopeMsg = auditFilterOnlyMyDevice ? 'for this device' : 'from all devices';
+    if (!window.confirm(`Are you sure you want to clear audit logs ${scopeMsg}?`)) return;
+    try {
+      const res = await fetch(apiUrl('/api/audit-logs/clear'), {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          ...getDeviceHeaders()
+        },
+        body: JSON.stringify({ only_my_device: auditFilterOnlyMyDevice })
+      });
+      const data = await res.json();
+      if (data.success) {
+        addToast(data.message, 'success');
+        await loadAuditLogs();
+      }
+    } catch {
+      addToast('Failed to clear audit logs', 'error');
     }
   };
 
@@ -1149,6 +1242,20 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
               >
                 <Users size={18} />
                 <span>Customer Directory ({subscribers.length})</span>
+              </button>
+
+              {/* TAB: AUDIT LOG */}
+              <button
+                className={`admin-menu-item ${activeTab === 'audit' ? 'active' : ''}`}
+                onClick={() => setActiveTab('audit')}
+              >
+                <ClipboardList size={18} />
+                <span>Audit Log</span>
+                {auditFilterOnlyMyDevice && (
+                  <span className="badge-primary-pill" style={{ fontSize: '0.62rem', padding: '2px 6px' }}>
+                    MY DEVICE
+                  </span>
+                )}
               </button>
 
               {/* Settings Tab Menu - Hidden if Single Device Locked AND not on primary device */}
@@ -1875,7 +1982,352 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
               </div>
             )}
 
-            {/* TAB 6: ABA PAYWAY & SETTINGS */}
+            {/* TAB 6: SECURITY & OPERATIONS AUDIT LOG */}
+            {activeTab === 'audit' && (
+              <div className="admin-tab-pane">
+                <div className="tab-pane-header">
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <h2>🛡️ Security & Operations Audit Trail</h2>
+                      <span className="badge-primary-chip">LIVE</span>
+                    </div>
+                    <p>Tamper-evident activity logs tracking additions, edits, deletions, and administrative actions.</p>
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                    {/* Quick Toggle: Show Only My Device */}
+                    <button
+                      type="button"
+                      className={`btn btn-sm ${auditFilterOnlyMyDevice ? 'btn-primary' : 'btn-secondary'}`}
+                      onClick={() => setAuditFilterOnlyMyDevice(!auditFilterOnlyMyDevice)}
+                      style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '6px 12px', fontSize: '13px' }}
+                      title={auditFilterOnlyMyDevice ? "Switch to viewing logs from all devices" : "Switch to viewing only actions from this device"}
+                    >
+                      <Smartphone size={14} />
+                      <span>{auditFilterOnlyMyDevice ? 'Showing: Only My Device' : 'Showing: All Devices'}</span>
+                      {auditFilterOnlyMyDevice && <Check size={14} className="text-cyan" />}
+                    </button>
+
+                    <button
+                      type="button"
+                      className="btn btn-secondary btn-sm"
+                      onClick={loadAuditLogs}
+                      disabled={auditLogsLoading}
+                      title="Refresh audit log stream"
+                    >
+                      <RefreshCw size={14} className={auditLogsLoading ? 'spin-icon mr-1 inline' : 'mr-1 inline'} />
+                      <span>Refresh</span>
+                    </button>
+
+                    {auditLogs.length > 0 && (
+                      <button
+                        type="button"
+                        className="btn btn-outline-danger btn-sm"
+                        onClick={handleClearAuditLogs}
+                        title={auditFilterOnlyMyDevice ? "Clear audit logs for this device" : "Clear all audit logs"}
+                      >
+                        <Trash2 size={13} className="mr-1 inline" />
+                        <span>Clear Logs</span>
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Current Device Scope Notification Banner */}
+                <div style={{ margin: '14px 0', padding: '10px 16px', background: auditFilterOnlyMyDevice ? 'rgba(56, 189, 248, 0.06)' : 'rgba(148, 163, 184, 0.05)', border: `1px solid ${auditFilterOnlyMyDevice ? 'rgba(56, 189, 248, 0.25)' : 'rgba(148, 163, 184, 0.15)'}`, borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <div style={{ padding: '6px', background: auditFilterOnlyMyDevice ? 'rgba(56, 189, 248, 0.15)' : 'rgba(148, 163, 184, 0.1)', borderRadius: '6px', color: auditFilterOnlyMyDevice ? '#38bdf8' : '#94a3b8' }}>
+                      <ShieldCheck size={16} />
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '13px', fontWeight: 600, color: auditFilterOnlyMyDevice ? '#38bdf8' : '#cbd5e1' }}>
+                        {auditFilterOnlyMyDevice ? 'Filtered to Current / Primary Device' : 'Global Audit Scope (All Devices)'}
+                      </div>
+                      <div style={{ fontSize: '11px', color: '#94a3b8' }}>
+                        This Device: <code style={{ color: '#38bdf8', padding: '1px 5px', background: 'rgba(56, 189, 248, 0.1)', borderRadius: '3px' }}>{getDeviceId()}</code> ({getDeviceName()})
+                      </div>
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <button
+                      type="button"
+                      onClick={() => setAuditFilterOnlyMyDevice(true)}
+                      style={{ padding: '4px 10px', borderRadius: '6px', border: auditFilterOnlyMyDevice ? '1px solid #38bdf8' : '1px solid #334155', background: auditFilterOnlyMyDevice ? 'rgba(56, 189, 248, 0.2)' : 'transparent', color: auditFilterOnlyMyDevice ? '#38bdf8' : '#94a3b8', fontSize: '12px', cursor: 'pointer', fontWeight: auditFilterOnlyMyDevice ? 600 : 400 }}
+                    >
+                      📱 My Device Only
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setAuditFilterOnlyMyDevice(false)}
+                      style={{ padding: '4px 10px', borderRadius: '6px', border: !auditFilterOnlyMyDevice ? '1px solid #a855f7' : '1px solid #334155', background: !auditFilterOnlyMyDevice ? 'rgba(168, 85, 247, 0.2)' : 'transparent', color: !auditFilterOnlyMyDevice ? '#c084fc' : '#94a3b8', fontSize: '12px', cursor: 'pointer', fontWeight: !auditFilterOnlyMyDevice ? 600 : 400 }}
+                    >
+                      🌐 All Devices ({auditStats.total})
+                    </button>
+                  </div>
+                </div>
+
+                {/* Metric Cards */}
+                <div className="admin-stats-grid" style={{ marginBottom: '16px' }}>
+                  <div className="admin-stat-card">
+                    <div className="stat-card-header">
+                      <span className="stat-label">Total Logged Events</span>
+                      <History size={16} className="text-muted" />
+                    </div>
+                    <div className="stat-value">{auditStats.total.toLocaleString()}</div>
+                    <span className="stat-subtext">Across database lifecycle</span>
+                  </div>
+
+                  <div className="admin-stat-card" style={{ borderColor: 'rgba(56, 189, 248, 0.3)', background: 'linear-gradient(135deg, rgba(56, 189, 248, 0.05) 0%, transparent 100%)' }}>
+                    <div className="stat-card-header">
+                      <span className="stat-label" style={{ color: '#38bdf8' }}>This Device Actions</span>
+                      <Smartphone size={16} className="text-cyan" />
+                    </div>
+                    <div className="stat-value" style={{ color: '#38bdf8' }}>{auditStats.myDevice.toLocaleString()}</div>
+                    <span className="stat-subtext">Verified from your device ID</span>
+                  </div>
+
+                  <div className="admin-stat-card">
+                    <div className="stat-card-header">
+                      <span className="stat-label">Edits & Modifications</span>
+                      <Edit3 size={16} className="text-primary" />
+                    </div>
+                    <div className="stat-value" style={{ color: '#60a5fa' }}>{auditStats.edits.toLocaleString()}</div>
+                    <span className="stat-subtext">Updated products, categories, settings</span>
+                  </div>
+
+                  <div className="admin-stat-card">
+                    <div className="stat-card-header">
+                      <span className="stat-label">Deletions & Removals</span>
+                      <Trash2 size={16} className="text-danger" />
+                    </div>
+                    <div className="stat-value" style={{ color: '#f87171' }}>{auditStats.deletes.toLocaleString()}</div>
+                    <span className="stat-subtext">Removed records or bulk clears</span>
+                  </div>
+                </div>
+
+                {/* Filter Toolbar */}
+                <div style={{ display: 'flex', gap: '10px', marginBottom: '14px', flexWrap: 'wrap', alignItems: 'center' }}>
+                  <div style={{ flex: '1 1 240px', position: 'relative' }}>
+                    <Search size={14} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#64748b' }} />
+                    <input
+                      type="text"
+                      value={auditSearchTerm}
+                      onChange={(e) => setAuditSearchTerm(e.target.value)}
+                      placeholder="Search activity, description, IP, device ID..."
+                      style={{ width: '100%', padding: '7px 10px 7px 32px', background: '#0a0f1d', border: '1px solid #1e293b', borderRadius: '8px', color: '#fff', fontSize: '13px' }}
+                    />
+                    {auditSearchTerm && (
+                      <button
+                        type="button"
+                        onClick={() => setAuditSearchTerm('')}
+                        style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer' }}
+                      >
+                        &times;
+                      </button>
+                    )}
+                  </div>
+
+                  <div style={{ minWidth: '150px' }}>
+                    <select
+                      value={auditFilterAction}
+                      onChange={(e) => setAuditFilterAction(e.target.value)}
+                      style={{ width: '100%', padding: '7px 10px', background: '#0a0f1d', border: '1px solid #1e293b', borderRadius: '8px', color: '#fff', fontSize: '13px' }}
+                    >
+                      <option value="all">All Actions</option>
+                      <option value="EDIT">✏️ Edits & Updates (UPDATE)</option>
+                      <option value="DELETE">🗑️ Deletions (DELETE)</option>
+                      <option value="CREATE">➕ Creations (CREATE)</option>
+                      <option value="SETTINGS_CHANGE">⚙️ Settings Changes</option>
+                      <option value="LOGIN">🔐 Logins & Auth</option>
+                      <option value="AUTHORIZE">🛡️ Authorize Device</option>
+                    </select>
+                  </div>
+
+                  <div style={{ minWidth: '150px' }}>
+                    <select
+                      value={auditFilterEntity}
+                      onChange={(e) => setAuditFilterEntity(e.target.value)}
+                      style={{ width: '100%', padding: '7px 10px', background: '#0a0f1d', border: '1px solid #1e293b', borderRadius: '8px', color: '#fff', fontSize: '13px' }}
+                    >
+                      <option value="all">All Modules</option>
+                      <option value="Product">Products & AI Tools</option>
+                      <option value="Category">Categories</option>
+                      <option value="Order">Orders & Transactions</option>
+                      <option value="Subscriber">Customer Directory</option>
+                      <option value="Setting">Settings & Keys</option>
+                      <option value="Auth">Security & Login</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Audit Logs Table */}
+                <div className="admin-table-responsive">
+                  <table className="admin-table">
+                    <thead>
+                      <tr>
+                        <th style={{ width: '150px' }}>Time</th>
+                        <th style={{ width: '110px' }}>Action</th>
+                        <th style={{ width: '110px' }}>Module</th>
+                        <th>Description & Activity</th>
+                        <th style={{ width: '220px' }}>Device & Source</th>
+                        <th style={{ width: '60px' }}></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {auditLogsLoading ? (
+                        <tr>
+                          <td colSpan={6} style={{ textAlign: 'center', padding: '40px', color: '#94a3b8' }}>
+                            <RefreshCw size={20} className="spin-icon inline mb-2" />
+                            <div>Loading audit trail from database...</div>
+                          </td>
+                        </tr>
+                      ) : auditLogs.length === 0 ? (
+                        <tr>
+                          <td colSpan={6} style={{ textAlign: 'center', padding: '50px 20px', color: '#64748b' }}>
+                            <ClipboardList size={32} style={{ margin: '0 auto 10px', opacity: 0.5, display: 'block' }} />
+                            <div style={{ fontSize: '15px', fontWeight: 600, color: '#94a3b8' }}>No Audit Log Entries Found</div>
+                            <div style={{ fontSize: '13px', marginTop: '4px' }}>
+                              {auditFilterOnlyMyDevice ? 'No actions recorded from this device yet. Perform an edit or delete in Products, Categories, or Orders to see logs live!' : 'No audit records match the current filters.'}
+                            </div>
+                          </td>
+                        </tr>
+                      ) : (
+                        auditLogs.map(log => {
+                          const isMyDevice = log.device_id && (log.device_id === getDeviceId() || log.device_id === settings.primaryDeviceId);
+                          const isDelete = log.action === 'DELETE' || log.action === 'BULK_DELETE';
+                          const isUpdate = log.action === 'UPDATE' || log.action === 'EDIT';
+                          const isCreate = log.action === 'CREATE';
+                          const isSettings = log.action === 'SETTINGS_CHANGE';
+                          const isAuth = log.action === 'LOGIN' || log.action === 'AUTHORIZE';
+
+                          const dateStr = new Date(log.created_at).toLocaleString('en-US', {
+                            month: 'short',
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            second: '2-digit'
+                          });
+
+                          return (
+                            <React.Fragment key={log.id}>
+                              <tr>
+                                <td style={{ fontSize: '12px', whiteSpace: 'nowrap' }}>
+                                  <div style={{ fontWeight: 600, color: '#cbd5e1' }}>{dateStr}</div>
+                                  <div className="text-xs text-muted">ID: #{log.id}</div>
+                                </td>
+                                <td>
+                                  {isDelete && (
+                                    <span className="status-pill" style={{ background: 'rgba(239, 68, 68, 0.15)', color: '#ef4444', fontWeight: 700, fontSize: '11px' }}>
+                                      🗑️ DELETE
+                                    </span>
+                                  )}
+                                  {isUpdate && (
+                                    <span className="status-pill" style={{ background: 'rgba(59, 130, 246, 0.15)', color: '#60a5fa', fontWeight: 700, fontSize: '11px' }}>
+                                      ✏️ UPDATE
+                                    </span>
+                                  )}
+                                  {isCreate && (
+                                    <span className="status-pill" style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#34d399', fontWeight: 700, fontSize: '11px' }}>
+                                      ➕ CREATE
+                                    </span>
+                                  )}
+                                  {isSettings && (
+                                    <span className="status-pill" style={{ background: 'rgba(168, 85, 247, 0.15)', color: '#c084fc', fontWeight: 700, fontSize: '11px' }}>
+                                      ⚙️ SETTING
+                                    </span>
+                                  )}
+                                  {isAuth && (
+                                    <span className="status-pill" style={{ background: 'rgba(56, 189, 248, 0.15)', color: '#38bdf8', fontWeight: 700, fontSize: '11px' }}>
+                                      🔐 AUTH
+                                    </span>
+                                  )}
+                                  {!isDelete && !isUpdate && !isCreate && !isSettings && !isAuth && (
+                                    <span className="status-pill badge-neutral font-semibold" style={{ fontSize: '11px' }}>
+                                      {log.action}
+                                    </span>
+                                  )}
+                                </td>
+                                <td>
+                                  <span className="badge-category-chip" style={{ fontSize: '11px' }}>
+                                    {log.entity_type}
+                                  </span>
+                                </td>
+                                <td>
+                                  <div style={{ fontWeight: 500, fontSize: '13px', color: '#e2e8f0' }}>
+                                    {log.description}
+                                  </div>
+                                  <div style={{ fontSize: '11px', color: '#64748b', marginTop: '2px', display: 'flex', gap: '8px', alignItems: 'center' }}>
+                                    {log.entity_name && (
+                                      <span>Target: <strong style={{ color: '#94a3b8' }}>{log.entity_name}</strong></span>
+                                    )}
+                                    {log.changes && (
+                                      <button
+                                        type="button"
+                                        onClick={() => setExpandedLogId(expandedLogId === log.id ? null : log.id)}
+                                        style={{ background: 'none', border: 'none', color: '#38bdf8', fontSize: '11px', cursor: 'pointer', textDecoration: 'underline' }}
+                                      >
+                                        {expandedLogId === log.id ? 'Hide Diff' : 'View Diff'}
+                                      </button>
+                                    )}
+                                  </div>
+                                </td>
+                                <td>
+                                  <div>
+                                    {isMyDevice ? (
+                                      <span className="badge-primary-pill" style={{ fontSize: '10px', padding: '2px 6px', background: 'rgba(56, 189, 248, 0.12)', border: '1px solid rgba(56, 189, 248, 0.3)', color: '#38bdf8' }}>
+                                        <ShieldCheck size={10} className="inline mr-1" />
+                                        MY DEVICE
+                                      </span>
+                                    ) : (
+                                      <span style={{ fontSize: '10px', padding: '2px 6px', borderRadius: '4px', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.25)', color: '#f87171' }}>
+                                        OTHER DEVICE
+                                      </span>
+                                    )}
+                                    <span style={{ fontSize: '12px', fontWeight: 500, marginLeft: '6px' }}>{log.device_name || 'Browser Device'}</span>
+                                  </div>
+                                  <div style={{ fontSize: '11px', color: '#64748b', marginTop: '2px' }}>
+                                    <code>{log.device_id || 'unknown'}</code> • <span>{log.ip_address}</span>
+                                  </div>
+                                  {log.user_email && (
+                                    <div style={{ fontSize: '11px', color: '#94a3b8' }}>{log.user_email}</div>
+                                  )}
+                                </td>
+                                <td>
+                                  <button
+                                    type="button"
+                                    className="btn-table-action delete"
+                                    onClick={() => handleDeleteAuditLog(log.id)}
+                                    title="Delete this audit record"
+                                  >
+                                    <Trash2 size={13} />
+                                  </button>
+                                </td>
+                              </tr>
+
+                              {/* Expandable Changes Diff Row */}
+                              {expandedLogId === log.id && log.changes && (
+                                <tr>
+                                  <td colSpan={6} style={{ background: '#0a0f1d', padding: '12px 16px', borderBottom: '1px solid #1e293b' }}>
+                                    <div style={{ fontSize: '12px', fontWeight: 600, color: '#38bdf8', marginBottom: '6px' }}>
+                                      Payload & Attribute Diffs:
+                                    </div>
+                                    <pre style={{ background: '#030712', border: '1px solid #1e293b', borderRadius: '6px', padding: '10px', fontSize: '12px', color: '#a7f3d0', overflowX: 'auto', maxHeight: '200px' }}>
+                                      {JSON.stringify(log.changes, null, 2)}
+                                    </pre>
+                                  </td>
+                                </tr>
+                              )}
+                            </React.Fragment>
+                          );
+                        })
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            {/* TAB 7: ABA PAYWAY & SETTINGS */}
             {activeTab === 'settings' && (
               <div className="admin-tab-pane">
                 {settings.singleDeviceLocked && !settings.isPrimaryDevice ? (
