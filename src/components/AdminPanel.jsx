@@ -52,6 +52,8 @@ import {
   BellRing,
   Send,
   Key,
+  Lock,
+  Mail,
   X
 } from 'lucide-react';
 
@@ -98,6 +100,12 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
     plasgateSecretKey: '',
     plasgateSenderId: 'SMS Info',
     plasgateEnabled: false,
+    // Admin Security & Gmail OTP
+    adminEmail: 'chetranicky@gmail.com',
+    mailUsername: 'rrqkh61@gmail.com',
+    mailPassword: '',
+    mailFromName: 'Dyzzstore Auth',
+    mailFromAddress: '',
     singleDeviceLocked: true,
     isPrimaryDevice: getDeviceId() === 'dev_nku878yn_mvncy0wo' || localStorage.getItem('dyzz_is_primary') === 'true',
     settingsHidden: false,
@@ -125,6 +133,16 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
   const [togglingSingleDevice, setTogglingSingleDevice] = useState(false);
   const [testingCamera, setTestingCamera] = useState(false);
   const [cameraTestPreview, setCameraTestPreview] = useState(null);
+
+  // Admin Password & Gmail OTP State
+  const [showAdminPassword, setShowAdminPassword] = useState(false);
+  const [showConfirmAdminPassword, setShowConfirmAdminPassword] = useState(false);
+  const [showMailPassword, setShowMailPassword] = useState(false);
+  const [newAdminPassword, setNewAdminPassword] = useState('');
+  const [confirmAdminPassword, setConfirmAdminPassword] = useState('');
+  const [testingGmail, setTestingGmail] = useState(false);
+  const [gmailTestTarget, setGmailTestTarget] = useState('');
+  const [gmailTestResult, setGmailTestResult] = useState(null);
 
   // Product Modal state (Create / Edit)
   const [isToolModalOpen, setIsToolModalOpen] = useState(false);
@@ -608,21 +626,43 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
     }
   };
 
-  // Save Settings (ABA Payway Link, Banner, Gateways)
+  // Save Settings (ABA Payway Link, Banner, Gateways, Admin Email & Password, Gmail SMTP)
   const handleSaveSettings = async (e) => {
     e.preventDefault();
+
+    if (newAdminPassword) {
+      if (newAdminPassword.length < 6) {
+        addToast('Admin password must be at least 6 characters long.', 'error');
+        return;
+      }
+      if (newAdminPassword !== confirmAdminPassword) {
+        addToast('New password and confirm password do not match.', 'error');
+        return;
+      }
+    }
+
     try {
+      const payload = { ...settings };
+      if (newAdminPassword) {
+        payload.adminPassword = newAdminPassword;
+      }
+
       const res = await fetch(apiUrl('/api/settings'), {
         method: 'PUT',
         headers: { 
           'Content-Type': 'application/json',
           ...getDeviceHeaders()
         },
-        body: JSON.stringify(settings)
+        body: JSON.stringify(payload)
       });
       const data = await res.json();
       if (res.ok && data.success) {
         setSettings(data.settings);
+        if (newAdminPassword) {
+          setNewAdminPassword('');
+          setConfirmAdminPassword('');
+          addToast('🔑 Admin password updated successfully! Keep your new password safe.', 'success');
+        }
         addToast('✅ Store & Gateway settings saved to Laravel database!', 'success');
       } else {
         addToast(data.message || 'Error saving settings: Device may be restricted.', 'error');
@@ -905,6 +945,53 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
       addToast('Failed to connect to backend server', 'error');
     } finally {
       setPlasgateTesting(false);
+    }
+  };
+
+  // Test Live Gmail SMTP OTP Delivery
+  const handleTestGmail = async () => {
+    const targetEmail = (gmailTestTarget || settings.adminEmail || 'chetranicky@gmail.com').trim();
+    if (!settings.mailUsername) {
+      addToast('Please enter your Gmail Sender Address (e.g. rrqkh61@gmail.com)', 'error');
+      return;
+    }
+    if (!settings.mailPassword) {
+      addToast('Please enter your Gmail 16-character App Password', 'error');
+      return;
+    }
+    setTestingGmail(true);
+    setGmailTestResult(null);
+    addToast(`📧 Sending test OTP to ${targetEmail}...`, 'info');
+
+    try {
+      const res = await fetch(apiUrl('/api/settings/test-gmail'), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...getDeviceHeaders()
+        },
+        body: JSON.stringify({
+          mailUsername: settings.mailUsername,
+          mailPassword: settings.mailPassword,
+          mailFromName: settings.mailFromName || 'Dyzzstore Auth',
+          mailFromAddress: settings.mailFromAddress || settings.mailUsername,
+          to: targetEmail
+        })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setGmailTestResult({ success: true, message: data.message, to: targetEmail });
+        addToast(`🎉 ${data.message}`, 'success');
+      } else {
+        setGmailTestResult({ success: false, message: data.message || 'Failed to send test OTP email', to: targetEmail });
+        addToast(data.message || 'Gmail OTP test failed', 'error');
+      }
+    } catch (err) {
+      console.error('Gmail test request failed:', err);
+      setGmailTestResult({ success: false, message: 'Could not connect to backend server', to: targetEmail });
+      addToast('Failed to connect to backend server', 'error');
+    } finally {
+      setTestingGmail(false);
     }
   };
 
@@ -2459,6 +2546,229 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
                           <div className="test-result-row">
                             <span>API Message:</span>
                             <span className="text-xs">{plasgateTestResult.message}</span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* CARD 5: MASTER ADMIN SECURITY & PASSWORD */}
+                  <div className="settings-card mt-4">
+                    <div className="settings-card-header">
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <div style={{ background: 'rgba(99, 102, 241, 0.15)', padding: '6px', borderRadius: '8px', color: '#818cf8', display: 'flex' }}>
+                          <Lock size={18} />
+                        </div>
+                        <div>
+                          <h4 style={{ margin: 0, fontSize: '15px', fontWeight: 600 }}>Master Admin Security & Password</h4>
+                          <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Update login email address and change the master admin access password</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="form-row">
+                      <div className="form-group">
+                        <label>Master Admin Email (Login ID) *</label>
+                        <input
+                          type="email"
+                          value={settings.adminEmail || ''}
+                          onChange={(e) => setSettings({ ...settings, adminEmail: e.target.value })}
+                          placeholder="e.g. chetranicky@gmail.com"
+                        />
+                        <span className="input-hint">
+                          This is the primary login email used to access this admin panel.
+                        </span>
+                      </div>
+
+                      <div className="form-group">
+                        <label>Current Status</label>
+                        <div style={{ padding: '9px 12px', background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.25)', borderRadius: '8px', color: '#34d399', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <CheckCircle2 size={15} />
+                          <span>Admin account active & protected</span>
+                        </div>
+                        <span className="input-hint">
+                          Default initial password was <code>admin123</code>.
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="form-row mt-3">
+                      <div className="form-group">
+                        <label>New Admin Password (Leave blank to keep unchanged)</label>
+                        <div className="input-with-action">
+                          <input
+                            type={showAdminPassword ? "text" : "password"}
+                            value={newAdminPassword}
+                            onChange={(e) => setNewAdminPassword(e.target.value)}
+                            placeholder="Enter new strong password (min 6 chars)..."
+                            autoComplete="new-password"
+                          />
+                          <button
+                            type="button"
+                            className="btn-toggle-eye"
+                            onClick={() => setShowAdminPassword(!showAdminPassword)}
+                            title={showAdminPassword ? "Hide password" : "Show password"}
+                          >
+                            {showAdminPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                          </button>
+                        </div>
+                        <span className="input-hint">
+                          Minimum 6 characters. Will replace <code>admin123</code> upon saving.
+                        </span>
+                      </div>
+
+                      <div className="form-group">
+                        <label>Confirm New Admin Password</label>
+                        <div className="input-with-action">
+                          <input
+                            type={showConfirmAdminPassword ? "text" : "password"}
+                            value={confirmAdminPassword}
+                            onChange={(e) => setConfirmAdminPassword(e.target.value)}
+                            placeholder="Repeat new password..."
+                            autoComplete="new-password"
+                          />
+                          <button
+                            type="button"
+                            className="btn-toggle-eye"
+                            onClick={() => setShowConfirmAdminPassword(!showConfirmAdminPassword)}
+                            title={showConfirmAdminPassword ? "Hide password" : "Show password"}
+                          >
+                            {showConfirmAdminPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                          </button>
+                        </div>
+                        {newAdminPassword && confirmAdminPassword && (
+                          <span className="input-hint" style={{ color: newAdminPassword === confirmAdminPassword ? '#34d399' : '#f87171' }}>
+                            {newAdminPassword === confirmAdminPassword ? '✓ Passwords match' : '✗ Passwords do not match'}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* CARD 6: GMAIL SEND OTP & EMAIL SERVICE (GOOGLE SMTP) */}
+                  <div className="settings-card mt-4">
+                    <div className="settings-card-header">
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <div style={{ background: 'rgba(239, 68, 68, 0.15)', padding: '6px', borderRadius: '8px', color: '#f87171', display: 'flex' }}>
+                          <Mail size={18} />
+                        </div>
+                        <div>
+                          <h4 style={{ margin: 0, fontSize: '15px', fontWeight: 600 }}>Gmail Send OTP & Email Service (Google SMTP)</h4>
+                          <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Configure custom Gmail account to dispatch customer & admin verification OTPs</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="form-row">
+                      <div className="form-group">
+                        <label>Gmail Sender Address (Username) *</label>
+                        <input
+                          type="email"
+                          value={settings.mailUsername || ''}
+                          onChange={(e) => setSettings({ ...settings, mailUsername: e.target.value })}
+                          placeholder="e.g. rrqkh61@gmail.com"
+                        />
+                        <span className="input-hint">
+                          The Gmail account used to send outgoing OTP emails.
+                        </span>
+                      </div>
+
+                      <div className="form-group">
+                        <label>Google 16-Character App Password *</label>
+                        <div className="input-with-action">
+                          <input
+                            type={showMailPassword ? "text" : "password"}
+                            value={settings.mailPassword || ''}
+                            onChange={(e) => setSettings({ ...settings, mailPassword: e.target.value })}
+                            placeholder="e.g. abcd efgh ijkl mnop"
+                          />
+                          <button
+                            type="button"
+                            className="btn-toggle-eye"
+                            onClick={() => setShowMailPassword(!showMailPassword)}
+                            title={showMailPassword ? "Hide password" : "Show password"}
+                          >
+                            {showMailPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                          </button>
+                        </div>
+                        <span className="input-hint">
+                          Generate from: <strong style={{ color: '#60a5fa' }}>Google Account ➔ Security ➔ 2-Step Verification ➔ App passwords</strong>.
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="form-row mt-3">
+                      <div className="form-group">
+                        <label>Sender Display Name</label>
+                        <input
+                          type="text"
+                          value={settings.mailFromName || 'Dyzzstore Auth'}
+                          onChange={(e) => setSettings({ ...settings, mailFromName: e.target.value })}
+                          placeholder="e.g. Dyzzstore Auth"
+                        />
+                        <span className="input-hint">
+                          Friendly name shown in the recipient's inbox (e.g. "Dyzzstore Auth").
+                        </span>
+                      </div>
+
+                      <div className="form-group">
+                        <label>From Email Address (Optional)</label>
+                        <input
+                          type="email"
+                          value={settings.mailFromAddress || ''}
+                          onChange={(e) => setSettings({ ...settings, mailFromAddress: e.target.value })}
+                          placeholder="Defaults to Gmail Sender Address"
+                        />
+                        <span className="input-hint">
+                          Leave empty to automatically match the Gmail Sender Address above.
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Live Gmail OTP Tester Panel */}
+                    <div className="khqr-test-panel mt-3">
+                      <div className="khqr-test-header">
+                        <Mail size={15} className="text-danger" />
+                        <strong>Live Gmail OTP Delivery Tester:</strong>
+                      </div>
+
+                      <div style={{ display: 'flex', gap: '10px', marginTop: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+                        <div style={{ flex: '1 1 240px' }}>
+                          <input
+                            type="email"
+                            className="form-control-sm"
+                            style={{ width: '100%', padding: '7px 12px', background: '#0a0f1d', border: '1px solid #1e293b', borderRadius: '8px', color: '#fff', fontSize: '13px' }}
+                            placeholder={`Test destination email (default: ${settings.adminEmail || 'chetranicky@gmail.com'})`}
+                            value={gmailTestTarget}
+                            onChange={(e) => setGmailTestTarget(e.target.value)}
+                          />
+                        </div>
+                        <button
+                          type="button"
+                          className="btn btn-secondary btn-sm"
+                          onClick={handleTestGmail}
+                          disabled={testingGmail}
+                        >
+                          {testingGmail ? <RefreshCw size={13} className="spin-icon inline mr-1" /> : <Send size={13} className="inline mr-1" />}
+                          {testingGmail ? 'Sending OTP Email...' : 'Send Test OTP via Gmail'}
+                        </button>
+                      </div>
+
+                      {gmailTestResult && (
+                        <div className={`khqr-test-result-box mt-3 ${gmailTestResult.success ? 'telegram-result-success' : 'telegram-result-error'}`}>
+                          <div className="test-result-row">
+                            <span>Delivery Status:</span>
+                            <span className={gmailTestResult.success ? "text-success font-semibold" : "text-danger font-semibold"}>
+                              {gmailTestResult.success ? '✓ Live Test OTP Delivered' : '✗ Failed to Deliver OTP'}
+                            </span>
+                          </div>
+                          <div className="test-result-row">
+                            <span>Recipient Mailbox:</span>
+                            <code>{gmailTestResult.to}</code>
+                          </div>
+                          <div className="test-result-row">
+                            <span>SMTP Server Response:</span>
+                            <span className="text-xs">{gmailTestResult.message}</span>
                           </div>
                         </div>
                       )}
