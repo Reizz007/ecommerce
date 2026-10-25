@@ -85,19 +85,27 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
     telegramBotToken: '',
     telegramChatId: '',
     telegramEnabled: false,
+    // Dedicated Telegram Security / Device Alert Group (gp)
+    telegramDeviceChatId: '',
+    telegramDeviceBotToken: '',
+    telegramDeviceAlertsEnabled: true,
+    telegramAlertOnNewDevice: true,
+    telegramAlertOnPrimaryLogin: true,
     plasgatePrivateKey: '',
     plasgateSecretKey: '',
     plasgateSenderId: 'SMS Info',
     plasgateEnabled: false,
     singleDeviceLocked: true,
-    isPrimaryDevice: true,
+    isPrimaryDevice: getDeviceId() === 'dev_nku878yn_mvncy0wo' || localStorage.getItem('dyzz_is_primary') === 'true',
     settingsHidden: false,
-    primaryDeviceName: '',
+    primaryDeviceName: 'Windows PC • Chrome',
     primaryDeviceAt: '',
-    currentDeviceId: ''
+    primaryDeviceIp: '127.0.0.1',
+    currentDeviceId: getDeviceId()
   });
   const [showSecretKey, setShowSecretKey] = useState(false);
   const [showTelegramToken, setShowTelegramToken] = useState(false);
+  const [showTelegramDeviceToken, setShowTelegramDeviceToken] = useState(false);
   const [showPlasgatePrivate, setShowPlasgatePrivate] = useState(false);
   const [showPlasgateSecret, setShowPlasgateSecret] = useState(false);
   const [plasgateTestPhone, setPlasgateTestPhone] = useState('012345678');
@@ -107,6 +115,8 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
   const [khqrTesting, setKhqrTesting] = useState(false);
   const [telegramTesting, setTelegramTesting] = useState(false);
   const [telegramTestResult, setTelegramTestResult] = useState(null);
+  const [testingTelegramGroup, setTestingTelegramGroup] = useState(false);
+  const [telegramGroupTestResult, setTelegramGroupTestResult] = useState(null);
   const [authorizingDevice, setAuthorizingDevice] = useState(false);
   const [testingDeviceAlert, setTestingDeviceAlert] = useState(false);
 
@@ -198,7 +208,14 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
       }
       if (ordersRes?.orders) setOrders(ordersRes.orders);
       if (subsRes?.subscribers) setSubscribers(subsRes.subscribers);
-      if (settingsRes?.settings) setSettings(settingsRes.settings);
+      if (settingsRes?.settings) {
+        setSettings(prev => ({ ...prev, ...settingsRes.settings }));
+        if (settingsRes.settings.isPrimaryDevice) {
+          localStorage.setItem('dyzz_is_primary', 'true');
+        } else {
+          localStorage.removeItem('dyzz_is_primary');
+        }
+      }
     } catch (err) {
       console.error('Failed to load Laravel backend data:', err);
       addToast('Connecting to Laravel backend API...', 'info');
@@ -210,6 +227,14 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
   useEffect(() => {
     loadBackendData();
   }, []);
+
+  // Strict Single Device Protection: Auto-redirect away from settings if accessed on unauthorized device
+  useEffect(() => {
+    if (settings.singleDeviceLocked && !settings.isPrimaryDevice && activeTab === 'settings') {
+      setActiveTab('overview');
+      addToast('🔒 Settings tab is locked. Only your primary authorized device can view and modify settings.', 'warning');
+    }
+  }, [settings.singleDeviceLocked, settings.isPrimaryDevice, activeTab]);
 
   // Real-time polling for new orders with audio chime alert
   useEffect(() => {
@@ -682,6 +707,38 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
     }
   };
 
+  // Test Direct Connection to Telegram Security Group (gp)
+  const handleTestDeviceGroupAlert = async () => {
+    setTestingTelegramGroup(true);
+    setTelegramGroupTestResult(null);
+    try {
+      const res = await fetch(apiUrl('/api/settings/test-telegram-group'), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...getDeviceHeaders()
+        },
+        body: JSON.stringify({
+          telegramDeviceChatId: settings.telegramDeviceChatId,
+          telegramDeviceBotToken: settings.telegramDeviceBotToken
+        })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        addToast(`✅ ${data.message}`, 'success');
+        setTelegramGroupTestResult({ success: true, message: data.message });
+      } else {
+        addToast(`❌ ${data.message || 'Failed to send alert to Telegram Group'}`, 'error');
+        setTelegramGroupTestResult({ success: false, message: data.message });
+      }
+    } catch {
+      addToast('Network error connecting to backend', 'error');
+      setTelegramGroupTestResult({ success: false, message: 'Network connection error' });
+    } finally {
+      setTestingTelegramGroup(false);
+    }
+  };
+
   const handleCopyLink = () => {
     navigator.clipboard.writeText(settings.abaPayLink);
     setCopiedLink(true);
@@ -943,9 +1000,9 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
                   <Settings size={18} />
                   <span>Cambodia KHQR & Settings</span>
                   {settings.singleDeviceLocked && (
-                    <span className="badge-primary-pill" title="Protected: Only this device can view settings">
+                    <span className="badge-primary-pill" title="Strict Single Device Security: Only your authorized primary device can view and modify platform settings">
                       <ShieldCheck size={11} className="inline mr-1" />
-                      1-DEVICE
+                      MY DEVICE ONLY
                     </span>
                   )}
                 </button>
@@ -1704,16 +1761,7 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
                       <div className="locked-actions-group">
                         <button
                           type="button"
-                          className="btn btn-primary"
-                          onClick={handleAuthorizeThisDevice}
-                          disabled={authorizingDevice}
-                        >
-                          <ShieldCheck size={16} className="inline mr-1" />
-                          {authorizingDevice ? 'Authorizing...' : 'Authorize This Device & IP as Primary'}
-                        </button>
-                        <button
-                          type="button"
-                          className="btn btn-secondary ml-2"
+                          className="btn btn-secondary"
                           onClick={() => setActiveTab('overview')}
                         >
                           Return to Overview
@@ -1813,9 +1861,124 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
                               onClick={handleTestDeviceAlert}
                               disabled={testingDeviceAlert}
                             >
-                              <Send size={13} className="inline mr-1 text-cyan" />
-                              {testingDeviceAlert ? 'Sending Alert...' : 'Send Test (Device + IP) Alert to Telegram'}
+                              <ShieldAlert size={13} className="inline mr-1 text-danger" />
+                              {testingDeviceAlert ? 'Sending Alert...' : 'Simulate Unauthorized Login Alert'}
                             </button>
+                          </div>
+
+                          {/* TELEGRAM ALERT GROUP (GP) SETUP */}
+                          <div className="telegram-gp-security-section">
+                            <div className="telegram-gp-sec-header">
+                              <div className="telegram-gp-tag">
+                                <Send size={13} />
+                                <span>Telegram Alert Group (gp) Setup</span>
+                              </div>
+                              <span className="text-xs text-muted">
+                                Route real-time login alerts, security warnings, and unauthorized intrusion alerts directly to a dedicated Telegram Group.
+                              </span>
+                            </div>
+
+                            <div className="form-grid">
+                              <div className="form-group">
+                                <label className="flex items-center gap-1.5 font-medium">
+                                  <span>Telegram Security Alert Group ID (Chat ID)</span>
+                                  <span className="badge-hint">Recommended</span>
+                                </label>
+                                <input
+                                  type="text"
+                                  value={settings.telegramDeviceChatId || ''}
+                                  onChange={(e) => setSettings({ ...settings, telegramDeviceChatId: e.target.value })}
+                                  placeholder="e.g. -1002345678901 (Group Chat ID)"
+                                  className="form-control"
+                                />
+                                <span className="input-hint text-xs">
+                                  Create a Telegram Group, add your bot as an admin/member, and paste the Group ID here (starts with <code>-100...</code>). If blank, defaults to main Telegram Chat ID ({settings.telegramChatId || 'Not set'}).
+                                </span>
+                              </div>
+
+                              <div className="form-group">
+                                <label className="flex items-center justify-between font-medium">
+                                  <span>Security Bot Token (Optional)</span>
+                                  <button
+                                    type="button"
+                                    className="btn-text-xs"
+                                    onClick={() => setShowTelegramDeviceToken(!showTelegramDeviceToken)}
+                                  >
+                                    {showTelegramDeviceToken ? <EyeOff size={13} className="inline mr-1" /> : <Eye size={13} className="inline mr-1" />}
+                                    {showTelegramDeviceToken ? 'Hide' : 'Reveal'}
+                                  </button>
+                                </label>
+                                <input
+                                  type={showTelegramDeviceToken ? 'text' : 'password'}
+                                  value={settings.telegramDeviceBotToken || ''}
+                                  onChange={(e) => setSettings({ ...settings, telegramDeviceBotToken: e.target.value })}
+                                  placeholder="Leave blank to use main store bot token"
+                                  className="form-control"
+                                />
+                                <span className="input-hint text-xs">
+                                  Leave empty to automatically use main store bot token ({settings.telegramBotToken ? '••••••••' + settings.telegramBotToken.slice(-6) : 'Configured in Telegram card below'}).
+                                </span>
+                              </div>
+                            </div>
+
+                            {/* ALERT TRIGGERS & SWITCHES */}
+                            <div className="telegram-gp-switches-grid">
+                              <label className="toggle-checkbox-card">
+                                <input
+                                  type="checkbox"
+                                  checked={Boolean(settings.telegramDeviceAlertsEnabled ?? true)}
+                                  onChange={(e) => setSettings({ ...settings, telegramDeviceAlertsEnabled: e.target.checked })}
+                                />
+                                <div className="toggle-card-content">
+                                  <strong>Enable Telegram Security Alerts</strong>
+                                  <span className="text-xs text-muted">Master switch for real-time security alerts pushed to Telegram.</span>
+                                </div>
+                              </label>
+
+                              <label className="toggle-checkbox-card">
+                                <input
+                                  type="checkbox"
+                                  checked={Boolean(settings.telegramAlertOnNewDevice ?? true)}
+                                  onChange={(e) => setSettings({ ...settings, telegramAlertOnNewDevice: e.target.checked })}
+                                />
+                                <div className="toggle-card-content">
+                                  <strong>🚨 Alert on Another / New Device Login</strong>
+                                  <span className="text-xs text-muted">Push instant high-priority red alert if an unrecognized device or IP logs in.</span>
+                                </div>
+                              </label>
+
+                              <label className="toggle-checkbox-card">
+                                <input
+                                  type="checkbox"
+                                  checked={Boolean(settings.telegramAlertOnPrimaryLogin ?? true)}
+                                  onChange={(e) => setSettings({ ...settings, telegramAlertOnPrimaryLogin: e.target.checked })}
+                                />
+                                <div className="toggle-card-content">
+                                  <strong>🔔 Notice on Primary Device Login</strong>
+                                  <span className="text-xs text-muted">Push verified login confirmation when this authorized device logs in.</span>
+                                </div>
+                              </label>
+                            </div>
+
+                            {/* ACTIONS ROW */}
+                            <div className="telegram-gp-actions-row">
+                              <button
+                                type="button"
+                                className="btn btn-primary btn-sm"
+                                onClick={handleTestDeviceGroupAlert}
+                                disabled={testingTelegramGroup}
+                              >
+                                <Send size={13} className="inline mr-1" />
+                                {testingTelegramGroup ? 'Testing Group Connection...' : '🚀 Test Send Alert to Telegram Group (gp)'}
+                              </button>
+
+                              {settings.telegramDeviceChatId && (
+                                <span className="badge-gp-status active">
+                                  <CheckCircle2 size={13} className="inline mr-1" />
+                                  Target: Group {settings.telegramDeviceChatId}
+                                </span>
+                              )}
+                            </div>
                           </div>
                         </div>
                       </div>
