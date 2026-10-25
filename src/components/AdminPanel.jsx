@@ -1856,7 +1856,34 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
                             </div>
                             <div className="device-info-col">
                               <span className="device-info-label">Device Identifier (ID):</span>
-                              <code className="text-xs">{getDeviceId()}</code>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px', flexWrap: 'wrap' }}>
+                                <code style={{ fontSize: '0.78rem', background: '#070a12', padding: '4px 8px', borderRadius: '6px', border: '1px solid rgba(56, 189, 248, 0.25)', color: '#38bdf8', fontFamily: 'monospace', fontWeight: 600 }}>
+                                  {getDeviceId()}
+                                </code>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    navigator.clipboard.writeText(getDeviceId());
+                                    addToast('📋 Device ID copied to clipboard: ' + getDeviceId(), 'info');
+                                  }}
+                                  style={{
+                                    background: 'rgba(56, 189, 248, 0.1)',
+                                    border: '1px solid rgba(56, 189, 248, 0.3)',
+                                    color: '#38bdf8',
+                                    borderRadius: '6px',
+                                    padding: '3px 8px',
+                                    fontSize: '0.72rem',
+                                    cursor: 'pointer',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '4px'
+                                  }}
+                                  title="Copy Device ID"
+                                >
+                                  <Copy size={12} />
+                                  <span>Copy</span>
+                                </button>
+                              </div>
                             </div>
                           </div>
 

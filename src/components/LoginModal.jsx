@@ -520,6 +520,13 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }) {
                 >
                   🔐 Administrator? Sign in with Password
                 </button>
+                <div style={{ marginTop: '0.65rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontSize: '0.72rem', color: '#64748b' }}>
+                  <Smartphone size={12} style={{ color: '#38bdf8' }} />
+                  <span>This Device ID:</span>
+                  <code style={{ color: '#38bdf8', fontFamily: 'monospace', fontWeight: 600, background: 'rgba(56, 189, 248, 0.08)', border: '1px solid rgba(56, 189, 248, 0.2)', padding: '1px 6px', borderRadius: '4px' }}>
+                    {getDeviceId()}
+                  </code>
+                </div>
               </div>
             </form>
           ) : (
