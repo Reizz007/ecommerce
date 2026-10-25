@@ -48,15 +48,21 @@ export function getDeviceName() {
   else if (ua.includes('Firefox')) browser = 'Firefox';
   else if (ua.includes('Safari') && !ua.includes('Chrome')) browser = 'Safari';
 
-  return `${os} • ${browser}`;
+  return `${os} - ${browser}`;
 }
 
 /**
  * Returns common device headers to attach to API requests.
+ * Strictly guarantees pure ASCII values to comply with HTTP/Fetch ByteString standard (RFC 7230).
  */
 export function getDeviceHeaders() {
+  const rawName = getDeviceName();
+  const safeName = rawName.replace(/[^\x20-\x7E]/g, '-').trim();
+  const rawId = getDeviceId();
+  const safeId = rawId.replace(/[^\x20-\x7E]/g, '').trim();
+
   return {
-    'X-Device-Id': getDeviceId(),
-    'X-Device-Name': getDeviceName()
+    'X-Device-Id': safeId,
+    'X-Device-Name': safeName
   };
 }

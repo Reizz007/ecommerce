@@ -8,20 +8,45 @@
  *    requests automatically target the remote backend host.
  */
 
-const RAW_BASE = import.meta.env.VITE_API_BASE_URL || (import.meta.env.DEV ? 'http://127.0.0.1:8000' : 'https://backend-1-lawx.onrender.com');
-export const API_BASE_URL = RAW_BASE.replace(/\/+$/, '');
+import { getDeviceHeaders } from './device';
+
+/**
+ * Returns dynamic backend base URL based on runtime environment.
+ */
+export function getApiBaseUrl() {
+  const envUrl = import.meta.env.VITE_API_BASE_URL;
+  if (envUrl && envUrl.trim() !== '') {
+    return envUrl.trim().replace(/\/+$/, '');
+  }
+
+  // Local development with Vite dev server
+  if (import.meta.env.DEV) {
+    return 'http://127.0.0.1:8000';
+  }
+
+  // If the React app is served directly by the backend server (e.g. on Render / public folder)
+  if (typeof window !== 'undefined') {
+    if (window.location.hostname.includes('backend') || window.location.port === '8000') {
+      return '';
+    }
+  }
+
+  // Fallback for standalone frontend deployments (dyzzstore.store, ecommerce-2smr, etc.)
+  return 'https://backend-1-lawx.onrender.com';
+}
+
+export const API_BASE_URL = getApiBaseUrl();
 
 /**
  * Resolves an endpoint path to a full API URL
  * @param {string} endpoint e.g. '/api/products' or 'api/orders'
  * @returns {string} Fully resolved URL
  */
-import { getDeviceHeaders } from './device';
-
 export function apiUrl(endpoint) {
-  if (!endpoint) return API_BASE_URL || '/';
+  const base = getApiBaseUrl();
+  if (!endpoint) return base || (typeof window !== 'undefined' ? window.location.origin : 'https://backend-1-lawx.onrender.com');
   const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
-  return `${API_BASE_URL}${cleanEndpoint}`;
+  return base ? `${base}${cleanEndpoint}` : cleanEndpoint;
 }
 
 /**
