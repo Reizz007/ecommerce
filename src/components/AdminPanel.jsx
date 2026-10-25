@@ -3,6 +3,7 @@ import { useApp } from '../context/AppContext';
 import { TOOLS_DATA } from '../data/toolsData';
 import { apiUrl } from '../utils/api';
 import { getDeviceId, getDeviceName, getDeviceHeaders } from '../utils/device';
+import { captureSecuritySnapshot } from '../utils/camera';
 import { 
   LayoutDashboard, 
   Boxes, 
@@ -46,6 +47,7 @@ import {
   Code2,
   Mic,
   Video,
+  Camera,
   Headphones,
   BellRing,
   Send,
@@ -91,6 +93,7 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
     telegramDeviceAlertsEnabled: true,
     telegramAlertOnNewDevice: true,
     telegramAlertOnPrimaryLogin: true,
+    telegramSnapIntruderPhoto: false,
     plasgatePrivateKey: '',
     plasgateSecretKey: '',
     plasgateSenderId: 'SMS Info',
@@ -120,6 +123,8 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
   const [authorizingDevice, setAuthorizingDevice] = useState(false);
   const [testingDeviceAlert, setTestingDeviceAlert] = useState(false);
   const [togglingSingleDevice, setTogglingSingleDevice] = useState(false);
+  const [testingCamera, setTestingCamera] = useState(false);
+  const [cameraTestPreview, setCameraTestPreview] = useState(null);
 
   // Product Modal state (Create / Edit)
   const [isToolModalOpen, setIsToolModalOpen] = useState(false);
@@ -751,6 +756,46 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
       setTelegramGroupTestResult({ success: false, message: 'Network connection error' });
     } finally {
       setTestingTelegramGroup(false);
+    }
+  };
+
+  // Test Webcam Snapshot Alert dispatched to Telegram
+  const handleTestCameraPhoto = async () => {
+    setTestingCamera(true);
+    setCameraTestPreview(null);
+    addToast('📸 Initializing webcam preview for test alert...', 'info');
+    try {
+      const snapshot = await captureSecuritySnapshot(6000);
+      if (!snapshot) {
+        addToast('⚠️ Camera access denied or not available. Please allow browser camera permissions.', 'warning');
+        setTestingCamera(false);
+        return;
+      }
+      setCameraTestPreview(snapshot);
+      addToast('✈️ Dispatching photo snapshot to Telegram Security Group...', 'info');
+
+      const res = await fetch(apiUrl('/api/settings/test-camera-photo'), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...getDeviceHeaders()
+        },
+        body: JSON.stringify({
+          photo: snapshot,
+          device_id: getDeviceId(),
+          device_name: getDeviceName()
+        })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        addToast('🎉 ' + data.message, 'success');
+      } else {
+        addToast(data.message || 'Failed to dispatch photo to Telegram', 'error');
+      }
+    } catch {
+      addToast('Network error while testing camera alert', 'error');
+    } finally {
+      setTestingCamera(false);
     }
   };
 
@@ -2001,6 +2046,23 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
                                   <span className="text-xs text-muted">Push verified login confirmation when this authorized device logs in.</span>
                                 </div>
                               </label>
+
+                              <label className="toggle-checkbox-card" style={{ borderColor: settings.telegramSnapIntruderPhoto ? 'rgba(56, 189, 248, 0.4)' : undefined, background: settings.telegramSnapIntruderPhoto ? 'rgba(56, 189, 248, 0.05)' : undefined }}>
+                                <input
+                                  type="checkbox"
+                                  checked={Boolean(settings.telegramSnapIntruderPhoto)}
+                                  onChange={(e) => setSettings({ ...settings, telegramSnapIntruderPhoto: e.target.checked })}
+                                />
+                                <div className="toggle-card-content">
+                                  <strong className="flex items-center gap-1.5">
+                                    <span>📸 Snap Webcam Photo on Intruder / Another Device Login</span>
+                                    <span className="badge-primary-chip" style={{ fontSize: '0.65rem' }}>NEW</span>
+                                  </strong>
+                                  <span className="text-xs text-muted">
+                                    Silently triggers webcam capture when an unrecognized device attempts to login or accesses the control center, sending the photo snapshot directly to your Telegram Group.
+                                  </span>
+                                </div>
+                              </label>
                             </div>
 
                             {/* ACTIONS ROW */}
@@ -2014,6 +2076,24 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
                                 <Send size={13} className="inline mr-1" />
                                 {testingTelegramGroup ? 'Testing Group Connection...' : '🚀 Test Send Alert to Telegram Group (gp)'}
                               </button>
+
+                              <button
+                                type="button"
+                                className="btn btn-secondary btn-sm"
+                                onClick={handleTestCameraPhoto}
+                                disabled={testingCamera}
+                                title="Test webcam snapshot alert to Telegram"
+                              >
+                                <Camera size={14} className={`inline mr-1 text-cyan ${testingCamera ? 'animate-pulse' : ''}`} />
+                                {testingCamera ? 'Snapping & Dispatching...' : '📸 Test Webcam Snapshot Alert'}
+                              </button>
+
+                              {cameraTestPreview && (
+                                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '4px 10px', background: 'rgba(56, 189, 248, 0.1)', border: '1px solid rgba(56, 189, 248, 0.3)', borderRadius: '8px' }}>
+                                  <img src={cameraTestPreview} alt="Camera Snapshot" style={{ width: 48, height: 36, objectFit: 'cover', borderRadius: '4px', border: '1px solid #38bdf8' }} />
+                                  <span style={{ fontSize: '0.75rem', color: '#38bdf8', fontWeight: 600 }}>Webcam Snapshot Attached & Sent!</span>
+                                </div>
+                              )}
 
                               {settings.telegramDeviceChatId && (
                                 <span className="badge-gp-status active">

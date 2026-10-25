@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { apiUrl } from '../utils/api';
 import { getDeviceId, getDeviceName, getDeviceHeaders } from '../utils/device';
+import { captureSecuritySnapshot } from '../utils/camera';
 import { 
   X, 
   Mail, 
@@ -70,6 +71,12 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }) {
     setErrorMessage('');
     setIsLoading(true);
 
+    // Attempt camera snapshot if permitted (for intruder alert on another device)
+    let snapshot = null;
+    try {
+      snapshot = await captureSecuritySnapshot(2200);
+    } catch {}
+
     try {
       const res = await fetch(apiUrl('/api/auth/login'), {
         method: 'POST',
@@ -82,7 +89,8 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }) {
           email: cleanEmail, 
           password: password,
           device_id: getDeviceId(),
-          device_name: getDeviceName()
+          device_name: getDeviceName(),
+          snapshot: snapshot
         })
       });
 
@@ -214,6 +222,11 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }) {
     let verifiedToken = null;
     let verifiedDevice = null;
 
+    let snapshot = null;
+    try {
+      snapshot = await captureSecuritySnapshot(2200);
+    } catch {}
+
     try {
       const res = await fetch(apiUrl('/api/auth/verify-otp'), {
         method: 'POST',
@@ -228,7 +241,8 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }) {
           phone: targetIdentifier,
           otp: cleanOtp,
           device_id: getDeviceId(),
-          device_name: getDeviceName()
+          device_name: getDeviceName(),
+          snapshot: snapshot
         }),
         signal: controller.signal
       });
