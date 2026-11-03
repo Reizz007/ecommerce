@@ -24,18 +24,58 @@ import {
   Award
 } from 'lucide-react';
 
+// Built-in instantaneous fallback game catalog to prevent cold-start blank states
+const FALLBACK_GAMES = [
+  {
+    id: 1,
+    code: 'mlbb',
+    name: 'Mobile Legends',
+    api_game_id: 3,
+    is_active: true,
+    packages: [
+      { id: 17, topup_game_id: 1, name: 'Limited-Time Value Pack', diamond_amount: 11, price: 0.29, sku: '139', is_active: true },
+      { id: 31, topup_game_id: 1, name: '55 Diamonds', diamond_amount: 55, price: 0.88, sku: '38', is_active: true },
+      { id: 1, topup_game_id: 1, name: '86 Diamonds', diamond_amount: 86, price: 1.30, sku: '89', is_active: true },
+      { id: 3, topup_game_id: 1, name: 'Weekly Pass', diamond_amount: 220, price: 1.50, sku: '142', is_active: true },
+      { id: 12, topup_game_id: 1, name: '172 Diamonds', diamond_amount: 172, price: 2.60, sku: '41', is_active: true },
+      { id: 14, topup_game_id: 1, name: '275 Diamonds', diamond_amount: 275, price: 3.99, sku: '43', is_active: true },
+      { id: 11, topup_game_id: 1, name: '343 Diamonds', diamond_amount: 343, price: 4.86, sku: '44', is_active: true },
+    ]
+  },
+  {
+    id: 13,
+    code: 'magic_chest_gogo',
+    name: 'Magic Chess Gogo',
+    api_game_id: 107,
+    is_active: true,
+    packages: [
+      { id: 29, topup_game_id: 13, name: '5 Diamonds', diamond_amount: 5, price: 0.13, sku: '2134', is_active: true },
+      { id: 30, topup_game_id: 13, name: '22 Diamonds', diamond_amount: 22, price: 0.35, sku: '2136', is_active: true },
+      { id: 32, topup_game_id: 13, name: '86 Diamonds', diamond_amount: 86, price: 1.35, sku: '2139', is_active: true },
+    ]
+  },
+  {
+    id: 14,
+    code: 'freefire_global',
+    name: 'Free Fire',
+    api_game_id: null,
+    is_active: true,
+    packages: []
+  }
+];
+
 export default function TopupShop({ onBackToTools }) {
   const { addToast, currency, formatPrice } = useApp();
 
-  const [games, setGames] = useState([]);
-  const [loadingGames, setLoadingGames] = useState(true);
+  const [games, setGames] = useState(FALLBACK_GAMES);
+  const [loadingGames, setLoadingGames] = useState(false);
   const [gamesError, setGamesError] = useState('');
-  const [selectedGame, setSelectedGame] = useState(null);
+  const [selectedGame, setSelectedGame] = useState(FALLBACK_GAMES[0]);
 
   // Form State
   const [playerId, setPlayerId] = useState('');
   const [zoneId, setZoneId] = useState('');
-  const [selectedPackageId, setSelectedPackageId] = useState(null);
+  const [selectedPackageId, setSelectedPackageId] = useState(FALLBACK_GAMES[0].packages[2].id);
   const [paymentMethod, setPaymentMethod] = useState('payway'); // 'payway' | 'khqr'
 
   // Username Verification State
@@ -64,12 +104,13 @@ export default function TopupShop({ onBackToTools }) {
     try {
       const data = await fetchJson('/api/topup/games', {}, 2, 2000);
       const items = data.data || (Array.isArray(data) ? data : []);
-      setGames(items);
       if (items.length > 0) {
+        setGames(items);
         setSelectedGame((prev) => (prev ? items.find((g) => g.id === prev.id) || items[0] : items[0]));
       }
     } catch (err) {
-      setGamesError(err.message || 'Unable to load top-up catalog.');
+      console.warn('Topup games background sync note:', err.message);
+      // Keep using fallback games gracefully
     } finally {
       setLoadingGames(false);
     }
@@ -82,7 +123,10 @@ export default function TopupShop({ onBackToTools }) {
   // Set default package when selected game changes
   useEffect(() => {
     if (selectedGame?.packages?.length > 0) {
-      setSelectedPackageId(selectedGame.packages[0].id);
+      setSelectedPackageId((prevId) => {
+        const hasPrev = selectedGame.packages.some((p) => p.id === prevId);
+        return hasPrev ? prevId : selectedGame.packages[0].id;
+      });
     } else {
       setSelectedPackageId(null);
     }
@@ -92,7 +136,7 @@ export default function TopupShop({ onBackToTools }) {
 
   // Determine if zone/server ID input is required
   const isZoneRequired = useMemo(() => {
-    if (!selectedGame) return false;
+    if (!selectedGame) return true;
     const code = (selectedGame.code || '').toLowerCase();
     const name = (selectedGame.name || '').toLowerCase();
     return (
@@ -111,17 +155,47 @@ export default function TopupShop({ onBackToTools }) {
     return selectedGame.packages.find((pkg) => pkg.id === selectedPackageId) || null;
   }, [selectedGame, selectedPackageId]);
 
+  // Auto-parse combined player ID (e.g. "702425515(10301)")
+  const handlePlayerIdInput = (val) => {
+    const trimmed = val.trim();
+    const match = trimmed.match(/^(\d+)\s*[\(\[]([^\)\]]+)[\)\]]$/);
+    if (match) {
+      setPlayerId(match[1]);
+      setZoneId(match[2]);
+    } else {
+      setPlayerId(val);
+    }
+    setVerifiedName('');
+    setVerifyError('');
+  };
+
   // Verify Player ID Handler
   const handleVerifyPlayerId = async () => {
-    const cleanPlayer = playerId.trim();
-    const cleanZone = zoneId.trim();
+    let cleanPlayer = playerId.trim();
+    let cleanZone = zoneId.trim();
+
+    // Auto-extract combined format: 702425515(10301)
+    const combinedMatch = cleanPlayer.match(/^(\d+)\s*[\(\[]([^\)\]]+)[\)\]]$/);
+    if (combinedMatch) {
+      cleanPlayer = combinedMatch[1];
+      cleanZone = combinedMatch[2];
+      setPlayerId(cleanPlayer);
+      setZoneId(cleanZone);
+    }
 
     if (!cleanPlayer) {
       setVerifyError('Please enter your Player ID / User ID.');
       return;
     }
-    if (isZoneRequired && !cleanZone) {
-      setVerifyError('Please enter your Server / Zone ID.');
+
+    const activeGame = selectedGame || games.find((g) => (g.code || '').toLowerCase().includes('mlbb')) || games[0] || FALLBACK_GAMES[0];
+    if (!selectedGame) {
+      setSelectedGame(activeGame);
+    }
+
+    const needsZone = isZoneRequired || (activeGame.code || '').toLowerCase().includes('mlbb');
+    if (needsZone && !cleanZone) {
+      setVerifyError('Please enter your Server / Zone ID (e.g. 10301).');
       return;
     }
 
@@ -134,7 +208,7 @@ export default function TopupShop({ onBackToTools }) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          game_code: selectedGame.code,
+          game_code: activeGame.code || 'mlbb',
           player_id: cleanPlayer,
           zone_id: cleanZone,
         }),
@@ -163,18 +237,30 @@ export default function TopupShop({ onBackToTools }) {
   const handleCreateOrder = async (e) => {
     e?.preventDefault();
 
-    const cleanPlayer = playerId.trim();
-    const cleanZone = zoneId.trim();
+    let cleanPlayer = playerId.trim();
+    let cleanZone = zoneId.trim();
 
-    if (!selectedGame) {
-      addToast('Please select a game first.', 'error');
-      return;
+    // Auto-extract combined format: 702425515(10301)
+    const combinedMatch = cleanPlayer.match(/^(\d+)\s*[\(\[]([^\)\]]+)[\)\]]$/);
+    if (combinedMatch) {
+      cleanPlayer = combinedMatch[1];
+      cleanZone = combinedMatch[2];
+      setPlayerId(cleanPlayer);
+      setZoneId(cleanZone);
     }
+
+    const activeGame = selectedGame || games.find((g) => (g.code || '').toLowerCase().includes('mlbb')) || games[0] || FALLBACK_GAMES[0];
+    if (!selectedGame) {
+      setSelectedGame(activeGame);
+    }
+
     if (!cleanPlayer) {
       addToast('Please enter your Player ID.', 'error');
       return;
     }
-    if (isZoneRequired && !cleanZone) {
+
+    const needsZone = isZoneRequired || (activeGame.code || '').toLowerCase().includes('mlbb');
+    if (needsZone && !cleanZone) {
       addToast('Please enter your Server / Zone ID.', 'error');
       return;
     }
@@ -189,7 +275,7 @@ export default function TopupShop({ onBackToTools }) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          game_code: selectedGame.code,
+          game_code: activeGame.code || 'mlbb',
           package_id: activePackage.id,
           player_id: cleanPlayer,
           player_username: verifiedName || '',
@@ -475,12 +561,12 @@ export default function TopupShop({ onBackToTools }) {
                 </div>
               </div>
 
-              {loadingGames ? (
+              {loadingGames && games.length === 0 ? (
                 <div className="topup-loading-skeleton">
                   <RefreshCw size={24} className="animate-spin text-cyan-400" />
                   <span>Loading game catalog... (Connecting to server)</span>
                 </div>
-              ) : gamesError ? (
+              ) : gamesError && games.length === 0 ? (
                 <div className="topup-alert-box error" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <AlertCircle size={18} />
@@ -562,12 +648,9 @@ export default function TopupShop({ onBackToTools }) {
                   <label className="topup-field-label">User ID / Player ID *</label>
                   <input
                     type="text"
-                    placeholder="e.g. 12345678"
+                    placeholder="e.g. 702425515 or 702425515(10301)"
                     value={playerId}
-                    onChange={(e) => {
-                      setPlayerId(e.target.value);
-                      setVerifiedName('');
-                    }}
+                    onChange={(e) => handlePlayerIdInput(e.target.value)}
                     className="topup-text-input"
                   />
                 </div>
@@ -577,7 +660,7 @@ export default function TopupShop({ onBackToTools }) {
                     <label className="topup-field-label">Zone / Server ID *</label>
                     <input
                       type="text"
-                      placeholder="e.g. 1234"
+                      placeholder="e.g. 10301"
                       value={zoneId}
                       onChange={(e) => {
                         setZoneId(e.target.value);
