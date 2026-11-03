@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { apiUrl } from '../utils/api';
+import { apiUrl, fetchJson } from '../utils/api';
 import { getDeviceHeaders } from '../utils/device';
 import {
   Gamepad2,
@@ -104,12 +104,11 @@ export default function AdminTopupTab({ formatPrice, addToast }) {
 
     setVerifyingId(order.id);
     try {
-      const res = await fetch(apiUrl(`/api/admin/topup/orders/${order.id}/manual-verify`), {
+      const data = await fetchJson(`/api/admin/topup/orders/${order.id}/manual-verify`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...getDeviceHeaders() }
-      });
-      const data = await res.json();
-      if (res.ok && data.success) {
+        headers: { 'Content-Type': 'application/json' }
+      }, 0);
+      if (data.success) {
         addToast(`✅ Order ${order.order_no} pushed to FlashTopUp API!`, 'success');
       } else {
         addToast(`⚠️ FlashTopUp: ${data.message || 'Verification on hold'}`, 'info');
@@ -124,13 +123,12 @@ export default function AdminTopupTab({ formatPrice, addToast }) {
 
   const handleUpdateStatus = async (orderId, newStatus) => {
     try {
-      const res = await fetch(apiUrl(`/api/admin/topup/orders/${orderId}`), {
+      const data = await fetchJson(`/api/admin/topup/orders/${orderId}`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json', ...getDeviceHeaders() },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: newStatus })
-      });
-      const data = await res.json();
-      if (res.ok && data.success) {
+      }, 0);
+      if (data.success) {
         addToast(`Status updated to ${newStatus}`, 'success');
         loadData();
       }
@@ -176,18 +174,17 @@ export default function AdminTopupTab({ formatPrice, addToast }) {
   const handleSaveGame = async (e) => {
     e.preventDefault();
     try {
-      const url = editingGame
-        ? apiUrl(`/api/admin/topup/games/${editingGame.id}`)
-        : apiUrl('/api/admin/topup/games');
+      const endpoint = editingGame
+        ? `/api/admin/topup/games/${editingGame.id}`
+        : '/api/admin/topup/games';
       const method = editingGame ? 'PATCH' : 'POST';
 
-      const res = await fetch(url, {
+      const data = await fetchJson(endpoint, {
         method,
-        headers: { 'Content-Type': 'application/json', ...getDeviceHeaders() },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(gameForm)
-      });
-      const data = await res.json();
-      if (res.ok && data.success) {
+      }, 0);
+      if (data.success) {
         addToast(editingGame ? 'Game updated!' : 'Game created!', 'success');
         setIsGameModalOpen(false);
         loadData();
@@ -247,18 +244,17 @@ export default function AdminTopupTab({ formatPrice, addToast }) {
   const handleSavePackage = async (e) => {
     e.preventDefault();
     try {
-      const url = editingPackage
-        ? apiUrl(`/api/admin/topup/packages/${editingPackage.id}`)
-        : apiUrl('/api/admin/topup/packages');
+      const endpoint = editingPackage
+        ? `/api/admin/topup/packages/${editingPackage.id}`
+        : '/api/admin/topup/packages';
       const method = editingPackage ? 'PATCH' : 'POST';
 
-      const res = await fetch(url, {
+      const data = await fetchJson(endpoint, {
         method,
-        headers: { 'Content-Type': 'application/json', ...getDeviceHeaders() },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(packageForm)
-      });
-      const data = await res.json();
-      if (res.ok && data.success) {
+      }, 0);
+      if (data.success) {
         addToast(editingPackage ? 'Package updated!' : 'Package created!', 'success');
         setIsPackageModalOpen(false);
         loadData();

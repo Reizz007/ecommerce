@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useApp } from '../context/AppContext';
-import { apiFetch, apiUrl } from '../utils/api';
+import { apiFetch, apiUrl, fetchJson } from '../utils/api';
 import './TopupShop.css';
 import { 
   Gamepad2, 
@@ -57,33 +57,27 @@ export default function TopupShop({ onBackToTools }) {
   const [isTrackingLoading, setIsTrackingLoading] = useState(false);
   const [trackingError, setTrackingError] = useState('');
 
-  // Fetch Games Catalog
-  useEffect(() => {
-    let ignore = false;
-    async function loadGames() {
-      setLoadingGames(true);
-      setGamesError('');
-      try {
-        const res = await apiFetch('/api/topup/games');
-        const data = await res.json();
-        const items = data.data || (Array.isArray(data) ? data : []);
-        if (!ignore) {
-          setGames(items);
-          if (items.length > 0) {
-            setSelectedGame(items[0]);
-          }
-        }
-      } catch (err) {
-        if (!ignore) {
-          setGamesError(err.message || 'Unable to load top-up catalog.');
-        }
-      } finally {
-        if (!ignore) setLoadingGames(false);
+  // Fetch Games Catalog with graceful retry on wake-up
+  const loadGames = useCallback(async () => {
+    setLoadingGames(true);
+    setGamesError('');
+    try {
+      const data = await fetchJson('/api/topup/games', {}, 2, 2000);
+      const items = data.data || (Array.isArray(data) ? data : []);
+      setGames(items);
+      if (items.length > 0) {
+        setSelectedGame((prev) => (prev ? items.find((g) => g.id === prev.id) || items[0] : items[0]));
       }
+    } catch (err) {
+      setGamesError(err.message || 'Unable to load top-up catalog.');
+    } finally {
+      setLoadingGames(false);
     }
-    loadGames();
-    return () => { ignore = true; };
   }, []);
+
+  useEffect(() => {
+    loadGames();
+  }, [loadGames]);
 
   // Set default package when selected game changes
   useEffect(() => {
@@ -136,7 +130,7 @@ export default function TopupShop({ onBackToTools }) {
     setVerifiedName('');
 
     try {
-      const res = await apiFetch('/api/topup/check-username', {
+      const data = await fetchJson('/api/topup/check-username', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -144,10 +138,9 @@ export default function TopupShop({ onBackToTools }) {
           player_id: cleanPlayer,
           zone_id: cleanZone,
         }),
-      });
+      }, 1, 1000);
 
-      const data = await res.json();
-      if (!res.ok || !data.success) {
+      if (!data.success) {
         throw new Error(data.message || 'Player not found. Please verify your ID.');
       }
 
@@ -192,7 +185,7 @@ export default function TopupShop({ onBackToTools }) {
 
     setIsSubmitting(true);
     try {
-      const res = await apiFetch('/api/topup/orders', {
+      const data = await fetchJson('/api/topup/orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -203,10 +196,9 @@ export default function TopupShop({ onBackToTools }) {
           zone_id: cleanZone,
           payment_method: paymentMethod,
         }),
-      });
+      }, 0);
 
-      const data = await res.json();
-      if (!res.ok || !data.success) {
+      if (!data.success || !data.order) {
         throw new Error(data.message || 'Failed to initialize order checkout.');
       }
 
@@ -229,16 +221,13 @@ export default function TopupShop({ onBackToTools }) {
 
       const checkStatus = async () => {
         try {
-          const res = await apiFetch(`/api/topup/orders/${encodeURIComponent(orderNo)}`);
-          if (res.ok) {
-            const data = await res.json();
-            const updated = data.data || data.order;
-            if (updated) {
-              setActiveOrder((prev) => ({ ...prev, ...updated }));
-              if (updated.status === 'success' || updated.status === 'completed') {
-                addToast('Payment confirmed! Diamonds delivered successfully 🎉', 'success');
-                if (intervalId) clearInterval(intervalId);
-              }
+          const data = await fetchJson(`/api/topup/orders/${encodeURIComponent(orderNo)}`, {}, 0);
+          const updated = data.data || data.order;
+          if (updated) {
+            setActiveOrder((prev) => ({ ...prev, ...updated }));
+            if (updated.status === 'success' || updated.status === 'completed') {
+              addToast('Payment confirmed! Diamonds delivered successfully 🎉', 'success');
+              if (intervalId) clearInterval(intervalId);
             }
           }
         } catch (e) {
@@ -268,9 +257,8 @@ export default function TopupShop({ onBackToTools }) {
     setTrackedOrder(null);
 
     try {
-      const res = await apiFetch(`/api/topup/orders/${encodeURIComponent(cleanNo)}`);
-      const data = await res.json();
-      if (!res.ok || !data.success) {
+      const data = await fetchJson(`/api/topup/orders/${encodeURIComponent(cleanNo)}`, {}, 1, 1000);
+      if (!data.success) {
         throw new Error(data.message || 'Order not found.');
       }
       setTrackedOrder(data.data || data.order);
@@ -477,12 +465,35 @@ export default function TopupShop({ onBackToTools }) {
               {loadingGames ? (
                 <div className="topup-loading-skeleton">
                   <RefreshCw size={24} className="animate-spin text-cyan-400" />
-                  <span>Loading game catalog...</span>
+                  <span>Loading game catalog... (Connecting to server)</span>
                 </div>
               ) : gamesError ? (
-                <div className="topup-alert-box error">
-                  <AlertCircle size={18} />
-                  <span>{gamesError}</span>
+                <div className="topup-alert-box error" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <AlertCircle size={18} />
+                    <span>{gamesError}</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => loadGames()}
+                    className="topup-retry-btn"
+                    style={{
+                      background: 'rgba(239, 68, 68, 0.25)',
+                      border: '1px solid rgba(239, 68, 68, 0.5)',
+                      color: '#fff',
+                      padding: '6px 14px',
+                      borderRadius: '8px',
+                      cursor: 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      fontSize: '0.85rem',
+                      fontWeight: 500
+                    }}
+                  >
+                    <RefreshCw size={14} className={loadingGames ? 'animate-spin' : ''} />
+                    Retry Now
+                  </button>
                 </div>
               ) : (
                 <div className="topup-games-grid">

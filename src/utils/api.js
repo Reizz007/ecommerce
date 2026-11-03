@@ -60,6 +60,7 @@ export async function apiFetch(endpoint, options = {}) {
   const url = apiUrl(endpoint);
   const deviceHeaders = getDeviceHeaders();
   const mergedHeaders = {
+    'Accept': 'application/json',
     ...deviceHeaders,
     ...(options.headers || {})
   };
@@ -68,5 +69,57 @@ export async function apiFetch(endpoint, options = {}) {
     ...options,
     headers: mergedHeaders
   });
+}
+
+/**
+ * Safe JSON fetch wrapper with retry logic for sleeping/deploying backend services.
+ * Automatically handles non-JSON HTML error pages (502/503/404) gracefully.
+ *
+ * @param {string} endpoint e.g. '/api/topup/games'
+ * @param {RequestInit} [options]
+ * @param {number} [retries=2] Number of retries on network/502/503/HTML failure
+ * @param {number} [delayMs=1500] Delay between retries
+ * @returns {Promise<any>}
+ */
+export async function fetchJson(endpoint, options = {}, retries = 2, delayMs = 1500) {
+  let lastError = null;
+
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      const res = await apiFetch(endpoint, options);
+      const contentType = res.headers.get('content-type') || '';
+
+      if (!contentType.includes('application/json')) {
+        // When server is spinning up or restarting, Render/Cloudflare returns HTML
+        if (attempt < retries) {
+          await new Promise((resolve) => setTimeout(resolve, delayMs));
+          continue;
+        }
+
+        throw new Error(
+          res.status === 404
+            ? 'Endpoint route not found (404).'
+            : 'Top-up server is waking up or deploying. Please click Retry in a few seconds.'
+        );
+      }
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.message || data.error || `Server error (${res.status})`);
+      }
+      return data;
+    } catch (err) {
+      lastError = err;
+      // Do not retry 400 validation errors or not found
+      if (err.message && (err.message.includes('404') || err.message.includes('422'))) {
+        throw err;
+      }
+      if (attempt < retries) {
+        await new Promise((resolve) => setTimeout(resolve, delayMs));
+      }
+    }
+  }
+
+  throw lastError || new Error('Connection error. Please try again.');
 }
 

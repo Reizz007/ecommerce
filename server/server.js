@@ -574,6 +574,51 @@ app.get('/api/payment/khqr/verify/:id', (req, res) => {
   });
 });
 
+// -------------------------------------------------------------
+// TOP-UP & FLASH RESELLER PROXY (FORWARD TO LARAVEL BACKEND)
+// -------------------------------------------------------------
+const LARAVEL_API_BASE = process.env.LARAVEL_API_BASE || 'https://backend-1-lawx.onrender.com';
+
+const topupProxyHandler = async (req, res) => {
+  try {
+    const targetUrl = `${LARAVEL_API_BASE.replace(/\/+$/, '')}${req.originalUrl}`;
+    const forwardHeaders = { ...req.headers };
+    delete forwardHeaders.host;
+    delete forwardHeaders.connection;
+    delete forwardHeaders['content-length'];
+
+    const fetchOptions = {
+      method: req.method,
+      headers: {
+        ...forwardHeaders,
+        'Accept': 'application/json',
+      }
+    };
+
+    if (req.method !== 'GET' && req.method !== 'HEAD' && req.body && Object.keys(req.body).length > 0) {
+      fetchOptions.body = JSON.stringify(req.body);
+      fetchOptions.headers['content-type'] = 'application/json';
+    }
+
+    const backendRes = await fetch(targetUrl, fetchOptions);
+    const contentType = backendRes.headers.get('content-type') || 'application/json';
+    res.status(backendRes.status);
+    res.set('content-type', contentType);
+
+    const bodyText = await backendRes.text();
+    return res.send(bodyText);
+  } catch (err) {
+    console.error('Proxy error to Laravel backend:', err.message);
+    return res.status(502).json({
+      success: false,
+      message: 'Top-up backend service is waking up or temporarily unavailable. Please retry in a few moments.',
+      error: err.message
+    });
+  }
+};
+
+app.use(['/api/topup', '/api/admin/topup', '/api/games', '/api/check-username'], topupProxyHandler);
+
 // Serve frontend static files from dist/ if built (Single Service Mode on Render/Cloud)
 const DIST_DIR = path.join(__dirname, '..', 'dist');
 if (fs.existsSync(DIST_DIR)) {
