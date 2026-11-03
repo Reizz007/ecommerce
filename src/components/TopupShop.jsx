@@ -368,26 +368,26 @@ export default function TopupShop({ onBackToTools }) {
           )}
 
           {trackedOrder && (
-            <div className="topup-tracked-result mt-6">
+            <div className="topup-tracked-result">
               <div className="topup-status-banner">
                 <div>
-                  <span className="text-xs uppercase tracking-wider text-slate-400">Order Status</span>
-                  <div className="flex items-center gap-2 mt-1">
+                  <span style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: '#94a3b8' }}>Order Status</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px' }}>
                     <span className={`topup-status-tag ${trackedOrder.status}`}>
                       {trackedOrder.status?.toUpperCase()}
                     </span>
                     {trackedOrder.status === 'success' && (
-                      <span className="text-xs text-emerald-400 font-semibold flex items-center gap-1">
+                      <span style={{ fontSize: '0.8rem', color: '#34d399', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
                         <CheckCircle2 size={14} /> Diamonds Transferred
                       </span>
                     )}
                   </div>
                 </div>
 
-                <div className="text-right">
-                  <span className="text-xs text-slate-400">Total Paid</span>
-                  <p className="text-2xl font-black text-white mt-1">
-                    ${Number(trackedOrder.amount).toFixed(2)}
+                <div style={{ textAlign: 'right' }}>
+                  <span style={{ fontSize: '0.75rem', color: '#94a3b8', textTransform: 'uppercase' }}>Total Paid</span>
+                  <p style={{ fontSize: '1.75rem', fontWeight: 900, color: '#ffffff', margin: '4px 0 0' }}>
+                    ${Number(trackedOrder.amount).toFixed(2)} USD
                   </p>
                 </div>
               </div>
@@ -395,7 +395,7 @@ export default function TopupShop({ onBackToTools }) {
               <div className="topup-details-grid">
                 <div className="detail-item">
                   <span className="label">Order Number</span>
-                  <span className="value font-mono">{trackedOrder.order_no}</span>
+                  <span className="value" style={{ fontFamily: 'monospace' }}>{trackedOrder.order_no}</span>
                 </div>
                 <div className="detail-item">
                   <span className="label">Game</span>
@@ -403,35 +403,48 @@ export default function TopupShop({ onBackToTools }) {
                 </div>
                 <div className="detail-item">
                   <span className="label">Item / Diamonds</span>
-                  <span className="value font-semibold text-cyan-400">
+                  <span className="value" style={{ color: '#38bdf8', fontWeight: 700 }}>
                     💎 {trackedOrder.package?.name || `${trackedOrder.diamond_amount} Diamonds`}
                   </span>
                 </div>
                 <div className="detail-item">
                   <span className="label">Player ID</span>
-                  <span className="value font-mono">
+                  <span className="value" style={{ fontFamily: 'monospace' }}>
                     {trackedOrder.player_id} {trackedOrder.zone_id ? `(${trackedOrder.zone_id})` : ''}
                   </span>
                 </div>
                 {trackedOrder.player_username && (
                   <div className="detail-item">
                     <span className="label">Player Username</span>
-                    <span className="value font-bold text-emerald-400">
+                    <span className="value" style={{ color: '#34d399', fontWeight: 800 }}>
                       {trackedOrder.player_username}
                     </span>
                   </div>
                 )}
                 <div className="detail-item">
                   <span className="label">Payment Gateway</span>
-                  <span className="value uppercase font-medium">{trackedOrder.payment_method || 'ABA PayWay'}</span>
+                  <span className="value" style={{ textTransform: 'uppercase', fontWeight: 700 }}>
+                    {trackedOrder.payment_method || 'ABA PayWay'}
+                  </span>
                 </div>
               </div>
 
               {trackedOrder.gateway_checkout_url && trackedOrder.status === 'pending' && (
-                <div className="mt-4 p-4 rounded-xl bg-purple-950/40 border border-purple-500/30 flex items-center justify-between">
+                <div style={{
+                  marginTop: '16px',
+                  padding: '16px',
+                  borderRadius: '14px',
+                  background: 'rgba(139, 92, 246, 0.15)',
+                  border: '1px solid rgba(139, 92, 246, 0.35)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  flexWrap: 'wrap',
+                  gap: '12px'
+                }}>
                   <div>
-                    <p className="text-sm font-semibold text-purple-200">Payment still pending</p>
-                    <p className="text-xs text-purple-300/80">Click checkout to finish transaction with ABA PayWay or KHQR.</p>
+                    <p style={{ margin: 0, fontSize: '0.92rem', fontWeight: 700, color: '#e9d5ff' }}>Payment still pending</p>
+                    <p style={{ margin: '4px 0 0', fontSize: '0.78rem', color: '#c084fc' }}>Click checkout to finish transaction with ABA PayWay or KHQR.</p>
                   </div>
                   <a
                     href={trackedOrder.gateway_checkout_url}
@@ -642,19 +655,19 @@ export default function TopupShop({ onBackToTools }) {
                             <Flame size={12} /> POPULAR
                           </span>
                         )}
-                        <div className="flex items-center gap-2">
+                        <div className="topup-package-diamonds">
                           <span className="topup-diamond-icon">💎</span>
-                          <span className="font-bold text-white text-base">
+                          <span className="topup-diamond-amount">
                             {pkg.diamond_amount} Diamonds
                           </span>
                         </div>
 
-                        <span className="topup-package-title truncate">
+                        <span className="topup-package-title">
                           {pkg.name}
                         </span>
 
                         <div className="topup-package-footer">
-                          <span className="topup-price-tag font-bold">
+                          <span className="topup-price-tag">
                             ${Number(pkg.price).toFixed(2)}
                           </span>
                           <span className="topup-radio-circle"></span>
@@ -683,11 +696,11 @@ export default function TopupShop({ onBackToTools }) {
                   className={`topup-payment-card ${paymentMethod === 'payway' ? 'selected' : ''}`}
                 >
                   <div className="topup-pay-icon aba">
-                    <span className="font-black text-xs">ABA</span>
+                    <span style={{ fontWeight: 900, fontSize: '0.8rem' }}>ABA</span>
                   </div>
-                  <div className="text-left flex-1 min-w-0">
-                    <h4 className="font-bold text-white text-sm">ABA PayWay</h4>
-                    <p className="text-xs text-slate-400">ABA Mobile App & Scan QR</p>
+                  <div style={{ flex: 1, minWidth: 0, textAlign: 'left' }}>
+                    <h4 className="topup-pay-title">ABA PayWay</h4>
+                    <p className="topup-pay-subtitle">ABA Mobile App & Direct Scan</p>
                   </div>
                   <div className="topup-radio-circle"></div>
                 </button>
@@ -698,11 +711,11 @@ export default function TopupShop({ onBackToTools }) {
                   className={`topup-payment-card ${paymentMethod === 'khqr' ? 'selected' : ''}`}
                 >
                   <div className="topup-pay-icon khqr">
-                    <span className="font-black text-xs">KHQR</span>
+                    <span style={{ fontWeight: 900, fontSize: '0.8rem' }}>KHQR</span>
                   </div>
-                  <div className="text-left flex-1 min-w-0">
-                    <h4 className="font-bold text-white text-sm">KHQR Bakong</h4>
-                    <p className="text-xs text-slate-400">All Cambodian Banks Support</p>
+                  <div style={{ flex: 1, minWidth: 0, textAlign: 'left' }}>
+                    <h4 className="topup-pay-title">KHQR Bakong</h4>
+                    <p className="topup-pay-subtitle">All Cambodian Banking Apps</p>
                   </div>
                   <div className="topup-radio-circle"></div>
                 </button>
@@ -712,52 +725,63 @@ export default function TopupShop({ onBackToTools }) {
 
           {/* Right Column: Checkout Summary Sticky Widget */}
           <div className="topup-sidebar-column">
-            <div className="topup-summary-box sticky top-24">
-              <h3 className="text-lg font-bold text-white pb-3 border-b border-white/10 flex items-center justify-between">
-                <span>Order Summary</span>
-                <Sparkles size={16} className="text-cyan-400" />
-              </h3>
+            <div className="topup-summary-box">
+              <div className="topup-summary-header">
+                <div className="topup-summary-title">
+                  <Sparkles size={18} className="topup-neon-sparkle" />
+                  <span>Order Summary</span>
+                </div>
+                <span className="topup-secure-badge">
+                  <ShieldCheck size={12} /> SECURE
+                </span>
+              </div>
 
-              <div className="topup-summary-details mt-4 space-y-3 text-sm">
-                <div className="flex justify-between items-center text-slate-300">
-                  <span>Selected Game</span>
-                  <span className="font-semibold text-white">{selectedGame?.name || '-'}</span>
+              <div className="topup-summary-list">
+                <div className="topup-summary-row">
+                  <span className="topup-summary-label">Selected Game</span>
+                  <span className="topup-summary-val game-val">{selectedGame?.name || '—'}</span>
                 </div>
 
-                <div className="flex justify-between items-center text-slate-300">
-                  <span>Selected Item</span>
-                  <span className="font-semibold text-cyan-400 truncate max-w-[170px]">
-                    {activePackage ? `${activePackage.diamond_amount} Diamonds` : 'None'}
+                <div className="topup-summary-row">
+                  <span className="topup-summary-label">Recharge Item</span>
+                  <span className="topup-summary-val diamond-val">
+                    {activePackage ? `💎 ${activePackage.diamond_amount} Diamonds` : 'None selected'}
                   </span>
                 </div>
 
-                <div className="flex justify-between items-center text-slate-300">
-                  <span>Player ID</span>
-                  <span className="font-mono text-white">
+                <div className="topup-summary-row">
+                  <span className="topup-summary-label">Player ID</span>
+                  <span className="topup-summary-val" style={{ fontFamily: 'monospace' }}>
                     {playerId ? `${playerId}${zoneId ? ` (${zoneId})` : ''}` : 'Not entered'}
                   </span>
                 </div>
 
                 {verifiedName && (
-                  <div className="flex justify-between items-center text-slate-300">
-                    <span>Username</span>
-                    <span className="font-bold text-emerald-400 truncate max-w-[170px]">{verifiedName}</span>
+                  <div className="topup-summary-row highlight">
+                    <span className="topup-summary-label">Player Name</span>
+                    <span className="topup-summary-val username-val">
+                      <CheckCircle2 size={14} /> {verifiedName}
+                    </span>
                   </div>
                 )}
 
-                <div className="flex justify-between items-center text-slate-300">
-                  <span>Payment Gateway</span>
-                  <span className="font-bold uppercase text-white">{paymentMethod}</span>
+                <div className="topup-summary-row">
+                  <span className="topup-summary-label">Gateway</span>
+                  <span className="topup-summary-val method-val">{paymentMethod === 'khqr' ? 'KHQR Bakong' : 'ABA PayWay'}</span>
                 </div>
               </div>
 
-              <div className="topup-summary-total mt-6 pt-4 border-t border-white/10">
-                <span className="text-xs text-slate-400 uppercase tracking-wider">Total Amount</span>
-                <div className="flex items-baseline justify-between mt-1">
-                  <span className="text-3xl font-black text-white">
-                    ${activePackage ? Number(activePackage.price).toFixed(2) : '0.00'}
+              <div className="topup-summary-total-card">
+                <div className="topup-total-label-wrap">
+                  <span className="topup-total-label">Total Payable</span>
+                  <span className="topup-instant-delivery-tag">⚡ Instant Delivery</span>
+                </div>
+                <div className="topup-total-price-wrap">
+                  <span className="topup-price-currency">$</span>
+                  <span className="topup-price-number">
+                    {activePackage ? Number(activePackage.price).toFixed(2) : '0.00'}
                   </span>
-                  <span className="text-xs text-slate-400">USD</span>
+                  <span className="topup-currency-badge">USD</span>
                 </div>
               </div>
 
@@ -765,7 +789,7 @@ export default function TopupShop({ onBackToTools }) {
                 type="button"
                 disabled={isSubmitting || !activePackage || !playerId.trim()}
                 onClick={handleCreateOrder}
-                className="btn btn-primary btn-xl w-full mt-6 topup-buy-now-btn"
+                className="topup-checkout-cta-btn"
               >
                 {isSubmitting ? (
                   <>
@@ -776,22 +800,46 @@ export default function TopupShop({ onBackToTools }) {
                   <>
                     <Zap size={18} />
                     <span>Instant Checkout</span>
+                    <ArrowRight size={16} />
                   </>
                 )}
               </button>
 
-              <div className="topup-trust-points mt-6 pt-4 border-t border-white/10 space-y-2 text-xs text-slate-400">
-                <div className="flex items-center gap-2">
-                  <ShieldCheck size={14} className="text-emerald-400" />
+              <div className="topup-trust-badges">
+                <div className="topup-trust-item">
+                  <ShieldCheck size={14} className="topup-trust-icon" />
                   <span>100% Authorized Game Reseller</span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <CheckCircle2 size={14} className="text-cyan-400" />
-                  <span>Instant Delivery via Flash API</span>
+                <div className="topup-trust-item">
+                  <CheckCircle2 size={14} className="topup-trust-icon" />
+                  <span>Official FlashTopUp Reseller API</span>
                 </div>
               </div>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Mobile Floating Checkout Bar (< 980px) */}
+      {viewTab === 'shop' && activePackage && playerId.trim() && (
+        <div className="topup-mobile-floating-bar">
+          <div className="topup-mobile-float-info">
+            <span className="topup-mobile-float-item">
+              💎 {activePackage.diamond_amount} Diamonds ({selectedGame?.name || 'Top-Up'})
+            </span>
+            <span className="topup-mobile-float-price">
+              ${Number(activePackage.price).toFixed(2)} USD
+            </span>
+          </div>
+          <button
+            type="button"
+            disabled={isSubmitting}
+            onClick={handleCreateOrder}
+            className="btn btn-primary topup-mobile-float-btn"
+          >
+            {isSubmitting ? <RefreshCw size={16} className="animate-spin" /> : <Zap size={16} />}
+            <span>Pay Now</span>
+          </button>
         </div>
       )}
 
@@ -807,31 +855,45 @@ export default function TopupShop({ onBackToTools }) {
               <X size={20} />
             </button>
 
-            <div className="topup-modal-header text-center">
-              <span className="text-xs uppercase tracking-widest text-cyan-400 font-semibold">
+            <div className="topup-modal-header">
+              <span className="topup-modal-kicker">
                 Scan & Complete Payment
               </span>
-              <h3 className="text-2xl font-black text-white mt-1">
+              <h3 className="topup-modal-order-no">
                 Order #{activeOrder.order_no}
               </h3>
-              <p className="text-sm text-slate-400 mt-1">
-                Amount: <b className="text-white">${Number(activeOrder.amount).toFixed(2)} USD</b> for 💎 {activeOrder.diamond_amount} Diamonds
+              <p className="topup-modal-subtitle">
+                Amount: <b>${Number(activeOrder.amount).toFixed(2)} USD</b> for 💎 {activeOrder.diamond_amount} Diamonds
               </p>
             </div>
 
-            <div className="topup-modal-body my-4">
+            <div className="topup-modal-body" style={{ margin: '16px 0' }}>
               {activeOrder.status === 'success' || activeOrder.status === 'completed' ? (
-                <div className="topup-success-box text-center py-8">
-                  <div className="w-16 h-16 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 flex items-center justify-center mx-auto mb-4 animate-bounce">
+                <div style={{ textAlign: 'center', padding: '32px 16px' }}>
+                  <div style={{
+                    width: '64px',
+                    height: '64px',
+                    borderRadius: '50%',
+                    background: 'rgba(16, 185, 129, 0.2)',
+                    color: '#34d399',
+                    border: '1px solid rgba(16, 185, 129, 0.4)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    margin: '0 auto 16px'
+                  }}>
                     <CheckCircle2 size={36} />
                   </div>
-                  <h4 className="text-xl font-bold text-white">Top-Up Successful!</h4>
-                  <p className="text-sm text-slate-300 mt-2 max-w-sm mx-auto">
+                  <h4 style={{ fontSize: '1.35rem', fontWeight: 800, color: '#ffffff', margin: 0 }}>
+                    Top-Up Successful!
+                  </h4>
+                  <p style={{ fontSize: '0.9rem', color: '#cbd5e1', margin: '10px 0 0' }}>
                     Your {activeOrder.diamond_amount} diamonds have been dispatched to User ID <b>{activeOrder.player_id}</b>. Enjoy your game!
                   </p>
                   <button 
                     type="button" 
-                    className="btn btn-primary mt-6 px-8"
+                    className="btn btn-primary"
+                    style={{ marginTop: '24px', padding: '12px 32px' }}
                     onClick={() => {
                       setIsPaymentModalOpen(false);
                       setActiveOrder(null);
@@ -841,7 +903,7 @@ export default function TopupShop({ onBackToTools }) {
                   </button>
                 </div>
               ) : (
-                <div className="text-center">
+                <div style={{ textAlign: 'center' }}>
                   <div className="topup-qr-frame">
                     {checkoutUrl ? (
                       <iframe 
@@ -850,20 +912,20 @@ export default function TopupShop({ onBackToTools }) {
                         className="topup-checkout-iframe"
                       />
                     ) : (
-                      <div className="py-12 flex flex-col items-center justify-center">
-                        <QrCode size={64} className="text-slate-500 mb-3" />
-                        <p className="text-sm text-slate-400">Loading payment gateway...</p>
+                      <div style={{ padding: '60px 20px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                        <QrCode size={64} style={{ color: '#64748b', marginBottom: '12px' }} />
+                        <p style={{ fontSize: '0.9rem', color: '#94a3b8' }}>Loading payment gateway...</p>
                       </div>
                     )}
                   </div>
 
-                  <div className="topup-polling-status mt-4 flex items-center justify-center gap-2 text-xs text-cyan-400">
+                  <div className="topup-polling-status">
                     <RefreshCw size={14} className="animate-spin" />
                     <span>Waiting for bank confirmation (auto-detecting)...</span>
                   </div>
 
                   {checkoutUrl && (
-                    <div className="mt-4 flex gap-3 justify-center">
+                    <div className="topup-modal-actions">
                       <a
                         href={checkoutUrl}
                         target="_blank"
@@ -878,7 +940,7 @@ export default function TopupShop({ onBackToTools }) {
                         onClick={() => copyOrderToClipboard(activeOrder.order_no)}
                         className="btn btn-secondary btn-sm"
                       >
-                        {copiedOrderNo ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} />}
+                        {copiedOrderNo ? <Check size={14} style={{ color: '#34d399' }} /> : <Copy size={14} />}
                         <span>{copiedOrderNo ? 'Copied' : 'Copy Order No'}</span>
                       </button>
                     </div>
