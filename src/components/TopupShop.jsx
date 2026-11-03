@@ -76,7 +76,7 @@ export default function TopupShop({ onBackToTools }) {
   const [playerId, setPlayerId] = useState('');
   const [zoneId, setZoneId] = useState('');
   const [selectedPackageId, setSelectedPackageId] = useState(FALLBACK_GAMES[0].packages[2].id);
-  const [paymentMethod, setPaymentMethod] = useState('payway'); // 'payway' | 'khqr'
+  const [paymentMethod, setPaymentMethod] = useState('khqr'); // Unified KHQR Gateway (ABA & Bakong)
 
   // Username Verification State
   const [isCheckingId, setIsCheckingId] = useState(false);
@@ -767,7 +767,7 @@ export default function TopupShop({ onBackToTools }) {
               )}
             </section>
 
-            {/* Step 4: Payment Gateway */}
+            {/* Step 4: Payment Gateway (Unified KHQR & ABA Mobile) */}
             <section className="topup-card">
               <div className="topup-step-indicator">
                 <span className="step-num">4</span>
@@ -777,36 +777,32 @@ export default function TopupShop({ onBackToTools }) {
                 </div>
               </div>
 
-              <div className="topup-payment-grid">
-                <button
-                  type="button"
-                  onClick={() => setPaymentMethod('payway')}
-                  className={`topup-payment-card ${paymentMethod === 'payway' ? 'selected' : ''}`}
-                >
-                  <div className="topup-pay-icon aba">
-                    <span style={{ fontWeight: 900, fontSize: '0.8rem' }}>ABA</span>
-                  </div>
-                  <div style={{ flex: 1, minWidth: 0, textAlign: 'left' }}>
-                    <h4 className="topup-pay-title">ABA PayWay</h4>
-                    <p className="topup-pay-subtitle">ABA Mobile App & Direct Scan</p>
-                  </div>
-                  <div className="topup-radio-circle"></div>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setPaymentMethod('khqr')}
-                  className={`topup-payment-card ${paymentMethod === 'khqr' ? 'selected' : ''}`}
-                >
+              <div className="topup-payment-grid" style={{ gridTemplateColumns: '1fr' }}>
+                <div className="topup-payment-card selected" style={{ cursor: 'default' }}>
                   <div className="topup-pay-icon khqr">
                     <span style={{ fontWeight: 900, fontSize: '0.8rem' }}>KHQR</span>
                   </div>
                   <div style={{ flex: 1, minWidth: 0, textAlign: 'left' }}>
-                    <h4 className="topup-pay-title">KHQR Bakong</h4>
-                    <p className="topup-pay-subtitle">All Cambodian Banking Apps</p>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                      <h4 className="topup-pay-title" style={{ margin: 0 }}>Cambodia National KHQR</h4>
+                      <span style={{
+                        fontSize: '0.68rem',
+                        fontWeight: 800,
+                        padding: '2px 8px',
+                        borderRadius: '999px',
+                        background: 'rgba(6, 182, 212, 0.2)',
+                        color: '#67e8f9',
+                        border: '1px solid rgba(6, 182, 212, 0.4)'
+                      }}>
+                        DYZZSTORE GATEWAY
+                      </span>
+                    </div>
+                    <p className="topup-pay-subtitle" style={{ marginTop: '4px' }}>
+                      Scan & Pay with <strong>ABA Mobile</strong>, <strong>Bakong</strong>, Acleda, Wing & all 30+ Cambodian Banking Apps
+                    </p>
                   </div>
-                  <div className="topup-radio-circle"></div>
-                </button>
+                  <div className="topup-radio-circle" style={{ borderColor: '#06b6d4', background: '#06b6d4' }}></div>
+                </div>
               </div>
             </section>
           </div>
@@ -855,7 +851,7 @@ export default function TopupShop({ onBackToTools }) {
 
                 <div className="topup-summary-row">
                   <span className="topup-summary-label">Gateway</span>
-                  <span className="topup-summary-val method-val">{paymentMethod === 'khqr' ? 'KHQR Bakong' : 'ABA PayWay'}</span>
+                  <span className="topup-summary-val method-val">Cambodia KHQR (ABA & All Banks)</span>
                 </div>
               </div>
 
