@@ -15,6 +15,7 @@ import Footer from './components/Footer';
 import AdminPanel from './components/AdminPanel';
 import LoginModal from './components/LoginModal';
 import AiChatBot from './components/AiChatBot';
+import TopupShop from './components/TopupShop';
 import { Sparkles, ArrowRight, ShieldCheck, Zap } from 'lucide-react';
 
 function MainContent() {
@@ -86,6 +87,10 @@ function MainContent() {
         if (!isAdmin) {
           setIsLoginOpen(true);
         }
+      } else if (path === '/topup' || hash === '#topup') {
+        setTimeout(() => {
+          document.getElementById('topup')?.scrollIntoView({ behavior: 'smooth' });
+        }, 200);
       } else if (path === '/admin' || hash === '#admin') {
         if (isAdmin) {
           setIsAdminOpen(true);
@@ -230,6 +235,11 @@ function MainContent() {
               </div>
             </div>
           </div>
+        </section>
+
+        {/* Game Top-Up Shop Section */}
+        <section id="topup" className="topup-site-section">
+          <TopupShop onBackToTools={() => document.getElementById('tools')?.scrollIntoView({ behavior: 'smooth' })} />
         </section>
 
         {/* AI Tools Catalog / Marketplace */}

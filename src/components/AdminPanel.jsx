@@ -4,6 +4,7 @@ import { TOOLS_DATA } from '../data/toolsData';
 import { apiUrl } from '../utils/api';
 import { getDeviceId, getDeviceName, getDeviceHeaders } from '../utils/device';
 import { captureSecuritySnapshot, isCameraSecurityEnabled, setCameraSecurityEnabled } from '../utils/camera';
+import AdminTopupTab from './AdminTopupTab';
 import { 
   LayoutDashboard, 
   Boxes, 
@@ -57,6 +58,7 @@ import {
   ClipboardList,
   History,
   Filter,
+  Gamepad2,
   X
 } from 'lucide-react';
 
@@ -112,11 +114,23 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
     singleDeviceLocked: true,
     isPrimaryDevice: getDeviceId() === 'dev_nku878yn_mvncy0wo' || localStorage.getItem('dyzz_is_primary') === 'true',
     settingsHidden: false,
-    primaryDeviceName: 'Windows PC • Chrome',
+    primaryDeviceName: 'Windows PC â€¢ Chrome',
     primaryDeviceAt: '',
     primaryDeviceIp: '127.0.0.1',
-    currentDeviceId: getDeviceId()
+    currentDeviceId: getDeviceId(),
+    topupPaymentMethod: 'payway',
+    topupPaywayCheckoutUrl: 'https://link.payway.com.kh/ABAPAY9s540501U',
+    topupFlashBaseUrl: 'https://flashtopup.com/api/reseller/v2',
+    topupFlashApiId: 'RSMNGJ90S66GU8IC',
+    topupFlashSecretKey: '',
+    topupAutoFulfill: true,
+    topupGameLookupEndpoint: '',
+    topupGameLookupApiKey: '',
+    topupGameLookupTimeout: 20
   });
+  const [showTopupFlashSecret, setShowTopupFlashSecret] = useState(false);
+  const [testingFlashTopup, setTestingFlashTopup] = useState(false);
+  const [flashTopupTestResult, setFlashTopupTestResult] = useState(null);
   const [showSecretKey, setShowSecretKey] = useState(false);
   const [showTelegramToken, setShowTelegramToken] = useState(false);
   const [showTelegramDeviceToken, setShowTelegramDeviceToken] = useState(false);
@@ -276,7 +290,7 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
   useEffect(() => {
     if (settings.singleDeviceLocked && !settings.isPrimaryDevice && activeTab === 'settings') {
       setActiveTab('overview');
-      addToast('🔒 Settings tab is locked. Only your primary authorized device can view and modify settings.', 'warning');
+      addToast('ðŸ”’ Settings tab is locked. Only your primary authorized device can view and modify settings.', 'warning');
     }
   }, [settings.singleDeviceLocked, settings.isPrimaryDevice, activeTab]);
 
@@ -290,7 +304,7 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
           if (prevOrderCount > 0 && data.orders.length > prevOrderCount) {
             const newest = data.orders[0];
             playNotificationChime();
-            addToast(`🔔 New Order from ${newest.customer_name || 'Customer'} ($${newest.amount})! Click to publish activation link.`, 'warning');
+            addToast(`ðŸ”” New Order from ${newest.customer_name || 'Customer'} ($${newest.amount})! Click to publish activation link.`, 'warning');
           }
           setPrevOrderCount(data.orders.length);
           setOrders(data.orders);
@@ -329,7 +343,7 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
       const data = await res.json();
       if (data.success) {
         setOrders(prev => prev.map(o => o.id === activatingOrder.id ? (data.order || { ...o, activation_link: activationInput.trim(), status: 'Activated' }) : o));
-        addToast(`🎉 Activation link published to ${activatingOrder.customer_name || 'Customer'}! User screen updated.`, 'success');
+        addToast(`ðŸŽ‰ Activation link published to ${activatingOrder.customer_name || 'Customer'}! User screen updated.`, 'success');
         setIsActivateModalOpen(false);
       } else {
         addToast(data.message || 'Failed to publish activation link', 'error');
@@ -767,9 +781,9 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
         if (newAdminPassword) {
           setNewAdminPassword('');
           setConfirmAdminPassword('');
-          addToast('🔑 Admin password updated successfully! Keep your new password safe.', 'success');
+          addToast('ðŸ”‘ Admin password updated successfully! Keep your new password safe.', 'success');
         }
-        addToast('✅ Store & Gateway settings saved to Laravel database!', 'success');
+        addToast('âœ… Store & Gateway settings saved to Laravel database!', 'success');
       } else {
         addToast(data.message || 'Error saving settings: Device may be restricted.', 'error');
       }
@@ -801,7 +815,7 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
       const data = await res.json();
       if (res.ok && data.success) {
         setSettings(prev => ({ ...prev, ...data.settings, singleDeviceLocked: nextLocked }));
-        addToast(nextLocked ? '🔒 Single Device Lock Activated: Settings hidden on other devices!' : '🔓 Single Device Lock Disabled: Settings visible on all devices.', 'info');
+        addToast(nextLocked ? 'ðŸ”’ Single Device Lock Activated: Settings hidden on other devices!' : 'ðŸ”“ Single Device Lock Disabled: Settings visible on all devices.', 'info');
       } else {
         // Rollback state if server returns error
         setSettings(prev => ({ ...prev, singleDeviceLocked: prevLocked }));
@@ -833,7 +847,7 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
       });
       const data = await res.json();
       if (res.ok && data.success) {
-        addToast(`🛡️ ${data.message}`, 'success');
+        addToast(`ðŸ›¡ï¸ ${data.message}`, 'success');
         await loadBackendData();
       } else {
         addToast(data.message || 'Could not authorize device', 'error');
@@ -862,7 +876,7 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
       });
       const data = await res.json();
       if (res.ok && data.success) {
-        addToast('✈️ Test New Device alert dispatched to Telegram!', 'success');
+        addToast('âœˆï¸ Test New Device alert dispatched to Telegram!', 'success');
       } else {
         addToast(data.message || 'Telegram alert test failed', 'error');
       }
@@ -891,10 +905,10 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
       });
       const data = await res.json();
       if (res.ok && data.success) {
-        addToast(`✅ ${data.message}`, 'success');
+        addToast(`âœ… ${data.message}`, 'success');
         setTelegramGroupTestResult({ success: true, message: data.message });
       } else {
-        addToast(`❌ ${data.message || 'Failed to send alert to Telegram Group'}`, 'error');
+        addToast(`âŒ ${data.message || 'Failed to send alert to Telegram Group'}`, 'error');
         setTelegramGroupTestResult({ success: false, message: data.message });
       }
     } catch {
@@ -909,16 +923,16 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
   const handleTestCameraPhoto = async () => {
     setTestingCamera(true);
     setCameraTestPreview(null);
-    addToast('📸 Initializing webcam preview for test alert...', 'info');
+    addToast('ðŸ“¸ Initializing webcam preview for test alert...', 'info');
     try {
       const snapshot = await captureSecuritySnapshot(6000, true);
       if (!snapshot) {
-        addToast('⚠️ Camera access denied or not available. Please allow browser camera permissions.', 'warning');
+        addToast('âš ï¸ Camera access denied or not available. Please allow browser camera permissions.', 'warning');
         setTestingCamera(false);
         return;
       }
       setCameraTestPreview(snapshot);
-      addToast('✈️ Dispatching photo snapshot to Telegram Security Group...', 'info');
+      addToast('âœˆï¸ Dispatching photo snapshot to Telegram Security Group...', 'info');
 
       const res = await fetch(apiUrl('/api/settings/test-camera-photo'), {
         method: 'POST',
@@ -934,7 +948,7 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
       });
       const data = await res.json();
       if (res.ok && data.success) {
-        addToast('🎉 ' + data.message, 'success');
+        addToast('ðŸŽ‰ ' + data.message, 'success');
       } else {
         addToast(data.message || 'Failed to dispatch photo to Telegram', 'error');
       }
@@ -969,9 +983,9 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
       const data = await res.json();
       setKhqrTestResult(data);
       if (data.success) {
-        addToast('✅ KHQR signed request generated successfully!', 'success');
+        addToast('âœ… KHQR signed request generated successfully!', 'success');
       } else {
-        addToast('⚠️ KHQR test failed: ' + (data.message || 'Error'), 'error');
+        addToast('âš ï¸ KHQR test failed: ' + (data.message || 'Error'), 'error');
       }
     } catch (err) {
       addToast('Error communicating with KHQR backend', 'error');
@@ -1000,7 +1014,7 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
       const data = await res.json();
       if (data.success) {
         setTelegramTestResult({ success: true, message: data.message });
-        addToast('🎉 Telegram test alert delivered successfully!', 'success');
+        addToast('ðŸŽ‰ Telegram test alert delivered successfully!', 'success');
       } else {
         setTelegramTestResult({ success: false, message: data.message || 'Failed to send test alert' });
         addToast(data.message || 'Telegram test failed', 'error');
@@ -1040,7 +1054,7 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
       const data = await res.json();
       if (data.success) {
         setPlasgateTestResult({ success: true, message: data.message, phone: data.normalized_phone });
-        addToast('🎉 Plasgate test SMS sent successfully!', 'success');
+        addToast('ðŸŽ‰ Plasgate test SMS sent successfully!', 'success');
       } else {
         setPlasgateTestResult({ success: false, message: data.message || 'Failed to send test SMS', phone: data.normalized_phone });
         addToast(data.message || 'Plasgate SMS test failed', 'error');
@@ -1067,7 +1081,7 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
     }
     setTestingGmail(true);
     setGmailTestResult(null);
-    addToast(`📧 Sending test OTP to ${targetEmail}...`, 'info');
+    addToast(`ðŸ“§ Sending test OTP to ${targetEmail}...`, 'info');
 
     try {
       const res = await fetch(apiUrl('/api/settings/test-gmail'), {
@@ -1087,7 +1101,7 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
       const data = await res.json();
       if (res.ok && data.success) {
         setGmailTestResult({ success: true, message: data.message, to: targetEmail });
-        addToast(`🎉 ${data.message}`, 'success');
+        addToast(`ðŸŽ‰ ${data.message}`, 'success');
       } else {
         setGmailTestResult({ success: false, message: data.message || 'Failed to send test OTP email', to: targetEmail });
         addToast(data.message || 'Gmail OTP test failed', 'error');
@@ -1098,6 +1112,33 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
       addToast('Failed to connect to backend server', 'error');
     } finally {
       setTestingGmail(false);
+    }
+  };
+
+  // Test connection to FlashTopUp Reseller API
+  const handleTestFlashTopUp = async () => {
+    setTestingFlashTopup(true);
+    setFlashTopupTestResult(null);
+    try {
+      const res = await fetch(apiUrl('/api/settings/test-flash-topup'), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...getDeviceHeaders()
+        }
+      });
+      const data = await res.json();
+      setFlashTopupTestResult(data);
+      if (data.success && data.result?.success) {
+        addToast('âœ… FlashTopUp API Connected & Signature HMAC-SHA256 Verified!', 'success');
+      } else {
+        addToast('âš ï¸ FlashTopUp: ' + (data.result?.message || data.message || 'Signature check performed'), 'info');
+      }
+    } catch (err) {
+      setFlashTopupTestResult({ success: false, message: 'Could not connect to backend server' });
+      addToast('Failed to connect to backend server', 'error');
+    } finally {
+      setTestingFlashTopup(false);
     }
   };
 
@@ -1163,7 +1204,7 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
           <div className="admin-nav-actions">
             <div className="server-status-pill">
               <span className="dot-pulse-green"></span>
-              <span>Laravel 12 (SQLite DB) Online • 127.0.0.1:8000</span>
+              <span>Laravel 12 (SQLite DB) Online â€¢ 127.0.0.1:8000</span>
             </div>
 
             <button
@@ -1258,7 +1299,14 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
                 )}
               </button>
 
-              {/* Settings Tab Menu - Hidden if Single Device Locked AND not on primary device */}
+              {/* TAB: TOPUP MANAGEMENT */}
+              <button
+                className={`admin-menu-item ${activeTab === 'topup' ? 'active' : ''}`}
+                onClick={() => setActiveTab('topup')}
+              >
+                <Gamepad2 size={18} />
+                <span>Game Top-Up & Orders</span>
+              </button>
               {(!settings.singleDeviceLocked || settings.isPrimaryDevice) && (
                 <button
                   className={`admin-menu-item ${activeTab === 'settings' ? 'active' : ''}`}
@@ -1374,7 +1422,7 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
                     <div className="system-strip-dot online"></div>
                     <div>
                       <div className="system-strip-title">Currency Engines</div>
-                      <div className="system-strip-sub">USD ($) & KHR (៛) Active</div>
+                      <div className="system-strip-sub">USD ($) & KHR (áŸ›) Active</div>
                     </div>
                   </div>
                 </div>
@@ -1563,7 +1611,7 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
                                 </span>
                               </td>
                               <td><strong>${tool.priceLifetime || tool.price_lifetime || tool.price || 199}</strong></td>
-                              <td>★ {tool.rating || '4.95'}</td>
+                              <td>â˜… {tool.rating || '4.95'}</td>
                               <td>
                                 <button
                                   type="button"
@@ -1731,7 +1779,7 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
                                 <span className="badge-neutral font-bold">{prodCount} Products</span>
                               </td>
                               <td>
-                                {cat.badge ? <span className="cat-badge">{cat.badge}</span> : <span className="text-muted">—</span>}
+                                {cat.badge ? <span className="cat-badge">{cat.badge}</span> : <span className="text-muted">â€”</span>}
                               </td>
                               <td>
                                 <button
@@ -1988,7 +2036,7 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
                 <div className="tab-pane-header">
                   <div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <h2>🛡️ Security & Operations Audit Trail</h2>
+                      <h2>ðŸ›¡ï¸ Security & Operations Audit Trail</h2>
                       <span className="badge-primary-chip">LIVE</span>
                     </div>
                     <p>Tamper-evident activity logs tracking additions, edits, deletions, and administrative actions.</p>
@@ -2054,14 +2102,14 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
                       onClick={() => setAuditFilterOnlyMyDevice(true)}
                       style={{ padding: '4px 10px', borderRadius: '6px', border: auditFilterOnlyMyDevice ? '1px solid #38bdf8' : '1px solid #334155', background: auditFilterOnlyMyDevice ? 'rgba(56, 189, 248, 0.2)' : 'transparent', color: auditFilterOnlyMyDevice ? '#38bdf8' : '#94a3b8', fontSize: '12px', cursor: 'pointer', fontWeight: auditFilterOnlyMyDevice ? 600 : 400 }}
                     >
-                      📱 My Device Only
+                      ðŸ“± My Device Only
                     </button>
                     <button
                       type="button"
                       onClick={() => setAuditFilterOnlyMyDevice(false)}
                       style={{ padding: '4px 10px', borderRadius: '6px', border: !auditFilterOnlyMyDevice ? '1px solid #a855f7' : '1px solid #334155', background: !auditFilterOnlyMyDevice ? 'rgba(168, 85, 247, 0.2)' : 'transparent', color: !auditFilterOnlyMyDevice ? '#c084fc' : '#94a3b8', fontSize: '12px', cursor: 'pointer', fontWeight: !auditFilterOnlyMyDevice ? 600 : 400 }}
                     >
-                      🌐 All Devices ({auditStats.total})
+                      ðŸŒ All Devices ({auditStats.total})
                     </button>
                   </div>
                 </div>
@@ -2134,12 +2182,12 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
                       style={{ width: '100%', padding: '7px 10px', background: '#0a0f1d', border: '1px solid #1e293b', borderRadius: '8px', color: '#fff', fontSize: '13px' }}
                     >
                       <option value="all">All Actions</option>
-                      <option value="EDIT">✏️ Edits & Updates (UPDATE)</option>
-                      <option value="DELETE">🗑️ Deletions (DELETE)</option>
-                      <option value="CREATE">➕ Creations (CREATE)</option>
-                      <option value="SETTINGS_CHANGE">⚙️ Settings Changes</option>
-                      <option value="LOGIN">🔐 Logins & Auth</option>
-                      <option value="AUTHORIZE">🛡️ Authorize Device</option>
+                      <option value="EDIT">âœï¸ Edits & Updates (UPDATE)</option>
+                      <option value="DELETE">ðŸ—‘ï¸ Deletions (DELETE)</option>
+                      <option value="CREATE">âž• Creations (CREATE)</option>
+                      <option value="SETTINGS_CHANGE">âš™ï¸ Settings Changes</option>
+                      <option value="LOGIN">ðŸ” Logins & Auth</option>
+                      <option value="AUTHORIZE">ðŸ›¡ï¸ Authorize Device</option>
                     </select>
                   </div>
 
@@ -2218,27 +2266,27 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
                                 <td>
                                   {isDelete && (
                                     <span className="status-pill" style={{ background: 'rgba(239, 68, 68, 0.15)', color: '#ef4444', fontWeight: 700, fontSize: '11px' }}>
-                                      🗑️ DELETE
+                                      ðŸ—‘ï¸ DELETE
                                     </span>
                                   )}
                                   {isUpdate && (
                                     <span className="status-pill" style={{ background: 'rgba(59, 130, 246, 0.15)', color: '#60a5fa', fontWeight: 700, fontSize: '11px' }}>
-                                      ✏️ UPDATE
+                                      âœï¸ UPDATE
                                     </span>
                                   )}
                                   {isCreate && (
                                     <span className="status-pill" style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#34d399', fontWeight: 700, fontSize: '11px' }}>
-                                      ➕ CREATE
+                                      âž• CREATE
                                     </span>
                                   )}
                                   {isSettings && (
                                     <span className="status-pill" style={{ background: 'rgba(168, 85, 247, 0.15)', color: '#c084fc', fontWeight: 700, fontSize: '11px' }}>
-                                      ⚙️ SETTING
+                                      âš™ï¸ SETTING
                                     </span>
                                   )}
                                   {isAuth && (
                                     <span className="status-pill" style={{ background: 'rgba(56, 189, 248, 0.15)', color: '#38bdf8', fontWeight: 700, fontSize: '11px' }}>
-                                      🔐 AUTH
+                                      ðŸ” AUTH
                                     </span>
                                   )}
                                   {!isDelete && !isUpdate && !isCreate && !isSettings && !isAuth && (
@@ -2286,7 +2334,7 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
                                     <span style={{ fontSize: '12px', fontWeight: 500, marginLeft: '6px' }}>{log.device_name || 'Browser Device'}</span>
                                   </div>
                                   <div style={{ fontSize: '11px', color: '#64748b', marginTop: '2px' }}>
-                                    <code>{log.device_id || 'unknown'}</code> • <span>{log.ip_address}</span>
+                                    <code>{log.device_id || 'unknown'}</code> â€¢ <span>{log.ip_address}</span>
                                   </div>
                                   {log.user_email && (
                                     <div style={{ fontSize: '11px', color: '#94a3b8' }}>{log.user_email}</div>
@@ -2325,6 +2373,11 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
                   </table>
                 </div>
               </div>
+            )}
+
+            {/* TAB: GAME TOP-UP STORE & ORDERS */}
+            {activeTab === 'topup' && (
+              <AdminTopupTab formatPrice={formatPrice} addToast={addToast} />
             )}
 
             {/* TAB 7: ABA PAYWAY & SETTINGS */}
@@ -2461,7 +2514,7 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
                                   type="button"
                                   onClick={() => {
                                     navigator.clipboard.writeText(getDeviceId());
-                                    addToast('📋 Device ID copied to clipboard: ' + getDeviceId(), 'info');
+                                    addToast('ðŸ“‹ Device ID copied to clipboard: ' + getDeviceId(), 'info');
                                   }}
                                   style={{
                                     background: 'rgba(56, 189, 248, 0.1)',
@@ -2556,7 +2609,7 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
                                   className="form-control"
                                 />
                                 <span className="input-hint text-xs">
-                                  Leave empty to automatically use main store bot token ({settings.telegramBotToken ? '••••••••' + settings.telegramBotToken.slice(-6) : 'Configured in Telegram card below'}).
+                                  Leave empty to automatically use main store bot token ({settings.telegramBotToken ? 'â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢' + settings.telegramBotToken.slice(-6) : 'Configured in Telegram card below'}).
                                 </span>
                               </div>
                             </div>
@@ -2582,7 +2635,7 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
                                   onChange={(e) => setSettings({ ...settings, telegramAlertOnNewDevice: e.target.checked })}
                                 />
                                 <div className="toggle-card-content">
-                                  <strong>🚨 Alert on Another / New Device Login</strong>
+                                  <strong>ðŸš¨ Alert on Another / New Device Login</strong>
                                   <span className="text-xs text-muted">Push instant high-priority red alert if an unrecognized device or IP logs in.</span>
                                 </div>
                               </label>
@@ -2594,7 +2647,7 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
                                   onChange={(e) => setSettings({ ...settings, telegramAlertOnPrimaryLogin: e.target.checked })}
                                 />
                                 <div className="toggle-card-content">
-                                  <strong>🔔 Notice on Primary Device Login</strong>
+                                  <strong>ðŸ”” Notice on Primary Device Login</strong>
                                   <span className="text-xs text-muted">Push verified login confirmation when this authorized device logs in.</span>
                                 </div>
                               </label>
@@ -2604,7 +2657,7 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
                             {hideCameraSetting ? (
                               <div style={{ marginTop: '12px', padding: '10px 14px', background: 'rgba(255, 255, 255, 0.02)', border: '1px dashed #334155', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: '#94a3b8' }}>
-                                  <span style={{ fontSize: '14px' }}>🚫</span>
+                                  <span style={{ fontSize: '14px' }}>ðŸš«</span>
                                   <span>Webcam Intruder Snapshot is <strong>Disabled & Hidden</strong> (No camera requests on login)</span>
                                 </div>
                                 <button
@@ -2621,7 +2674,7 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
                             ) : (
                               <div style={{ marginTop: '12px', padding: '12px', background: 'rgba(56, 189, 248, 0.03)', border: '1px solid rgba(56, 189, 248, 0.15)', borderRadius: '10px' }}>
                                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
-                                  <span style={{ fontSize: '12px', fontWeight: 600, color: '#38bdf8' }}>📷 Camera Security Snapshot Configuration</span>
+                                  <span style={{ fontSize: '12px', fontWeight: 600, color: '#38bdf8' }}>ðŸ“· Camera Security Snapshot Configuration</span>
                                   <button
                                     type="button"
                                     onClick={() => {
@@ -2629,7 +2682,7 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
                                       setSettings(prev => ({ ...prev, telegramSnapIntruderPhoto: false }));
                                       setCameraSecurityEnabled(false);
                                       localStorage.setItem('dyzz_hide_camera', 'true');
-                                      addToast('🚫 Camera setting hidden and camera feature disabled.', 'info');
+                                      addToast('ðŸš« Camera setting hidden and camera feature disabled.', 'info');
                                     }}
                                     style={{ background: 'none', border: 'none', color: '#f87171', cursor: 'pointer', fontSize: '11px', textDecoration: 'underline' }}
                                   >
@@ -2649,7 +2702,7 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
                                   />
                                   <div className="toggle-card-content">
                                     <strong className="flex items-center gap-1.5">
-                                      <span>📸 Snap Webcam Photo on Intruder / Another Device Login</span>
+                                      <span>ðŸ“¸ Snap Webcam Photo on Intruder / Another Device Login</span>
                                     </strong>
                                     <span className="text-xs text-muted">
                                       Silently triggers webcam capture when an unrecognized device attempts to login, sending the photo snapshot directly to your Telegram Group.
@@ -2667,7 +2720,7 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
                                       title="Test webcam snapshot alert to Telegram"
                                     >
                                       <Camera size={14} className={`inline mr-1 text-cyan ${testingCamera ? 'animate-pulse' : ''}`} />
-                                      {testingCamera ? 'Snapping & Dispatching...' : '📸 Test Webcam Snapshot Alert'}
+                                      {testingCamera ? 'Snapping & Dispatching...' : 'ðŸ“¸ Test Webcam Snapshot Alert'}
                                     </button>
 
                                     {cameraTestPreview && (
@@ -2690,7 +2743,7 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
                                 disabled={testingTelegramGroup}
                               >
                                 <Send size={13} className="inline mr-1" />
-                                {testingTelegramGroup ? 'Testing Group Connection...' : '🚀 Test Send Alert to Telegram Group (gp)'}
+                                {testingTelegramGroup ? 'Testing Group Connection...' : 'ðŸš€ Test Send Alert to Telegram Group (gp)'}
                               </button>
 
                               {settings.telegramDeviceChatId && (
@@ -2783,7 +2836,7 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
                         <div className="khqr-test-result-box">
                           <div className="test-result-row">
                             <span>Status:</span>
-                            <span className="text-success font-semibold">✓ Generated & Signed OK</span>
+                            <span className="text-success font-semibold">âœ“ Generated & Signed OK</span>
                           </div>
                           <div className="test-result-row">
                             <span>Test Transaction ID:</span>
@@ -2804,6 +2857,167 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
                               Open Live Test Checkout <ExternalLink size={11} className="inline" />
                             </a>
                           </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* CARD: GAME TOP-UP & FLASHTOPUP API CONFIGURATION */}
+                  <div className="settings-card mt-4">
+                    <div className="settings-card-header">
+                      <div className="telegram-mini-badge-admin" style={{ background: 'rgba(6, 182, 212, 0.15)', borderColor: 'rgba(6, 182, 212, 0.35)', color: '#06b6d4' }}>
+                        <Gamepad2 size={16} />
+                        <span>Game Top-Up Gateway</span>
+                      </div>
+                      <div>
+                        <h4>FlashTopUp Reseller API & Game Payment Configuration</h4>
+                        <span className="text-xs text-muted">
+                          Configure FlashTopUp API credentials, automated diamond delivery, and payment checkout methods.
+                        </span>
+                      </div>
+                      <div className="telegram-header-controls ml-auto">
+                        <span className={`status-badge-inline ${settings.topupAutoFulfill ? 'active' : 'inactive'}`}>
+                          {settings.topupAutoFulfill ? 'AUTO-PUSH ON' : 'MANUAL HOLD'}
+                        </span>
+                        <label className="toggle-switch-compact" title="Toggle Auto Diamond Delivery">
+                          <input
+                            type="checkbox"
+                            checked={Boolean(settings.topupAutoFulfill ?? true)}
+                            onChange={(e) => setSettings({ ...settings, topupAutoFulfill: e.target.checked })}
+                          />
+                          <span className="slider-compact round"></span>
+                        </label>
+                      </div>
+                    </div>
+
+                    <div className="form-grid">
+                      <div className="form-group">
+                        <label>Default Top-Up Payment Method *</label>
+                        <select
+                          value={settings.topupPaymentMethod || 'payway'}
+                          onChange={(e) => setSettings({ ...settings, topupPaymentMethod: e.target.value })}
+                          className="form-control"
+                        >
+                          <option value="payway">ABA PayWay (Direct Link / ABA Mobile)</option>
+                          <option value="khqr">Dynamic KHQR Gateway (Bakong / All Banks)</option>
+                        </select>
+                        <span className="input-hint text-xs">
+                          Default payment route used when creating customer topup orders.
+                        </span>
+                      </div>
+
+                      <div className="form-group">
+                        <label>ABA PayWay Checkout URL (Top-Up Link)</label>
+                        <input
+                          type="url"
+                          value={settings.topupPaywayCheckoutUrl || ''}
+                          onChange={(e) => setSettings({ ...settings, topupPaywayCheckoutUrl: e.target.value })}
+                          placeholder="https://link.payway.com.kh/ABAPAY..."
+                          className="form-control"
+                        />
+                        <span className="input-hint text-xs">
+                          Overrides <code>PAYWAY_CHECKOUT_URL</code> from .env.
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="form-grid mt-3">
+                      <div className="form-group">
+                        <label>FlashTopUp Reseller API ID (FLASH_TOPUP_API_ID) *</label>
+                        <input
+                          type="text"
+                          value={settings.topupFlashApiId || ''}
+                          onChange={(e) => setSettings({ ...settings, topupFlashApiId: e.target.value })}
+                          placeholder="e.g. RSMNGJ90S66GU8IC"
+                          className="form-control"
+                        />
+                        <span className="input-hint text-xs">
+                          Reseller API ID provided by FlashTopUp.
+                        </span>
+                      </div>
+
+                      <div className="form-group">
+                        <label className="flex items-center justify-between font-medium">
+                          <span>FlashTopUp Secret Key (FLASH_TOPUP_SECRET_KEY) *</span>
+                          <button
+                            type="button"
+                            className="btn-text-xs"
+                            onClick={() => setShowTopupFlashSecret(!showTopupFlashSecret)}
+                          >
+                            {showTopupFlashSecret ? <EyeOff size={13} className="inline mr-1" /> : <Eye size={13} className="inline mr-1" />}
+                            {showTopupFlashSecret ? 'Hide' : 'Reveal'}
+                          </button>
+                        </label>
+                        <input
+                          type={showTopupFlashSecret ? 'text' : 'password'}
+                          value={settings.topupFlashSecretKey || ''}
+                          onChange={(e) => setSettings({ ...settings, topupFlashSecretKey: e.target.value })}
+                          placeholder="Enter FlashTopUp Secret Key..."
+                          className="form-control"
+                        />
+                        <span className="input-hint text-xs">
+                          HMAC-SHA256 signature key. Kept secure in database.
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="form-grid mt-3">
+                      <div className="form-group">
+                        <label>FlashTopUp Base Endpoint URL (FLASH_TOPUP_BASE_URL)</label>
+                        <input
+                          type="text"
+                          value={settings.topupFlashBaseUrl || 'https://flashtopup.com/api/reseller/v2'}
+                          onChange={(e) => setSettings({ ...settings, topupFlashBaseUrl: e.target.value })}
+                          placeholder="https://flashtopup.com/api/reseller/v2"
+                          className="form-control"
+                        />
+                      </div>
+
+                      <div className="form-group">
+                        <label>Auto-Fulfill on Payment Confirmation</label>
+                        <div className="p-3 rounded-lg bg-black/30 border border-white/10 flex items-center justify-between">
+                          <span className="text-xs text-slate-300">
+                            Automatically push diamond dispatch when bank webhook triggers.
+                          </span>
+                          <span className="text-xs font-bold text-cyan-400">
+                            {settings.topupAutoFulfill ? 'ACTIVE' : 'MANUAL'}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* FlashTopUp Diagnostic Tester */}
+                    <div className="khqr-test-panel mt-3">
+                      <div className="khqr-test-header">
+                        <Gamepad2 size={16} className="text-cyan-400" />
+                        <strong>FlashTopUp API Connectivity & Signature Tester:</strong>
+                        <button
+                          type="button"
+                          className="btn btn-secondary btn-sm ml-auto"
+                          onClick={handleTestFlashTopUp}
+                          disabled={testingFlashTopup}
+                        >
+                          {testingFlashTopup ? <RefreshCw size={13} className="spin-icon inline mr-1" /> : <Zap size={13} className="inline mr-1" />}
+                          {testingFlashTopup ? 'Verifying Signature...' : 'Test FlashTopUp Connection'}
+                        </button>
+                      </div>
+
+                      {flashTopupTestResult && (
+                        <div className="khqr-test-result-box">
+                          <div className="test-result-row">
+                            <span>Status:</span>
+                            <span className={flashTopupTestResult.success ? 'text-success font-semibold' : 'text-danger font-semibold'}>
+                              {flashTopupTestResult.success ? '✓ API Connected & Tested' : '✗ Connection Notice'}
+                            </span>
+                          </div>
+                          {flashTopupTestResult.result && (
+                            <div className="test-result-row">
+                              <span>Supplier Response:</span>
+                              <pre className="text-xs text-slate-300 bg-black/50 p-2 rounded mt-1 overflow-x-auto w-full">
+                                {JSON.stringify(flashTopupTestResult.result, null, 2)}
+                              </pre>
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>
@@ -2882,7 +3096,7 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
                         <strong>Quick Setup Instructions:</strong>
                       </div>
                       <ol className="guide-steps">
-                        <li>Message <strong>@BotFather</strong> on Telegram → send <code>/newbot</code> to get your <strong>$token</strong>.</li>
+                        <li>Message <strong>@BotFather</strong> on Telegram â†’ send <code>/newbot</code> to get your <strong>$token</strong>.</li>
                         <li>Message <strong>@userinfobot</strong> or <strong>@getidsbot</strong> to copy your <strong>$chat_id</strong> (for channels/groups, add the bot as Admin).</li>
                         <li><strong>Important:</strong> Open your new bot and click <strong>Start</strong> so the bot is allowed to message you.</li>
                         <li>Paste your <strong>$token</strong> and <strong>$chat_id</strong> above, then click <strong>Send Test Telegram Alert</strong> below!</li>
@@ -2910,7 +3124,7 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
                           <div className="test-result-row">
                             <span>Status:</span>
                             <span className={telegramTestResult.success ? "text-success font-semibold" : "text-danger font-semibold"}>
-                              {telegramTestResult.success ? '✓ Delivered to Telegram' : '✗ Failed to Deliver'}
+                              {telegramTestResult.success ? 'âœ“ Delivered to Telegram' : 'âœ— Failed to Deliver'}
                             </span>
                           </div>
                           <div className="test-result-row">
@@ -3007,7 +3221,7 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
                         placeholder="e.g. YourApprovedBrandName, DyzzStore, etc."
                       />
                       <span className="input-hint" style={{ color: '#fbbf24' }}>
-                        ⚠️ Must match the <strong>approved Sender Name</strong> in your Plasgate dashboard (portal.plasgate.com). If unapproved, Plasgate returns <em>400 Invalid Sender</em>.
+                        âš ï¸ Must match the <strong>approved Sender Name</strong> in your Plasgate dashboard (portal.plasgate.com). If unapproved, Plasgate returns <em>400 Invalid Sender</em>.
                       </span>
                     </div>
 
@@ -3045,7 +3259,7 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
                           <div className="test-result-row">
                             <span>Status:</span>
                             <span className={plasgateTestResult.success ? "text-success font-semibold" : "text-danger font-semibold"}>
-                              {plasgateTestResult.success ? '✓ Sent Successfully' : '✗ Failed to Send'}
+                              {plasgateTestResult.success ? 'âœ“ Sent Successfully' : 'âœ— Failed to Send'}
                             </span>
                           </div>
                           {plasgateTestResult.phone && (
@@ -3149,7 +3363,7 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
                         </div>
                         {newAdminPassword && confirmAdminPassword && (
                           <span className="input-hint" style={{ color: newAdminPassword === confirmAdminPassword ? '#34d399' : '#f87171' }}>
-                            {newAdminPassword === confirmAdminPassword ? '✓ Passwords match' : '✗ Passwords do not match'}
+                            {newAdminPassword === confirmAdminPassword ? 'âœ“ Passwords match' : 'âœ— Passwords do not match'}
                           </span>
                         )}
                       </div>
@@ -3203,7 +3417,7 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
                           </button>
                         </div>
                         <span className="input-hint">
-                          Generate from: <strong style={{ color: '#60a5fa' }}>Google Account ➔ Security ➔ 2-Step Verification ➔ App passwords</strong>.
+                          Generate from: <strong style={{ color: '#60a5fa' }}>Google Account âž” Security âž” 2-Step Verification âž” App passwords</strong>.
                         </span>
                       </div>
                     </div>
@@ -3270,7 +3484,7 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
                           <div className="test-result-row">
                             <span>Delivery Status:</span>
                             <span className={gmailTestResult.success ? "text-success font-semibold" : "text-danger font-semibold"}>
-                              {gmailTestResult.success ? '✓ Live Test OTP Delivered' : '✗ Failed to Deliver OTP'}
+                              {gmailTestResult.success ? 'âœ“ Live Test OTP Delivered' : 'âœ— Failed to Deliver OTP'}
                             </span>
                           </div>
                           <div className="test-result-row">
@@ -3308,8 +3522,8 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
                       <h4>Active Promo Codes</h4>
                     </div>
                     <div className="promo-codes-list">
-                      <div className="promo-pill"><strong>NEURON20</strong> — 20% OFF Everything</div>
-                      <div className="promo-pill"><strong>AIWELCOME</strong> — $10 Flat Discount</div>
+                      <div className="promo-pill"><strong>NEURON20</strong> â€” 20% OFF Everything</div>
+                      <div className="promo-pill"><strong>AIWELCOME</strong> â€” $10 Flat Discount</div>
                     </div>
                   </div>
 
@@ -3608,7 +3822,7 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
                 <div>
                   <h3>Publish Customer Activation Link</h3>
                   <p>
-                    Order <strong>#{activatingOrder.order_number || activatingOrder.id}</strong> • Customer: <strong>{activatingOrder.customer_name || activatingOrder.customerName}</strong>
+                    Order <strong>#{activatingOrder.order_number || activatingOrder.id}</strong> â€¢ Customer: <strong>{activatingOrder.customer_name || activatingOrder.customerName}</strong>
                   </p>
                 </div>
               </div>
@@ -3642,21 +3856,21 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
                       className="btn-preset-chip"
                       onClick={() => setActivationInput(`https://t.me/dyzzstore_bot?start=act_${activatingOrder.order_number || activatingOrder.id}`)}
                     >
-                      🤖 Telegram Bot Link
+                      ðŸ¤– Telegram Bot Link
                     </button>
                     <button
                       type="button"
                       className="btn-preset-chip"
                       onClick={() => setActivationInput(`https://app.dyzzstore.com/activate?token=act_${activatingOrder.order_number || activatingOrder.id}`)}
                     >
-                      🌐 Web Portal Link
+                      ðŸŒ Web Portal Link
                     </button>
                     <button
                       type="button"
                       className="btn-preset-chip"
                       onClick={() => setActivationInput(activatingOrder.aba_link || settings.abaPayLink)}
                     >
-                      💳 ABA PayWay Receipt
+                      ðŸ’³ ABA PayWay Receipt
                     </button>
                   </div>
                   <input

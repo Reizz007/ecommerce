@@ -11,6 +11,7 @@ import {
   Sparkles,
   Boxes,
   Zap,
+  Gamepad2,
   HelpCircle,
   Star,
   ShieldCheck,
@@ -63,6 +64,11 @@ export default function Navbar({ onOpenSearch, onOpenAdmin, currentUser, onOpenL
 
           {/* Desktop Nav Links */}
           <nav className="nav-links">
+            <a href="#topup" className="nav-link topup-highlight-link">
+              <Gamepad2 size={16} className="text-cyan-400" />
+              <span>Game Top-Up</span>
+              <span style={{ background: 'linear-gradient(135deg, #06b6d4, #8b5cf6)', color: '#fff', fontSize: '0.62rem', padding: '2px 6px', borderRadius: '4px', fontWeight: 800 }}>NEW</span>
+            </a>
             <a href="#tools" className="nav-link">
               <Boxes size={16} />
               <span>AI Tools</span>
@@ -192,6 +198,9 @@ export default function Navbar({ onOpenSearch, onOpenAdmin, currentUser, onOpenL
         {mobileMenuOpen && (
           <div className="mobile-menu-drawer">
             <nav className="mobile-nav-links">
+              <a href="#topup" onClick={() => setMobileMenuOpen(false)} className="mobile-nav-link text-cyan">
+                <Gamepad2 size={18} /> Game Top-Up Shop
+              </a>
               <a href="#tools" onClick={() => setMobileMenuOpen(false)} className="mobile-nav-link">
                 <Boxes size={18} /> AI Tools Marketplace
               </a>
