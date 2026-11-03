@@ -701,9 +701,14 @@ export default function TopupShop({ onBackToTools }) {
               </div>
 
               {verifyError && (
-                <div className="topup-alert-box error mt-3">
-                  <AlertCircle size={16} />
-                  <span>{verifyError}</span>
+                <div className="topup-alert-box error mt-3" style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <AlertCircle size={16} style={{ flexShrink: 0 }} />
+                    <span style={{ fontSize: '0.84rem' }}>{verifyError}</span>
+                  </div>
+                  <span style={{ fontSize: '0.75rem', color: '#cbd5e1', paddingLeft: '24px' }}>
+                    💡 Tip: Username lookup is optional. You can proceed directly to <b>Instant Checkout</b> with your Player ID & Zone!
+                  </span>
                 </div>
               )}
             </section>
