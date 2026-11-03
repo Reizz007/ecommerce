@@ -114,7 +114,7 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
     singleDeviceLocked: true,
     isPrimaryDevice: getDeviceId() === 'dev_nku878yn_mvncy0wo' || localStorage.getItem('dyzz_is_primary') === 'true',
     settingsHidden: false,
-    primaryDeviceName: 'Windows PC â€¢ Chrome',
+    primaryDeviceName: 'Windows PC • Chrome',
     primaryDeviceAt: '',
     primaryDeviceIp: '127.0.0.1',
     currentDeviceId: getDeviceId(),
@@ -1204,7 +1204,7 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
           <div className="admin-nav-actions">
             <div className="server-status-pill">
               <span className="dot-pulse-green"></span>
-              <span>Laravel 12 (SQLite DB) Online â€¢ 127.0.0.1:8000</span>
+              <span>Laravel 12 REST API Online • Cloud Database</span>
             </div>
 
             <button
@@ -2334,7 +2334,7 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
                                     <span style={{ fontSize: '12px', fontWeight: 500, marginLeft: '6px' }}>{log.device_name || 'Browser Device'}</span>
                                   </div>
                                   <div style={{ fontSize: '11px', color: '#64748b', marginTop: '2px' }}>
-                                    <code>{log.device_id || 'unknown'}</code> â€¢ <span>{log.ip_address}</span>
+                                    <code>{log.device_id || 'unknown'}</code> • <span>{log.ip_address}</span>
                                   </div>
                                   {log.user_email && (
                                     <div style={{ fontSize: '11px', color: '#94a3b8' }}>{log.user_email}</div>
@@ -2609,7 +2609,7 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
                                   className="form-control"
                                 />
                                 <span className="input-hint text-xs">
-                                  Leave empty to automatically use main store bot token ({settings.telegramBotToken ? 'â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢' + settings.telegramBotToken.slice(-6) : 'Configured in Telegram card below'}).
+                                  Leave empty to automatically use main store bot token ({settings.telegramBotToken ? '••••••••' + settings.telegramBotToken.slice(-6) : 'Configured in Telegram card below'}).
                                 </span>
                               </div>
                             </div>
@@ -3822,7 +3822,7 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
                 <div>
                   <h3>Publish Customer Activation Link</h3>
                   <p>
-                    Order <strong>#{activatingOrder.order_number || activatingOrder.id}</strong> â€¢ Customer: <strong>{activatingOrder.customer_name || activatingOrder.customerName}</strong>
+                    Order <strong>#{activatingOrder.order_number || activatingOrder.id}</strong> • Customer: <strong>{activatingOrder.customer_name || activatingOrder.customerName}</strong>
                   </p>
                 </div>
               </div>

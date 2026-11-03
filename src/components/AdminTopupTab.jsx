@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { apiUrl, fetchJson } from '../utils/api';
 import { getDeviceHeaders } from '../utils/device';
+import './AdminTopupTab.css';
 import {
   Gamepad2,
   RefreshCw,
@@ -304,16 +305,16 @@ export default function AdminTopupTab({ formatPrice, addToast }) {
       {/* Top Header */}
       <div className="tab-pane-header">
         <div>
-          <h2 className="flex items-center gap-2">
-            <Gamepad2 className="text-cyan-400" size={26} />
-            Game Top-Up Management & FlashTopUp Fulfillment
+          <h2 style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '1.45rem', fontWeight: 800, color: '#ffffff', margin: 0 }}>
+            <Gamepad2 style={{ color: '#06b6d4' }} size={26} />
+            <span>Game Top-Up Management & FlashTopUp Fulfillment</span>
           </h2>
-          <p>
+          <p style={{ fontSize: '0.88rem', color: '#94a3b8', margin: '6px 0 0' }}>
             Manage active games, diamond pricing, FlashTopUp SKUs, and live customer top-up transactions.
           </p>
         </div>
 
-        <div className="pane-header-actions flex items-center gap-2">
+        <div className="pane-header-actions">
           <button type="button" className="btn btn-secondary btn-sm" onClick={loadData} disabled={loading}>
             <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
             <span>Refresh</span>
@@ -333,79 +334,89 @@ export default function AdminTopupTab({ formatPrice, addToast }) {
         </div>
       </div>
 
-      {/* KPI Stats Bar */}
-      <div className="admin-stats-grid mb-6">
-        <div className="admin-stat-card">
-          <div className="stat-card-icon text-cyan-400">
-            <DollarSign size={24} />
+      {/* KPI Stats Bar (4-Card Horizontal Responsive Grid) */}
+      <div className="admin-metrics-grid" style={{ marginBottom: '24px' }}>
+        <div className="admin-metric-card metric-card-revenue">
+          <div className="metric-header">
+            <span>Top-Up Revenue</span>
+            <div className="metric-icon-wrap icon-revenue">
+              <DollarSign size={20} />
+            </div>
           </div>
-          <div className="stat-card-content">
-            <span className="stat-label">Top-Up Revenue</span>
-            <h3 className="stat-value text-cyan-400">${Number(stats.totalRevenue).toFixed(2)}</h3>
-            <span className="stat-sub">From {stats.successCount} completed orders</span>
+          <div className="metric-val" style={{ color: '#38bdf8' }}>
+            {formatPrice ? formatPrice(stats.totalRevenue || 0) : `$${Number(stats.totalRevenue || 0).toFixed(2)}`}
           </div>
-        </div>
-
-        <div className="admin-stat-card">
-          <div className="stat-card-icon text-purple-400">
-            <Boxes size={24} />
-          </div>
-          <div className="stat-card-content">
-            <span className="stat-label">Total Orders</span>
-            <h3 className="stat-value">{stats.ordersCount}</h3>
-            <span className="stat-sub">{stats.pendingCount} pending bank payment</span>
+          <div className="metric-trend up">
+            <CheckCircle2 size={14} /> From {stats.successCount || 0} completed orders
           </div>
         </div>
 
-        <div className="admin-stat-card">
-          <div className="stat-card-icon text-emerald-400">
-            <CheckCircle2 size={24} />
+        <div className="admin-metric-card metric-card-products">
+          <div className="metric-header">
+            <span>Total Orders</span>
+            <div className="metric-icon-wrap icon-products">
+              <Boxes size={20} />
+            </div>
           </div>
-          <div className="stat-card-content">
-            <span className="stat-label">Delivered Successfully</span>
-            <h3 className="stat-value text-emerald-400">{stats.successCount}</h3>
-            <span className="stat-sub">Automated FlashTopUp push</span>
+          <div className="metric-val">{stats.ordersCount || 0}</div>
+          <div className="metric-trend info">
+            <Clock size={14} /> {stats.pendingCount || 0} pending payment
           </div>
         </div>
 
-        <div className="admin-stat-card">
-          <div className="stat-card-icon text-amber-400">
-            <AlertCircle size={24} />
+        <div className="admin-metric-card metric-card-khqr">
+          <div className="metric-header">
+            <span>Delivered Successfully</span>
+            <div className="metric-icon-wrap icon-khqr">
+              <CheckCircle2 size={20} />
+            </div>
           </div>
-          <div className="stat-card-content">
-            <span className="stat-label">Manual Attention / Hold</span>
-            <h3 className="stat-value text-amber-400">{stats.holdCount}</h3>
-            <span className="stat-sub">Requires admin verification</span>
+          <div className="metric-val" style={{ color: '#34d399' }}>{stats.successCount || 0}</div>
+          <div className="metric-trend up">
+            <Zap size={14} /> Automated FlashTopUp push
+          </div>
+        </div>
+
+        <div className="admin-metric-card metric-card-categories">
+          <div className="metric-header">
+            <span>Manual Attention / Hold</span>
+            <div className="metric-icon-wrap icon-categories">
+              <AlertCircle size={20} />
+            </div>
+          </div>
+          <div className="metric-val" style={{ color: '#fbbf24' }}>{stats.holdCount || 0}</div>
+          <div className="metric-trend" style={{ color: '#f59e0b' }}>
+            Requires admin verification
           </div>
         </div>
       </div>
 
       {/* Sub Tabs Navigation */}
-      <div className="admin-sub-tabs mb-4 flex gap-2 border-b border-white/10 pb-2">
+      <div className="topup-admin-subtabs" style={{ marginBottom: '18px' }}>
         <button
           type="button"
           onClick={() => setSubTab('orders')}
-          className={`btn btn-sm ${subTab === 'orders' ? 'btn-primary' : 'btn-secondary'}`}
+          className={`topup-admin-tab-btn ${subTab === 'orders' ? 'active' : ''}`}
         >
-          <Clock size={14} />
+          <Clock size={15} />
           <span>Customer Top-Up Orders ({orders.length})</span>
         </button>
 
         <button
           type="button"
           onClick={() => setSubTab('games')}
-          className={`btn btn-sm ${subTab === 'games' ? 'btn-primary' : 'btn-secondary'}`}
+          className={`topup-admin-tab-btn ${subTab === 'games' ? 'active' : ''}`}
         >
-          <Gamepad2 size={14} />
+          <Gamepad2 size={15} />
           <span>Games Catalog ({games.length})</span>
         </button>
 
         <button
           type="button"
           onClick={() => setSubTab('packages')}
-          className={`btn btn-sm ${subTab === 'packages' ? 'btn-primary' : 'btn-secondary'}`}
+          className={`topup-admin-tab-btn ${subTab === 'packages' ? 'active' : ''}`}
         >
-          <Package size={14} />
+          <Package size={15} />
           <span>Diamond Packages & Flash SKUs ({allPackages.length})</span>
         </button>
       </div>
@@ -414,26 +425,24 @@ export default function AdminTopupTab({ formatPrice, addToast }) {
       {subTab === 'orders' && (
         <div className="topup-orders-view">
           {/* Controls Bar */}
-          <div className="admin-table-controls flex flex-wrap items-center justify-between gap-3 mb-4">
-            <div className="flex items-center gap-2 flex-1 max-w-md">
-              <div className="input-with-icon w-full">
-                <Search size={16} className="input-icon" />
-                <input
-                  type="text"
-                  placeholder="Search order no, player ID, username..."
-                  value={orderSearch}
-                  onChange={(e) => setOrderSearch(e.target.value)}
-                  className="form-control"
-                />
-              </div>
+          <div className="topup-controls-bar" style={{ marginBottom: '16px' }}>
+            <div className="topup-search-box">
+              <Search size={15} style={{ color: '#64748b', flexShrink: 0 }} />
+              <input
+                type="text"
+                placeholder="Search order no, player ID, username..."
+                value={orderSearch}
+                onChange={(e) => setOrderSearch(e.target.value)}
+                className="topup-search-input"
+              />
             </div>
 
-            <div className="flex items-center gap-2">
-              <Filter size={14} className="text-muted" />
+            <div className="topup-filter-group">
+              <Filter size={14} style={{ color: '#94a3b8' }} />
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="form-control-sm"
+                className="topup-filter-select"
               >
                 <option value="all">All Statuses</option>
                 <option value="pending">Pending</option>
@@ -446,8 +455,8 @@ export default function AdminTopupTab({ formatPrice, addToast }) {
           </div>
 
           {/* Orders Table */}
-          <div className="admin-table-container">
-            <table className="admin-data-table">
+          <div className="admin-table-responsive">
+            <table className="admin-table">
               <thead>
                 <tr>
                   <th>Order No & Date</th>
@@ -464,8 +473,9 @@ export default function AdminTopupTab({ formatPrice, addToast }) {
               <tbody>
                 {filteredOrders.length === 0 ? (
                   <tr>
-                    <td colSpan={9} className="text-center py-8 text-muted">
-                      No top-up orders match your filters.
+                    <td colSpan={9} style={{ textAlign: 'center', padding: '3.5rem 1rem', color: '#94a3b8' }}>
+                      <AlertCircle size={32} style={{ margin: '0 auto 10px', display: 'block', opacity: 0.4 }} />
+                      <div>No top-up orders match your filters.</div>
                     </td>
                   </tr>
                 ) : (
@@ -475,42 +485,46 @@ export default function AdminTopupTab({ formatPrice, addToast }) {
                     return (
                       <tr key={order.id}>
                         <td>
-                          <div className="font-mono text-xs font-bold text-white">{order.order_no}</div>
-                          <div className="text-xs text-muted">
+                          <div className="topup-order-no">{order.order_no}</div>
+                          <div className="topup-order-date">
                             {new Date(order.created_at).toLocaleString()}
                           </div>
                         </td>
                         <td>
-                          <span className="font-medium text-white">{order.game?.name || 'Game'}</span>
+                          <div className="topup-game-cell-title">
+                            <Gamepad2 size={14} style={{ color: '#06b6d4', flexShrink: 0 }} />
+                            <span>{order.game?.name || 'Game'}</span>
+                          </div>
                         </td>
                         <td>
-                          <div className="text-sm font-semibold text-cyan-400">
+                          <div className="topup-diamonds-val">
                             💎 {order.diamond_amount} Diamonds
                           </div>
-                          <div className="text-xs text-muted">{order.package?.name || '-'}</div>
+                          <div className="topup-package-sub">{order.package?.name || '-'}</div>
                         </td>
                         <td>
-                          <code className="text-xs font-bold text-white">{order.player_id}</code>
+                          <code className="topup-player-code">{order.player_id}</code>
                           {order.zone_id && (
-                            <span className="text-xs text-muted ml-1">({order.zone_id})</span>
+                            <span className="topup-zone-pill">Zone {order.zone_id}</span>
                           )}
                         </td>
                         <td>
                           {order.player_username ? (
-                            <span className="text-xs font-bold text-emerald-400">
+                            <span className="topup-username-badge">
+                              <CheckCircle2 size={12} />
                               {order.player_username}
                             </span>
                           ) : (
-                            <span className="text-xs text-muted">-</span>
+                            <span style={{ color: '#64748b', fontSize: '0.85rem' }}>—</span>
                           )}
                         </td>
                         <td>
-                          <span className="text-xs uppercase font-semibold text-slate-300">
+                          <span className="topup-payment-pill">
                             {order.payment_method || 'payway'}
                           </span>
                         </td>
                         <td>
-                          <span className="font-bold text-white">
+                          <span className="topup-amount-val">
                             ${Number(order.amount).toFixed(2)}
                           </span>
                         </td>
@@ -528,13 +542,13 @@ export default function AdminTopupTab({ formatPrice, addToast }) {
                           </select>
                         </td>
                         <td style={{ textAlign: 'right' }}>
-                          <div className="flex items-center justify-end gap-1">
+                          <div className="table-actions-group">
                             <button
                               type="button"
                               disabled={isManualVerifying || order.status === 'success'}
                               onClick={() => handleManualVerify(order)}
                               title="Verify payment and auto-push diamond order to FlashTopUp API"
-                              className="btn btn-secondary btn-xs text-cyan-400"
+                              className={`topup-btn-autopush ${order.status === 'success' ? 'dispatched' : ''}`}
                             >
                               {isManualVerifying ? (
                                 <RefreshCw size={12} className="animate-spin" />
@@ -548,9 +562,9 @@ export default function AdminTopupTab({ formatPrice, addToast }) {
                               type="button"
                               onClick={() => handleDeleteOrder(order.id)}
                               title="Delete order"
-                              className="btn btn-icon-xs text-danger"
+                              className="btn-table-action delete"
                             >
-                              <Trash2 size={13} />
+                              <Trash2 size={14} />
                             </button>
                           </div>
                         </td>
@@ -567,8 +581,8 @@ export default function AdminTopupTab({ formatPrice, addToast }) {
       {/* SUB-TAB 2: GAMES CATALOG */}
       {subTab === 'games' && (
         <div className="topup-games-admin-view">
-          <div className="admin-table-container">
-            <table className="admin-data-table">
+          <div className="admin-table-responsive">
+            <table className="admin-table">
               <thead>
                 <tr>
                   <th>Game Name</th>
@@ -580,59 +594,68 @@ export default function AdminTopupTab({ formatPrice, addToast }) {
                 </tr>
               </thead>
               <tbody>
-                {games.map((g) => (
-                  <tr key={g.id}>
-                    <td>
-                      <div className="font-bold text-white flex items-center gap-2">
-                        <Gamepad2 size={16} className="text-cyan-400" />
-                        <span>{g.name}</span>
-                      </div>
-                    </td>
-                    <td>
-                      <code className="text-xs text-muted">{g.code}</code>
-                    </td>
-                    <td>
-                      <span className="text-xs font-mono">{g.api_game_id || 'Auto (3)'}</span>
-                    </td>
-                    <td>
-                      <span className="badge-primary-pill">{g.packages?.length || 0} Packages</span>
-                    </td>
-                    <td>
-                      <span className={`status-badge-inline ${g.is_active ? 'active' : 'inactive'}`}>
-                        {g.is_active ? 'ACTIVE' : 'DISABLED'}
-                      </span>
-                    </td>
-                    <td style={{ textAlign: 'right' }}>
-                      <div className="flex items-center justify-end gap-1">
-                        <button
-                          type="button"
-                          onClick={() => openNewPackageModal(g.id)}
-                          className="btn btn-secondary btn-xs text-cyan-400"
-                          title="Add package to this game"
-                        >
-                          <Plus size={12} />
-                          <span>Add SKU</span>
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => openEditGameModal(g)}
-                          className="btn btn-icon-xs text-muted hover:text-white"
-                          title="Edit game details"
-                        >
-                          <Edit3 size={13} />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleDeleteGame(g.id)}
-                          className="btn btn-icon-xs text-danger"
-                          title="Delete game"
-                        >
-                          <Trash2 size={13} />
-                        </button>
-                      </div>
+                {games.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} style={{ textAlign: 'center', padding: '3rem 1rem', color: '#94a3b8' }}>
+                      No games found. Click &quot;Add Game&quot; above to create one.
                     </td>
                   </tr>
-                ))}
+                ) : (
+                  games.map((g) => (
+                    <tr key={g.id}>
+                      <td>
+                        <div className="topup-game-cell-title">
+                          <Gamepad2 size={16} style={{ color: '#06b6d4', flexShrink: 0 }} />
+                          <span style={{ fontWeight: 700, color: '#ffffff' }}>{g.name}</span>
+                        </div>
+                      </td>
+                      <td>
+                        <code className="topup-code-badge">{g.code}</code>
+                      </td>
+                      <td>
+                        <span className="topup-api-id-text">{g.api_game_id || 'Auto (3)'}</span>
+                      </td>
+                      <td>
+                        <span className="topup-count-pill">{g.packages?.length || 0} Packages</span>
+                      </td>
+                      <td>
+                        <span className={`status-pill ${g.is_active ? 'active' : 'inactive'}`}>
+                          <span className="status-dot-mini"></span>
+                          {g.is_active ? 'ACTIVE' : 'DISABLED'}
+                        </span>
+                      </td>
+                      <td style={{ textAlign: 'right' }}>
+                        <div className="table-actions-group">
+                          <button
+                            type="button"
+                            onClick={() => openNewPackageModal(g.id)}
+                            className="topup-btn-autopush"
+                            title="Add package to this game"
+                          >
+                            <Plus size={13} />
+                            <span>Add SKU</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => openEditGameModal(g)}
+                            className="btn-table-action edit"
+                            title="Edit game details"
+                          >
+                            <Edit3 size={14} />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteGame(g.id)}
+                            className="btn-table-action delete"
+                            title="Delete game"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
@@ -642,8 +665,8 @@ export default function AdminTopupTab({ formatPrice, addToast }) {
       {/* SUB-TAB 3: PACKAGES & SKUS */}
       {subTab === 'packages' && (
         <div className="topup-packages-admin-view">
-          <div className="admin-table-container">
-            <table className="admin-data-table">
+          <div className="admin-table-responsive">
+            <table className="admin-table">
               <thead>
                 <tr>
                   <th>Game</th>
@@ -657,53 +680,64 @@ export default function AdminTopupTab({ formatPrice, addToast }) {
                 </tr>
               </thead>
               <tbody>
-                {allPackages.map((pkg) => (
-                  <tr key={pkg.id}>
-                    <td>
-                      <span className="font-semibold text-white">{pkg.gameName}</span>
-                    </td>
-                    <td>
-                      <span className="text-white font-medium">{pkg.name}</span>
-                    </td>
-                    <td>
-                      <span className="text-cyan-400 font-bold">💎 {pkg.diamond_amount}</span>
-                    </td>
-                    <td>
-                      <span className="text-emerald-400 font-bold">${Number(pkg.price).toFixed(2)}</span>
-                    </td>
-                    <td>
-                      <code className="text-xs bg-black/40 px-2 py-1 rounded border border-white/10 text-purple-300">
-                        {pkg.sku || 'Auto-Resolved'}
-                      </code>
-                    </td>
-                    <td>{pkg.sort_order ?? 0}</td>
-                    <td>
-                      <span className={`status-badge-inline ${pkg.is_active ? 'active' : 'inactive'}`}>
-                        {pkg.is_active ? 'ACTIVE' : 'HIDDEN'}
-                      </span>
-                    </td>
-                    <td style={{ textAlign: 'right' }}>
-                      <div className="flex items-center justify-end gap-1">
-                        <button
-                          type="button"
-                          onClick={() => openEditPackageModal(pkg)}
-                          className="btn btn-icon-xs text-muted hover:text-white"
-                          title="Edit package"
-                        >
-                          <Edit3 size={13} />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleDeletePackage(pkg.id)}
-                          className="btn btn-icon-xs text-danger"
-                          title="Delete package"
-                        >
-                          <Trash2 size={13} />
-                        </button>
-                      </div>
+                {allPackages.length === 0 ? (
+                  <tr>
+                    <td colSpan={8} style={{ textAlign: 'center', padding: '3rem 1rem', color: '#94a3b8' }}>
+                      No packages found. Click &quot;Add Package&quot; above to create one.
                     </td>
                   </tr>
-                ))}
+                ) : (
+                  allPackages.map((pkg) => (
+                    <tr key={pkg.id}>
+                      <td>
+                        <span style={{ fontWeight: 700, color: '#ffffff' }}>{pkg.gameName}</span>
+                      </td>
+                      <td>
+                        <span style={{ color: '#e2e8f0', fontWeight: 500 }}>{pkg.name || `${pkg.diamond_amount} Diamonds`}</span>
+                      </td>
+                      <td>
+                        <span className="topup-diamonds-val">💎 {pkg.diamond_amount}</span>
+                      </td>
+                      <td>
+                        <span className="topup-price-badge">${Number(pkg.price).toFixed(2)}</span>
+                      </td>
+                      <td>
+                        <code className="topup-sku-badge">
+                          {pkg.sku || 'Auto-Resolved'}
+                        </code>
+                      </td>
+                      <td>
+                        <span style={{ color: '#94a3b8', fontSize: '0.85rem' }}>{pkg.sort_order ?? 0}</span>
+                      </td>
+                      <td>
+                        <span className={`status-pill ${pkg.is_active ? 'active' : 'inactive'}`}>
+                          <span className="status-dot-mini"></span>
+                          {pkg.is_active ? 'ACTIVE' : 'HIDDEN'}
+                        </span>
+                      </td>
+                      <td style={{ textAlign: 'right' }}>
+                        <div className="table-actions-group">
+                          <button
+                            type="button"
+                            onClick={() => openEditPackageModal(pkg)}
+                            className="btn-table-action edit"
+                            title="Edit package"
+                          >
+                            <Edit3 size={14} />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDeletePackage(pkg.id)}
+                            className="btn-table-action delete"
+                            title="Delete package"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
