@@ -359,7 +359,6 @@ export default function TopupShop({ onBackToTools }) {
             {/* Step 1: Select Game */}
             <section className="topup-card">
               <div className="topup-step-indicator">
-                <span className="step-num">1</span>
                 <div>
                   <h2 className="step-title">Select Game</h2>
                   <p className="step-desc">Choose the game you wish to reload</p>
@@ -437,7 +436,6 @@ export default function TopupShop({ onBackToTools }) {
             {/* Step 2: Player ID & Server Verification */}
             <section className="topup-card">
               <div className="topup-step-indicator">
-                <span className="step-num">2</span>
                 <div>
                   <h2 className="step-title">Player Details</h2>
                   <p className="step-desc">
@@ -515,50 +513,43 @@ export default function TopupShop({ onBackToTools }) {
 
             {/* Step 3: Choose Package */}
             <section className="topup-card">
-              <div className="topup-step-indicator">
-                <span className="step-num">3</span>
+              <div className="topup-step-indicator" style={{ marginBottom: '14px' }}>
                 <div>
-                  <h2 className="step-title">Select Recharge Package</h2>
-                  <p className="step-desc">Direct top-up diamonds & special event passes</p>
+                  <h2 className="step-title">Select Package</h2>
                 </div>
               </div>
 
               {selectedGame?.packages?.length === 0 ? (
                 <p className="text-sm text-slate-400 py-4">No packages currently active for this game.</p>
               ) : (
-                <div className="topup-packages-grid">
+                <div className="topup-packages-list">
                   {selectedGame?.packages?.map((pkg) => {
                     const isSelected = activePackage?.id === pkg.id;
-                    const isWeekly = (pkg.name || '').toLowerCase().includes('weekly') || (pkg.name || '').toLowerCase().includes('pass');
+                    const priceFormatted = formatPrice ? formatPrice(pkg.price) : `$${Number(pkg.price).toFixed(2)}`;
 
                     return (
                       <button
                         key={pkg.id}
                         type="button"
                         onClick={() => setSelectedPackageId(pkg.id)}
-                        className={`topup-package-card ${isSelected ? 'selected' : ''} ${isWeekly ? 'featured' : ''}`}
+                        className={`topup-package-row ${isSelected ? 'selected' : ''}`}
                       >
-                        {isWeekly && (
-                          <span className="topup-badge-popular">
-                            <Flame size={12} /> POPULAR
-                          </span>
-                        )}
-                        <div className="topup-package-diamonds">
-                          <span className="topup-diamond-icon">💎</span>
-                          <span className="topup-diamond-amount">
-                            {pkg.diamond_amount} Diamonds
-                          </span>
+                        <div className="topup-package-row-left">
+                          <h4 className="topup-package-row-name">{pkg.name}</h4>
+                          <div className="topup-package-row-sub">
+                            {pkg.diamond_amount ? (
+                              <>
+                                <span className="topup-diamond-num">{pkg.diamond_amount}</span>
+                                <span className="topup-diamond-glyph">💎</span>
+                              </>
+                            ) : (
+                              <span className="topup-diamond-glyph">💎</span>
+                            )}
+                          </div>
                         </div>
 
-                        <span className="topup-package-title">
-                          {pkg.name}
-                        </span>
-
-                        <div className="topup-package-footer">
-                          <span className="topup-price-tag">
-                            ${Number(pkg.price).toFixed(2)}
-                          </span>
-                          <span className="topup-radio-circle"></span>
+                        <div className="topup-package-price-pill">
+                          {priceFormatted}
                         </div>
                       </button>
                     );
@@ -570,7 +561,6 @@ export default function TopupShop({ onBackToTools }) {
             {/* Step 4: Payment Gateway (Unified KHQR & ABA Mobile) */}
             <section className="topup-card">
               <div className="topup-step-indicator">
-                <span className="step-num">4</span>
                 <div>
                   <h2 className="step-title">Payment Method</h2>
                   <p className="step-desc">Instant confirmation with zero extra transaction fees</p>

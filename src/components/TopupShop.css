@@ -175,30 +175,20 @@
 
 .topup-step-indicator {
   display: flex;
-  align-items: center;
-  gap: 14px;
-  margin-bottom: 20px;
-  padding-bottom: 14px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  margin-bottom: 18px;
+  padding-bottom: 0;
+  border-bottom: none;
 }
 
 .topup-step-indicator .step-num {
-  width: 34px;
-  height: 34px;
-  border-radius: 10px;
-  background: linear-gradient(135deg, #8b5cf6, #06b6d4);
-  color: #ffffff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 900;
-  font-size: 0.95rem;
-  box-shadow: 0 0 16px rgba(139, 92, 246, 0.45);
-  flex-shrink: 0;
+  display: none;
 }
 
 .topup-step-indicator .step-title {
-  font-size: 1.18rem;
+  font-size: 1.15rem;
   font-weight: 800;
   color: #ffffff;
   margin: 0;
@@ -208,7 +198,7 @@
 .topup-step-indicator .step-desc {
   font-size: 0.82rem;
   color: #94a3b8;
-  margin: 3px 0 0;
+  margin: 0;
 }
 
 /* --------------------------------------------------------------------------
@@ -410,128 +400,124 @@
 }
 
 /* --------------------------------------------------------------------------
-   STEP 3: PACKAGES GRID
+   STEP 3: SELECT PACKAGE (SLEEK HORIZONTAL ROWS)
    -------------------------------------------------------------------------- */
+.topup-packages-list,
 .topup-packages-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  gap: 12px;
-}
-
-.topup-package-card {
-  position: relative;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  padding: 16px;
-  min-height: 125px;
-  border-radius: 16px;
-  background: rgba(11, 15, 25, 0.85);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  cursor: pointer;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-  text-align: left;
+  gap: 10px;
   width: 100%;
 }
 
-.topup-package-card:hover {
-  border-color: rgba(139, 92, 246, 0.5);
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(139, 92, 246, 0.15);
-}
-
-.topup-package-card.selected {
-  background: linear-gradient(135deg, rgba(139, 92, 246, 0.22), rgba(6, 182, 212, 0.15));
-  border-color: #8b5cf6;
-  box-shadow: 0 0 24px rgba(139, 92, 246, 0.3), inset 0 0 0 1px rgba(139, 92, 246, 0.4);
-}
-
-.topup-package-card.featured {
-  border-color: rgba(245, 158, 11, 0.4);
-}
-
-.topup-package-card.featured .topup-package-diamonds {
-  padding-right: 48px;
-}
-
-.topup-badge-popular {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 0.62rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  padding: 3px 7px;
-  border-radius: 6px;
-  background: rgba(245, 158, 11, 0.2);
-  border: 1px solid rgba(245, 158, 11, 0.45);
-  color: #fbbf24;
-}
-
-.topup-package-diamonds {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.topup-diamond-icon {
-  font-size: 1.25rem;
-  line-height: 1;
-}
-
-.topup-diamond-amount {
-  font-size: 1.05rem;
-  font-weight: 800;
-  color: #ffffff;
-}
-
-.topup-package-title {
-  font-size: 0.78rem;
-  color: #94a3b8;
-  margin: 6px 0 12px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.topup-package-footer {
+.topup-package-row,
+.topup-package-card {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-top: auto;
-  padding-top: 8px;
-  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  width: 100%;
+  padding: 14px 18px;
+  border-radius: 14px;
+  background: rgba(14, 18, 32, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  text-align: left;
+  position: relative;
+  box-sizing: border-box;
 }
 
-.topup-price-tag {
-  font-size: 1.15rem;
-  font-weight: 900;
-  color: #34d399;
+.topup-package-row:hover,
+.topup-package-card:hover {
+  border-color: rgba(6, 182, 212, 0.4);
+  background: rgba(18, 24, 44, 0.95);
+  transform: translateY(-1px);
 }
 
-.topup-package-card.selected .topup-price-tag {
-  color: #67e8f9;
+.topup-package-row.selected,
+.topup-package-card.selected {
+  background: linear-gradient(135deg, rgba(6, 182, 212, 0.12) 0%, rgba(14, 20, 36, 0.95) 100%);
+  border: 1.5px solid #06b6d4;
+  box-shadow: 0 0 20px rgba(6, 182, 212, 0.22), inset 0 0 0 1px rgba(6, 182, 212, 0.25);
 }
 
-.topup-radio-circle {
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  border: 2px solid rgba(255, 255, 255, 0.25);
+.topup-package-row-left {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  min-width: 0;
+  flex: 1;
+  padding-right: 12px;
+}
+
+.topup-package-row-name {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #ffffff;
+  line-height: 1.25;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.topup-package-row-sub {
   display: flex;
   align-items: center;
-  justify-content: center;
-  transition: all 0.2s ease;
-  flex-shrink: 0;
+  gap: 5px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #64748b;
+  line-height: 1;
 }
 
-.selected .topup-radio-circle {
+.topup-diamond-num {
+  color: #64748b;
+  font-weight: 600;
+}
+
+.topup-package-row.selected .topup-diamond-num {
+  color: #94a3b8;
+}
+
+.topup-diamond-glyph {
+  font-size: 0.8rem;
+  display: inline-block;
+  line-height: 1;
+}
+
+.topup-package-price-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 14px;
+  border-radius: 9999px;
+  font-size: 0.88rem;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  background: rgba(6, 182, 212, 0.12);
+  border: 1px solid rgba(6, 182, 212, 0.25);
+  color: #22d3ee;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+
+.topup-package-row:hover .topup-package-price-pill,
+.topup-package-card:hover .topup-package-price-pill {
+  background: rgba(6, 182, 212, 0.18);
+  border-color: rgba(6, 182, 212, 0.4);
+  color: #38bdf8;
+}
+
+.topup-package-row.selected .topup-package-price-pill,
+.topup-package-card.selected .topup-package-price-pill {
+  background: rgba(6, 182, 212, 0.22);
   border-color: #06b6d4;
-  background: #06b6d4;
-  box-shadow: 0 0 10px #06b6d4;
+  color: #38bdf8;
+  box-shadow: 0 0 10px rgba(6, 182, 212, 0.3);
 }
 
 /* --------------------------------------------------------------------------
@@ -1236,44 +1222,56 @@
   color: #5b21b6;
 }
 
+[data-theme="light"] .topup-package-row,
+.light-theme .topup-package-row,
 [data-theme="light"] .topup-package-card,
 .light-theme .topup-package-card {
   background: #f8fafc;
   border: 1px solid rgba(15, 23, 42, 0.08);
 }
 
+[data-theme="light"] .topup-package-row:hover,
+.light-theme .topup-package-row:hover,
 [data-theme="light"] .topup-package-card:hover,
 .light-theme .topup-package-card:hover {
   background: #ffffff;
-  border-color: #7c3aed;
-  box-shadow: 0 6px 20px rgba(124, 58, 237, 0.12);
+  border-color: #0891b2;
+  box-shadow: 0 4px 14px rgba(8, 145, 178, 0.12);
 }
 
+[data-theme="light"] .topup-package-row.selected,
+.light-theme .topup-package-row.selected,
 [data-theme="light"] .topup-package-card.selected,
 .light-theme .topup-package-card.selected {
-  background: rgba(124, 58, 237, 0.06);
-  border-color: #7c3aed;
-  box-shadow: 0 0 18px rgba(124, 58, 237, 0.2), inset 0 0 0 1px rgba(124, 58, 237, 0.3);
+  background: rgba(8, 145, 178, 0.06);
+  border-color: #0891b2;
+  box-shadow: 0 0 18px rgba(8, 145, 178, 0.18), inset 0 0 0 1px rgba(8, 145, 178, 0.25);
 }
 
-[data-theme="light"] .topup-diamond-amount,
-.light-theme .topup-diamond-amount {
+[data-theme="light"] .topup-package-row-name,
+.light-theme .topup-package-row-name {
   color: #0f172a;
 }
 
-[data-theme="light"] .topup-package-title,
-.light-theme .topup-package-title {
+[data-theme="light"] .topup-diamond-num,
+.light-theme .topup-diamond-num {
   color: #64748b;
 }
 
-[data-theme="light"] .topup-package-footer,
-.light-theme .topup-package-footer {
-  border-top: 1px solid rgba(15, 23, 42, 0.06);
+[data-theme="light"] .topup-package-price-pill,
+.light-theme .topup-package-price-pill {
+  background: rgba(8, 145, 178, 0.1);
+  border: 1px solid rgba(8, 145, 178, 0.25);
+  color: #0e7490;
 }
 
-[data-theme="light"] .topup-package-card.selected .topup-price-tag,
-.light-theme .topup-package-card.selected .topup-price-tag {
-  color: #7c3aed;
+[data-theme="light"] .topup-package-row.selected .topup-package-price-pill,
+.light-theme .topup-package-row.selected .topup-package-price-pill,
+[data-theme="light"] .topup-package-card.selected .topup-package-price-pill,
+.light-theme .topup-package-card.selected .topup-package-price-pill {
+  background: rgba(8, 145, 178, 0.18);
+  border-color: #0891b2;
+  color: #0891b2;
 }
 
 [data-theme="light"] .topup-payment-card,
@@ -1418,10 +1416,6 @@
     grid-template-columns: 1fr 340px;
     gap: 22px;
   }
-
-  .topup-packages-grid {
-    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-  }
 }
 
 /* 2. Medium Tablets & Split-Screen (769px – 980px) */
@@ -1438,10 +1432,6 @@
 
   .topup-mobile-floating-bar {
     display: flex;
-  }
-
-  .topup-packages-grid {
-    grid-template-columns: repeat(auto-fill, minmax(165px, 1fr));
   }
 }
 
@@ -1506,11 +1496,6 @@
     position: static;
     margin-left: auto;
     flex-shrink: 0;
-  }
-
-  .topup-packages-grid {
-    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-    gap: 10px;
   }
 
   .topup-payment-card {
@@ -1635,35 +1620,24 @@
     gap: 12px;
   }
 
+  .topup-packages-list,
   .topup-packages-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 10px;
+    gap: 9px;
   }
 
+  .topup-package-row,
   .topup-package-card {
-    padding: 12px 10px;
-    min-height: 110px;
+    padding: 13px 16px;
+    border-radius: 13px;
   }
 
-  .topup-package-diamonds {
-    padding-right: 36px;
-  }
-
-  .topup-diamond-icon {
-    font-size: 1.1rem;
-  }
-
-  .topup-diamond-amount {
+  .topup-package-row-name {
     font-size: 0.92rem;
   }
 
-  .topup-package-title {
-    font-size: 0.74rem;
-    margin: 4px 0 10px;
-  }
-
-  .topup-price-tag {
-    font-size: 1.02rem;
+  .topup-package-price-pill {
+    padding: 5px 13px;
+    font-size: 0.85rem;
   }
 
   .topup-payment-grid {
@@ -1800,22 +1774,28 @@
     white-space: normal;
   }
 
+  .topup-packages-list,
   .topup-packages-grid {
-    grid-template-columns: repeat(2, 1fr);
     gap: 8px;
   }
 
+  .topup-package-row,
   .topup-package-card {
-    padding: 10px 8px;
-    min-height: 102px;
+    padding: 11px 12px;
+    border-radius: 12px;
   }
 
-  .topup-diamond-amount {
-    font-size: 0.85rem;
+  .topup-package-row-name {
+    font-size: 0.86rem;
   }
 
-  .topup-price-tag {
-    font-size: 0.95rem;
+  .topup-package-row-sub {
+    font-size: 0.75rem;
+  }
+
+  .topup-package-price-pill {
+    padding: 4px 10px;
+    font-size: 0.8rem;
   }
 
   .topup-mobile-floating-bar {
@@ -1833,12 +1813,5 @@
   .topup-mobile-float-btn {
     padding: 8px 12px;
     font-size: 0.8rem;
-  }
-}
-
-/* 6. Micro Phones (<= 325px) */
-@media (max-width: 325px) {
-  .topup-packages-grid {
-    grid-template-columns: 1fr;
   }
 }
