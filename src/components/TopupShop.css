@@ -269,6 +269,11 @@
   -webkit-text-fill-color: transparent;
 }
 
+.topup-game-info {
+  min-width: 0;
+  flex: 1;
+}
+
 .topup-game-name {
   font-size: 0.95rem;
   font-weight: 800;
@@ -419,6 +424,10 @@
   border-color: rgba(245, 158, 11, 0.4);
 }
 
+.topup-package-card.featured .topup-package-diamonds {
+  padding-right: 48px;
+}
+
 .topup-badge-popular {
   position: absolute;
   top: 10px;
@@ -555,6 +564,11 @@
   color: #ffe4e6;
 }
 
+.topup-pay-info {
+  min-width: 0;
+  flex: 1;
+}
+
 .topup-pay-title {
   font-size: 0.95rem;
   font-weight: 800;
@@ -656,6 +670,8 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  min-width: 0;
+  max-width: 62%;
 }
 
 .topup-summary-val.game-val {
@@ -799,7 +815,7 @@
   z-index: 998;
   background: rgba(11, 15, 25, 0.95);
   border-top: 1px solid rgba(139, 92, 246, 0.35);
-  padding: 12px 18px;
+  padding: 12px 18px calc(12px + env(safe-area-inset-bottom, 0px));
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.6);
@@ -1083,8 +1099,292 @@
 }
 
 /* --------------------------------------------------------------------------
+   LIGHT MODE DESIGN SYSTEM (High Contrast & Clean Glassmorphism)
+   -------------------------------------------------------------------------- */
+[data-theme="light"] .topup-header-bar,
+.light-theme .topup-header-bar {
+  background: linear-gradient(135deg, rgba(124, 58, 237, 0.08) 0%, rgba(2, 132, 199, 0.05) 100%);
+  border: 1px solid rgba(124, 58, 237, 0.2);
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.06);
+}
+
+[data-theme="light"] .topup-main-title,
+.light-theme .topup-main-title {
+  background: linear-gradient(135deg, #0f172a 30%, #7c3aed 70%, #0284c7 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+[data-theme="light"] .topup-nav-tabs,
+.light-theme .topup-nav-tabs {
+  background: #ffffff;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+[data-theme="light"] .topup-tab-btn,
+.light-theme .topup-tab-btn {
+  color: #64748b;
+}
+
+[data-theme="light"] .topup-tab-btn:hover,
+.light-theme .topup-tab-btn:hover {
+  color: #0f172a;
+}
+
+[data-theme="light"] .topup-tab-btn.active,
+.light-theme .topup-tab-btn.active {
+  background: linear-gradient(135deg, rgba(124, 58, 237, 0.18), rgba(2, 132, 199, 0.14));
+  border: 1px solid rgba(2, 132, 199, 0.35);
+  color: #0f172a;
+  box-shadow: 0 2px 10px rgba(124, 58, 237, 0.15);
+}
+
+[data-theme="light"] .topup-card,
+.light-theme .topup-card {
+  background: #ffffff;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.07);
+}
+
+[data-theme="light"] .step-title,
+.light-theme .step-title {
+  color: #0f172a;
+}
+
+[data-theme="light"] .topup-step-indicator,
+.light-theme .topup-step-indicator {
+  border-bottom: 1px solid rgba(15, 23, 42, 0.06);
+}
+
+[data-theme="light"] .topup-game-card,
+.light-theme .topup-game-card {
+  background: #f8fafc;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+}
+
+[data-theme="light"] .topup-game-card:hover,
+.light-theme .topup-game-card:hover {
+  background: #ffffff;
+  border-color: #0284c7;
+  box-shadow: 0 6px 20px rgba(2, 132, 199, 0.12);
+}
+
+[data-theme="light"] .topup-game-card.selected,
+.light-theme .topup-game-card.selected {
+  background: rgba(2, 132, 199, 0.06);
+  border-color: #0284c7;
+  box-shadow: 0 0 18px rgba(2, 132, 199, 0.18), inset 0 0 0 1px rgba(2, 132, 199, 0.3);
+}
+
+[data-theme="light"] .topup-game-name,
+.light-theme .topup-game-name {
+  color: #0f172a;
+}
+
+[data-theme="light"] .topup-text-input,
+.light-theme .topup-text-input {
+  background: #f8fafc;
+  border: 1px solid rgba(15, 23, 42, 0.15);
+  color: #0f172a;
+}
+
+[data-theme="light"] .topup-text-input:focus,
+.light-theme .topup-text-input:focus {
+  background: #ffffff;
+  border-color: #0284c7;
+  box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.15);
+}
+
+[data-theme="light"] .topup-package-card,
+.light-theme .topup-package-card {
+  background: #f8fafc;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+}
+
+[data-theme="light"] .topup-package-card:hover,
+.light-theme .topup-package-card:hover {
+  background: #ffffff;
+  border-color: #7c3aed;
+  box-shadow: 0 6px 20px rgba(124, 58, 237, 0.12);
+}
+
+[data-theme="light"] .topup-package-card.selected,
+.light-theme .topup-package-card.selected {
+  background: rgba(124, 58, 237, 0.06);
+  border-color: #7c3aed;
+  box-shadow: 0 0 18px rgba(124, 58, 237, 0.2), inset 0 0 0 1px rgba(124, 58, 237, 0.3);
+}
+
+[data-theme="light"] .topup-diamond-amount,
+.light-theme .topup-diamond-amount {
+  color: #0f172a;
+}
+
+[data-theme="light"] .topup-package-title,
+.light-theme .topup-package-title {
+  color: #64748b;
+}
+
+[data-theme="light"] .topup-package-footer,
+.light-theme .topup-package-footer {
+  border-top: 1px solid rgba(15, 23, 42, 0.06);
+}
+
+[data-theme="light"] .topup-package-card.selected .topup-price-tag,
+.light-theme .topup-package-card.selected .topup-price-tag {
+  color: #7c3aed;
+}
+
+[data-theme="light"] .topup-payment-card,
+.light-theme .topup-payment-card {
+  background: #f8fafc;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+}
+
+[data-theme="light"] .topup-payment-card.selected,
+.light-theme .topup-payment-card.selected {
+  background: rgba(2, 132, 199, 0.06);
+  border-color: #0284c7;
+  box-shadow: 0 0 18px rgba(2, 132, 199, 0.15);
+}
+
+[data-theme="light"] .topup-pay-title,
+.light-theme .topup-pay-title {
+  color: #0f172a;
+}
+
+[data-theme="light"] .topup-summary-box,
+.light-theme .topup-summary-box {
+  background: #ffffff;
+  border: 1px solid rgba(124, 58, 237, 0.25);
+  box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.08), 0 0 25px rgba(124, 58, 237, 0.05);
+}
+
+[data-theme="light"] .topup-summary-header,
+.light-theme .topup-summary-header {
+  border-bottom: 1px solid rgba(15, 23, 42, 0.06);
+}
+
+[data-theme="light"] .topup-summary-title,
+.light-theme .topup-summary-title {
+  color: #0f172a;
+}
+
+[data-theme="light"] .topup-summary-row,
+.light-theme .topup-summary-row {
+  border-bottom: 1px solid rgba(15, 23, 42, 0.06);
+}
+
+[data-theme="light"] .topup-summary-val,
+.light-theme .topup-summary-val {
+  color: #0f172a;
+}
+
+[data-theme="light"] .topup-summary-val.game-val,
+.light-theme .topup-summary-val.game-val {
+  color: #0f172a;
+}
+
+[data-theme="light"] .topup-summary-val.diamond-val,
+.light-theme .topup-summary-val.diamond-val {
+  color: #0284c7;
+}
+
+[data-theme="light"] .topup-summary-total-card,
+.light-theme .topup-summary-total-card {
+  background: #f8fafc;
+  border: 1px solid rgba(124, 58, 237, 0.18);
+}
+
+[data-theme="light"] .topup-price-number,
+.light-theme .topup-price-number {
+  color: #0f172a;
+}
+
+[data-theme="light"] .topup-mobile-floating-bar,
+.light-theme .topup-mobile-floating-bar {
+  background: rgba(255, 255, 255, 0.95);
+  border-top: 1px solid rgba(124, 58, 237, 0.22);
+  box-shadow: 0 -8px 25px rgba(0, 0, 0, 0.08);
+}
+
+[data-theme="light"] .topup-mobile-float-item,
+.light-theme .topup-mobile-float-item {
+  color: #0f172a;
+}
+
+[data-theme="light"] .topup-tracking-card,
+.light-theme .topup-tracking-card {
+  background: #ffffff;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  box-shadow: 0 15px 35px -10px rgba(0, 0, 0, 0.07);
+}
+
+[data-theme="light"] .topup-status-banner,
+.light-theme .topup-status-banner {
+  background: #f8fafc;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+}
+
+[data-theme="light"] .detail-item,
+.light-theme .detail-item {
+  background: #f8fafc;
+  border: 1px solid rgba(15, 23, 42, 0.06);
+}
+
+[data-theme="light"] .detail-val,
+.light-theme .detail-val {
+  color: #0f172a;
+}
+
+[data-theme="light"] .topup-modal-window,
+.light-theme .topup-modal-window {
+  background: #ffffff;
+  border: 1px solid rgba(124, 58, 237, 0.25);
+  box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.2);
+}
+
+[data-theme="light"] .topup-modal-order-no,
+.light-theme .topup-modal-order-no {
+  color: #0f172a;
+}
+
+[data-theme="light"] .topup-modal-subtitle b,
+.light-theme .topup-modal-subtitle b {
+  color: #0f172a;
+}
+
+[data-theme="light"] .topup-modal-close-btn,
+.light-theme .topup-modal-close-btn {
+  background: rgba(15, 23, 42, 0.06);
+  border: 1px solid rgba(15, 23, 42, 0.1);
+  color: #64748b;
+}
+
+[data-theme="light"] .topup-modal-close-btn:hover,
+.light-theme .topup-modal-close-btn:hover {
+  background: rgba(15, 23, 42, 0.12);
+  color: #0f172a;
+}
+
+/* --------------------------------------------------------------------------
    RESPONSIVE MEDIA QUERIES (DESKTOP, TABLET, MOBILE)
    -------------------------------------------------------------------------- */
+
+/* 1. Laptops & Wide Tablets (1024px – 1200px) */
+@media (max-width: 1200px) {
+  .topup-shop-layout {
+    grid-template-columns: 1fr 340px;
+    gap: 22px;
+  }
+
+  .topup-packages-grid {
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  }
+}
+
+/* 2. Medium Tablets & Split-Screen (769px – 980px) */
 @media (max-width: 980px) {
   .topup-shop-layout {
     grid-template-columns: 1fr;
@@ -1099,17 +1399,61 @@
   .topup-mobile-floating-bar {
     display: flex;
   }
+
+  .topup-packages-grid {
+    grid-template-columns: repeat(auto-fill, minmax(165px, 1fr));
+  }
 }
 
-@media (max-width: 640px) {
+/* 3. Small Tablets & Phablets (581px – 768px) */
+@media (max-width: 768px) {
+  .topup-header-bar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
+    padding: 20px 18px;
+  }
+
+  .topup-brand-title {
+    width: 100%;
+  }
+
+  .topup-nav-tabs {
+    width: 100%;
+    justify-content: stretch;
+  }
+
+  .topup-tab-btn {
+    flex: 1;
+    justify-content: center;
+    padding: 10px 14px;
+    font-size: 0.82rem;
+  }
+
+  .topup-card {
+    padding: 20px 18px;
+  }
+
+  .topup-packages-grid {
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 10px;
+  }
+
+  .topup-payment-card {
+    padding: 14px 16px;
+  }
+}
+
+/* 4. Standard Mobile Phones (381px – 580px) */
+@media (max-width: 580px) {
   .topup-container {
-    padding: 16px 12px 110px;
+    padding: 16px 12px 115px;
   }
 
   .topup-header-bar {
-    padding: 18px 16px;
+    padding: 16px 14px;
     border-radius: 18px;
-    gap: 14px;
+    gap: 12px;
   }
 
   .topup-brand-title {
@@ -1128,19 +1472,41 @@
 
   .topup-nav-tabs {
     width: 100%;
-    justify-content: space-between;
+    padding: 4px;
   }
 
   .topup-tab-btn {
     flex: 1;
     justify-content: center;
-    padding: 8px 12px;
+    padding: 8px 10px;
     font-size: 0.78rem;
+    gap: 6px;
   }
 
   .topup-card {
-    padding: 18px 16px;
+    padding: 18px 14px;
     border-radius: 18px;
+  }
+
+  .topup-step-indicator {
+    gap: 10px;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+  }
+
+  .topup-step-indicator .step-num {
+    width: 30px;
+    height: 30px;
+    font-size: 0.85rem;
+    border-radius: 8px;
+  }
+
+  .topup-step-indicator .step-title {
+    font-size: 1.05rem;
+  }
+
+  .topup-step-indicator .step-desc {
+    font-size: 0.78rem;
   }
 
   .topup-games-grid {
@@ -1149,21 +1515,37 @@
   }
 
   .topup-game-card {
-    padding: 10px 12px;
-    gap: 10px;
+    padding: 10px 10px;
+    gap: 8px;
+    position: relative;
   }
 
   .topup-game-icon-box {
     width: 36px;
     height: 36px;
+    border-radius: 10px;
+  }
+
+  .topup-game-info {
+    min-width: 0;
+    flex: 1;
   }
 
   .topup-game-name {
-    font-size: 0.85rem;
+    font-size: 0.84rem;
   }
 
   .topup-game-count {
-    font-size: 0.7rem;
+    font-size: 0.68rem;
+  }
+
+  .topup-check-mark {
+    width: 18px;
+    height: 18px;
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    margin-left: 0;
   }
 
   .topup-inputs-row {
@@ -1181,12 +1563,25 @@
     min-height: 110px;
   }
 
+  .topup-package-diamonds {
+    padding-right: 36px;
+  }
+
+  .topup-diamond-icon {
+    font-size: 1.1rem;
+  }
+
   .topup-diamond-amount {
     font-size: 0.92rem;
   }
 
+  .topup-package-title {
+    font-size: 0.74rem;
+    margin: 4px 0 10px;
+  }
+
   .topup-price-tag {
-    font-size: 1rem;
+    font-size: 1.02rem;
   }
 
   .topup-payment-grid {
@@ -1195,17 +1590,68 @@
   }
 
   .topup-payment-card {
-    padding: 14px 16px;
+    padding: 12px 14px;
+    gap: 12px;
+  }
+
+  .topup-pay-icon {
+    width: 42px;
+    height: 42px;
+  }
+
+  .topup-pay-info {
+    min-width: 0;
+    flex: 1;
+  }
+
+  .topup-pay-title {
+    font-size: 0.88rem;
+  }
+
+  .topup-pay-subtitle {
+    font-size: 0.74rem;
   }
 
   .topup-summary-box {
-    padding: 20px 16px;
-    border-radius: 20px;
+    padding: 18px 14px;
+    border-radius: 18px;
+  }
+
+  .topup-summary-row {
+    padding: 9px 0;
+    font-size: 0.84rem;
+  }
+
+  .topup-price-number {
+    font-size: 2rem;
+  }
+
+  .topup-checkout-cta-btn {
+    padding: 13px 18px;
+    font-size: 0.94rem;
+  }
+
+  .topup-mobile-floating-bar {
+    padding: 10px 14px calc(10px + env(safe-area-inset-bottom, 0px));
+    gap: 10px;
+  }
+
+  .topup-mobile-float-item {
+    font-size: 0.8rem;
+  }
+
+  .topup-mobile-float-price {
+    font-size: 1.05rem;
+  }
+
+  .topup-mobile-float-btn {
+    padding: 9px 16px;
+    font-size: 0.86rem;
   }
 
   .topup-tracking-card {
-    padding: 20px 16px;
-    border-radius: 20px;
+    padding: 20px 14px;
+    border-radius: 18px;
   }
 
   .topup-tracking-form {
@@ -1215,7 +1661,8 @@
   .topup-status-banner {
     flex-direction: column;
     align-items: flex-start;
-    gap: 12px;
+    gap: 10px;
+    padding: 14px 16px;
   }
 
   .topup-details-grid {
@@ -1223,21 +1670,82 @@
   }
 
   .topup-modal-window {
-    padding: 22px 16px;
-    border-radius: 20px;
-    max-height: 96vh;
+    padding: 20px 14px;
+    border-radius: 18px;
+    width: 95%;
+    max-height: 94vh;
+  }
+
+  .topup-modal-order-no {
+    font-size: 1.25rem;
   }
 
   .topup-qr-frame {
-    height: 400px;
+    height: min(400px, 52vh);
   }
 }
 
+/* 5. Ultra-Narrow Mobile Phones (<= 380px) */
 @media (max-width: 380px) {
-  .topup-games-grid {
-    grid-template-columns: 1fr;
+  .topup-container {
+    padding: 12px 8px 115px;
   }
 
+  .topup-header-bar {
+    padding: 14px 10px;
+  }
+
+  .topup-main-title {
+    font-size: 1.2rem;
+  }
+
+  .topup-card {
+    padding: 14px 10px;
+  }
+
+  .topup-games-grid {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .topup-packages-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+
+  .topup-package-card {
+    padding: 10px 8px;
+    min-height: 102px;
+  }
+
+  .topup-diamond-amount {
+    font-size: 0.85rem;
+  }
+
+  .topup-price-tag {
+    font-size: 0.95rem;
+  }
+
+  .topup-mobile-floating-bar {
+    padding: 8px 10px calc(8px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .topup-mobile-float-item {
+    font-size: 0.74rem;
+  }
+
+  .topup-mobile-float-price {
+    font-size: 0.96rem;
+  }
+
+  .topup-mobile-float-btn {
+    padding: 8px 12px;
+    font-size: 0.8rem;
+  }
+}
+
+/* 6. Micro Phones (<= 325px) */
+@media (max-width: 325px) {
   .topup-packages-grid {
     grid-template-columns: 1fr;
   }

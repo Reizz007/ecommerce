@@ -9847,10 +9847,17 @@ input:checked+.slider:before {
 }
 
 /* Responsive Mobile Adjustments */
+@media (max-width: 768px) {
+  .ai-chat-launcher-wrapper {
+    bottom: calc(84px + env(safe-area-inset-bottom, 0px));
+    right: 16px;
+  }
+}
+
 @media (max-width: 480px) {
   .ai-chat-launcher-wrapper {
-    bottom: 18px;
-    right: 18px;
+    bottom: calc(78px + env(safe-area-inset-bottom, 0px));
+    right: 14px;
   }
   .ai-chat-launcher-btn {
     width: 52px;
