@@ -439,21 +439,19 @@ export default function TopupShop({ onBackToTools }) {
               <div className="topup-step-indicator">
                 <span className="step-num">2</span>
                 <div>
-                  <h2 className="step-title">Enter Account Details</h2>
+                  <h2 className="step-title">Player Details</h2>
                   <p className="step-desc">
-                    {isZoneRequired 
-                      ? 'Enter your User ID and Zone ID located in your game profile' 
-                      : 'Enter your Player / User ID'}
+                    Fill in your info exactly as shown in your game account.
                   </p>
                 </div>
               </div>
 
               <div className="topup-inputs-row">
                 <div className="topup-field-box">
-                  <label className="topup-field-label">User ID / Player ID *</label>
+                  <label className="topup-field-label">USER ID / PLAYER ID</label>
                   <input
                     type="text"
-                    placeholder="e.g. 702425515 or 702425515(10301)"
+                    placeholder="702425515"
                     value={playerId}
                     onChange={(e) => handlePlayerIdInput(e.target.value)}
                     className="topup-text-input"
@@ -462,10 +460,10 @@ export default function TopupShop({ onBackToTools }) {
 
                 {isZoneRequired && (
                   <div className="topup-field-box">
-                    <label className="topup-field-label">Zone / Server ID *</label>
+                    <label className="topup-field-label">SERVER / ZONE ID</label>
                     <input
                       type="text"
-                      placeholder="e.g. 10301"
+                      placeholder="10301"
                       value={zoneId}
                       onChange={(e) => {
                         setZoneId(e.target.value);
@@ -478,31 +476,28 @@ export default function TopupShop({ onBackToTools }) {
               </div>
 
               <div className="topup-verify-row">
-                <button
-                  type="button"
-                  disabled={isCheckingId || !playerId.trim()}
-                  onClick={handleVerifyPlayerId}
-                  className="btn btn-secondary btn-sm topup-verify-btn"
-                >
-                  {isCheckingId ? (
-                    <>
-                      <RefreshCw size={14} className="animate-spin" />
-                      <span>Checking Name...</span>
-                    </>
-                  ) : (
-                    <>
-                      <ShieldCheck size={16} />
-                      <span>Verify In-Game Username</span>
-                    </>
-                  )}
-                </button>
-
                 {verifiedName && (
-                  <div className="topup-verified-badge">
+                  <div className="topup-verified-badge" style={{ marginRight: 'auto' }}>
                     <CheckCircle2 size={16} className="text-emerald-400" />
                     <span>In-Game Name: <b>{verifiedName}</b></span>
                   </div>
                 )}
+
+                <button
+                  type="button"
+                  disabled={isCheckingId || !playerId.trim()}
+                  onClick={handleVerifyPlayerId}
+                  className="topup-verify-btn"
+                >
+                  {isCheckingId ? (
+                    <>
+                      <RefreshCw size={14} className="animate-spin" />
+                      <span>CHECKING...</span>
+                    </>
+                  ) : (
+                    <span>CHECK ID</span>
+                  )}
+                </button>
               </div>
 
               {verifyError && (
