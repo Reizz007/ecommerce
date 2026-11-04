@@ -90,13 +90,6 @@ export default function TopupShop({ onBackToTools }) {
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [copiedOrderNo, setCopiedOrderNo] = useState(false);
 
-  // Active View Tab: 'shop' | 'tracking'
-  const [viewTab, setViewTab] = useState('shop');
-  const [trackingOrderNo, setTrackingOrderNo] = useState('');
-  const [trackedOrder, setTrackedOrder] = useState(null);
-  const [isTrackingLoading, setIsTrackingLoading] = useState(false);
-  const [trackingError, setTrackingError] = useState('');
-
   // Fetch Games Catalog with graceful retry on wake-up
   const loadGames = useCallback(async () => {
     setLoadingGames(true);
@@ -329,32 +322,6 @@ export default function TopupShop({ onBackToTools }) {
     };
   }, [isPaymentModalOpen, activeOrder?.order_no, addToast]);
 
-  // Order Tracking Handler
-  const handleTrackOrder = async (e) => {
-    e?.preventDefault();
-    const cleanNo = trackingOrderNo.trim();
-    if (!cleanNo) {
-      setTrackingError('Please enter an Order ID.');
-      return;
-    }
-
-    setIsTrackingLoading(true);
-    setTrackingError('');
-    setTrackedOrder(null);
-
-    try {
-      const data = await fetchJson(`/api/topup/orders/${encodeURIComponent(cleanNo)}`, {}, 1, 1000);
-      if (!data.success) {
-        throw new Error(data.message || 'Order not found.');
-      }
-      setTrackedOrder(data.data || data.order);
-    } catch (err) {
-      setTrackingError(err.message || 'Could not locate order.');
-    } finally {
-      setIsTrackingLoading(false);
-    }
-  };
-
   const copyOrderToClipboard = (text) => {
     if (!text) return;
     navigator.clipboard?.writeText(text);
@@ -384,173 +351,11 @@ export default function TopupShop({ onBackToTools }) {
           </div>
         </div>
 
-        <div className="topup-nav-tabs">
-          <button 
-            type="button"
-            className={`topup-tab-btn ${viewTab === 'shop' ? 'active' : ''}`}
-            onClick={() => setViewTab('shop')}
-          >
-            <Sparkles size={16} />
-            <span>Select Game & Top Up</span>
-          </button>
-          <button 
-            type="button"
-            className={`topup-tab-btn ${viewTab === 'tracking' ? 'active' : ''}`}
-            onClick={() => setViewTab('tracking')}
-          >
-            <Search size={16} />
-            <span>Track Order Status</span>
-          </button>
-        </div>
       </div>
 
-      {viewTab === 'tracking' ? (
-        /* Order Tracking View */
-        <div className="topup-tracking-card">
-          <div className="topup-card-header">
-            <h2 className="text-xl font-bold flex items-center gap-2">
-              <Clock className="text-cyan-400" size={20} />
-              Real-Time Order Tracking
-            </h2>
-            <p className="text-sm text-slate-400 mt-1">
-              Enter your Order Number (e.g. <code>ORD_2026...</code>) to check live payment and diamond fulfillment status.
-            </p>
-          </div>
-
-          <form onSubmit={handleTrackOrder} className="topup-tracking-form">
-            <div className="topup-input-group flex-1">
-              <input
-                type="text"
-                placeholder="Enter Order ID (ORD_...)"
-                value={trackingOrderNo}
-                onChange={(e) => setTrackingOrderNo(e.target.value)}
-                className="topup-text-input"
-              />
-            </div>
-            <button 
-              type="submit" 
-              disabled={isTrackingLoading} 
-              className="btn btn-primary topup-track-submit-btn"
-            >
-              {isTrackingLoading ? (
-                <>
-                  <RefreshCw size={16} className="animate-spin" />
-                  <span>Searching...</span>
-                </>
-              ) : (
-                <>
-                  <Search size={16} />
-                  <span>Track Status</span>
-                </>
-              )}
-            </button>
-          </form>
-
-          {trackingError && (
-            <div className="topup-alert-box error mt-4">
-              <AlertCircle size={18} />
-              <span>{trackingError}</span>
-            </div>
-          )}
-
-          {trackedOrder && (
-            <div className="topup-tracked-result">
-              <div className="topup-status-banner">
-                <div>
-                  <span style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: '#94a3b8' }}>Order Status</span>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px' }}>
-                    <span className={`topup-status-tag ${trackedOrder.status}`}>
-                      {trackedOrder.status?.toUpperCase()}
-                    </span>
-                    {trackedOrder.status === 'success' && (
-                      <span style={{ fontSize: '0.8rem', color: '#34d399', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                        <CheckCircle2 size={14} /> Diamonds Transferred
-                      </span>
-                    )}
-                  </div>
-                </div>
-
-                <div style={{ textAlign: 'right' }}>
-                  <span style={{ fontSize: '0.75rem', color: '#94a3b8', textTransform: 'uppercase' }}>Total Paid</span>
-                  <p style={{ fontSize: '1.75rem', fontWeight: 900, color: '#ffffff', margin: '4px 0 0' }}>
-                    ${Number(trackedOrder.amount).toFixed(2)} USD
-                  </p>
-                </div>
-              </div>
-
-              <div className="topup-details-grid">
-                <div className="detail-item">
-                  <span className="label">Order Number</span>
-                  <span className="value" style={{ fontFamily: 'monospace' }}>{trackedOrder.order_no}</span>
-                </div>
-                <div className="detail-item">
-                  <span className="label">Game</span>
-                  <span className="value">{trackedOrder.game?.name || 'Mobile Game'}</span>
-                </div>
-                <div className="detail-item">
-                  <span className="label">Item / Diamonds</span>
-                  <span className="value" style={{ color: '#38bdf8', fontWeight: 700 }}>
-                    💎 {trackedOrder.package?.name || `${trackedOrder.diamond_amount} Diamonds`}
-                  </span>
-                </div>
-                <div className="detail-item">
-                  <span className="label">Player ID</span>
-                  <span className="value" style={{ fontFamily: 'monospace' }}>
-                    {trackedOrder.player_id} {trackedOrder.zone_id ? `(${trackedOrder.zone_id})` : ''}
-                  </span>
-                </div>
-                {trackedOrder.player_username && (
-                  <div className="detail-item">
-                    <span className="label">Player Username</span>
-                    <span className="value" style={{ color: '#34d399', fontWeight: 800 }}>
-                      {trackedOrder.player_username}
-                    </span>
-                  </div>
-                )}
-                <div className="detail-item">
-                  <span className="label">Payment Gateway</span>
-                  <span className="value" style={{ textTransform: 'uppercase', fontWeight: 700 }}>
-                    {trackedOrder.payment_method || 'ABA PayWay'}
-                  </span>
-                </div>
-              </div>
-
-              {trackedOrder.gateway_checkout_url && trackedOrder.status === 'pending' && (
-                <div style={{
-                  marginTop: '16px',
-                  padding: '16px',
-                  borderRadius: '14px',
-                  background: 'rgba(139, 92, 246, 0.15)',
-                  border: '1px solid rgba(139, 92, 246, 0.35)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  flexWrap: 'wrap',
-                  gap: '12px'
-                }}>
-                  <div>
-                    <p style={{ margin: 0, fontSize: '0.92rem', fontWeight: 700, color: '#e9d5ff' }}>Payment still pending</p>
-                    <p style={{ margin: '4px 0 0', fontSize: '0.78rem', color: '#c084fc' }}>Click checkout to finish transaction with ABA PayWay or KHQR.</p>
-                  </div>
-                  <a
-                    href={trackedOrder.gateway_checkout_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="btn btn-primary btn-sm"
-                  >
-                    <span>Open Checkout</span>
-                    <ExternalLink size={14} />
-                  </a>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-      ) : (
-        /* Top Up Shop View */
-        <div className="topup-shop-layout">
-          {/* Left Column: Form & Selection */}
-          <div className="topup-main-column">
+      <div className="topup-shop-layout">
+        {/* Left Column: Form & Selection */}
+        <div className="topup-main-column">
             {/* Step 1: Select Game */}
             <section className="topup-card">
               <div className="topup-step-indicator">
@@ -611,8 +416,8 @@ export default function TopupShop({ onBackToTools }) {
                         <div className="topup-game-icon-box">
                           <span className="topup-game-badge-txt">{badge}</span>
                         </div>
-                        <div className="text-left flex-1 min-w-0">
-                          <h3 className="topup-game-name truncate">{g.name}</h3>
+                        <div className="text-left flex-1 min-w-0 pr-2">
+                          <h3 className="topup-game-name">{g.name}</h3>
                           <span className="topup-game-count text-xs text-slate-400">
                             {g.packages?.length || 0} packages available
                           </span>
@@ -902,10 +707,9 @@ export default function TopupShop({ onBackToTools }) {
             </div>
           </div>
         </div>
-      )}
 
       {/* Mobile Floating Checkout Bar (< 980px) */}
-      {viewTab === 'shop' && activePackage && playerId.trim() && (
+      {activePackage && playerId.trim() && (
         <div className="topup-mobile-floating-bar">
           <div className="topup-mobile-float-info">
             <span className="topup-mobile-float-item">
