@@ -4,9 +4,9 @@
    ========================================================================== */
 
 .topup-container {
-  max-width: 1260px;
+  max-width: 1200px;
   margin: 0 auto;
-  padding: 24px 20px 90px;
+  padding: 28px 24px 100px;
   color: var(--text-main, #f8fafc);
   font-family: var(--font-display, 'Outfit', sans-serif);
   box-sizing: border-box;
@@ -162,11 +162,12 @@
   background: rgba(18, 24, 38, 0.75);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 20px;
-  padding: 24px;
+  padding: 24px 22px;
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   box-shadow: 0 12px 30px -10px rgba(0, 0, 0, 0.5);
   transition: border-color 0.25s ease;
+  box-sizing: border-box;
 }
 
 .topup-card:hover {
@@ -539,12 +540,6 @@
   display: grid;
   grid-template-columns: 1fr;
   gap: 12px;
-}
-
-@media (min-width: 480px) {
-  .topup-payment-grid {
-    grid-template-columns: 1fr 1fr;
-  }
 }
 
 .topup-payment-card {
@@ -1642,7 +1637,7 @@
 /* 3. Small Tablets & Phablets (581px – 768px) */
 @media (max-width: 768px) {
   .topup-container {
-    padding: 24px 20px 115px;
+    padding: 26px 22px 120px;
   }
 
   .topup-header-bar {
@@ -1669,7 +1664,7 @@
   }
 
   .topup-card {
-    padding: 22px 18px;
+    padding: 24px 22px;
   }
 
   .topup-games-grid {
@@ -1678,13 +1673,13 @@
   }
 
   .topup-game-card {
-    padding: 12px 18px;
+    padding: 14px 18px;
     gap: 14px;
   }
 
   .topup-game-icon-box {
-    width: 42px;
-    height: 42px;
+    width: 44px;
+    height: 44px;
   }
 
   .topup-game-name {
@@ -1702,19 +1697,23 @@
     flex-shrink: 0;
   }
 
+  .topup-payment-grid {
+    grid-template-columns: 1fr;
+  }
+
   .topup-payment-card {
-    padding: 14px 16px;
+    padding: 14px 18px;
   }
 }
 
 /* 4. Standard Mobile Phones (381px – 580px) */
 @media (max-width: 580px) {
   .topup-container {
-    padding: 20px 18px 115px;
+    padding: 24px 20px 120px;
   }
 
   .topup-header-bar {
-    padding: 16px 14px;
+    padding: 18px 16px;
     border-radius: 18px;
     gap: 12px;
   }
@@ -1747,21 +1746,18 @@
   }
 
   .topup-card {
-    padding: 18px 16px;
+    padding: 24px 20px;
     border-radius: 18px;
   }
 
   .topup-step-indicator {
     gap: 10px;
-    margin-bottom: 16px;
-    padding-bottom: 12px;
+    margin-bottom: 18px;
+    padding-bottom: 0;
   }
 
   .topup-step-indicator .step-num {
-    width: 30px;
-    height: 30px;
-    font-size: 0.85rem;
-    border-radius: 8px;
+    display: none;
   }
 
   .topup-step-indicator .step-title {
@@ -1772,14 +1768,14 @@
     font-size: 0.78rem;
   }
 
-  /* Single column full-width: never squeeze or fit right & left on mobile */
+  /* Single column full-width: generous breathing room & padding */
   .topup-games-grid {
     grid-template-columns: 1fr;
     gap: 10px;
   }
 
   .topup-game-card {
-    padding: 12px 14px;
+    padding: 13px 16px;
     gap: 12px;
     display: flex;
     align-items: center;
@@ -1818,35 +1814,28 @@
     flex-shrink: 0;
   }
 
-  /* 4. Standard Mobile Phones & Phablets (<= 580px) */
+  /* Vertical stacked player inputs with generous padding */
   .topup-inputs-row {
     grid-template-columns: 1fr;
     gap: 14px;
   }
 
-  @media (min-width: 480px) {
-    .topup-inputs-row {
-      grid-template-columns: 1fr 1fr;
-    }
+  .topup-text-input {
+    padding: 12px 14px;
+    font-size: 14px;
   }
 
+  /* Single column stacked package rows with price pill on right */
   .topup-packages-list,
   .topup-packages-grid {
     grid-template-columns: 1fr;
     gap: 10px;
   }
 
-  @media (min-width: 500px) {
-    .topup-packages-list,
-    .topup-packages-grid {
-      grid-template-columns: 1fr 1fr;
-    }
-  }
-
   .topup-package-row,
   .topup-package-card {
-    padding: 13px 16px;
-    border-radius: 13px;
+    padding: 14px 18px;
+    border-radius: 14px;
   }
 
   .topup-package-row-name {
@@ -1858,19 +1847,14 @@
     font-size: 11px;
   }
 
+  /* Payment Method: Bakong KHQR single column */
   .topup-payment-grid {
     grid-template-columns: 1fr;
     gap: 10px;
   }
 
-  @media (min-width: 480px) {
-    .topup-payment-grid {
-      grid-template-columns: 1fr 1fr;
-    }
-  }
-
   .topup-payment-card {
-    padding: 12px 14px;
+    padding: 14px 18px;
     gap: 12px;
   }
 
@@ -1893,7 +1877,7 @@
   }
 
   .topup-summary-box {
-    padding: 18px 16px;
+    padding: 20px 18px;
     border-radius: 18px;
   }
 
@@ -1907,7 +1891,7 @@
   }
 
   .topup-mobile-floating-bar {
-    padding: 10px 16px calc(10px + env(safe-area-inset-bottom, 0px));
+    padding: 10px 18px calc(10px + env(safe-area-inset-bottom, 0px));
     gap: 10px;
   }
 
@@ -1920,12 +1904,12 @@
   }
 
   .topup-mobile-float-btn {
-    padding: 9px 16px;
+    padding: 10px 18px;
     font-size: 0.86rem;
   }
 
   .topup-modal-window {
-    padding: 20px 16px;
+    padding: 22px 18px;
     border-radius: 18px;
     width: 95%;
     max-height: 94vh;
@@ -1943,11 +1927,11 @@
 /* 5. Ultra-Narrow Mobile Phones (<= 380px) */
 @media (max-width: 380px) {
   .topup-container {
-    padding: 14px 12px 115px;
+    padding: 20px 16px 120px;
   }
 
   .topup-header-bar {
-    padding: 14px 12px;
+    padding: 14px 14px;
   }
 
   .topup-main-title {
@@ -1955,7 +1939,7 @@
   }
 
   .topup-card {
-    padding: 14px 12px;
+    padding: 20px 16px;
   }
 
   .topup-games-grid {
@@ -1964,7 +1948,7 @@
   }
 
   .topup-game-card {
-    padding: 10px 12px;
+    padding: 12px 14px;
     gap: 10px;
   }
 
@@ -1981,7 +1965,7 @@
 
   .topup-package-row,
   .topup-package-card {
-    padding: 11px 12px;
+    padding: 13px 16px;
     border-radius: 12px;
   }
 
@@ -1999,11 +1983,11 @@
   }
 
   .topup-payment-card {
-    padding: 10px 12px;
+    padding: 13px 16px;
   }
 
   .topup-mobile-floating-bar {
-    padding: 8px 12px calc(8px + env(safe-area-inset-bottom, 0px));
+    padding: 8px 14px calc(8px + env(safe-area-inset-bottom, 0px));
   }
 
   .topup-mobile-float-item {
@@ -2015,7 +1999,7 @@
   }
 
   .topup-mobile-float-btn {
-    padding: 8px 12px;
+    padding: 8px 14px;
     font-size: 0.8rem;
   }
 }

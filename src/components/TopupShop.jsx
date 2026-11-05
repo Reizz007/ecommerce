@@ -346,7 +346,7 @@ export default function TopupShop({ onBackToTools }) {
               </span>
             </div>
             <p className="topup-subtitle">
-              Instant mobile game diamond delivery via ABA PayWay & KHQR
+              Instant mobile game diamond delivery via Bakong KHQR
             </p>
           </div>
         </div>
@@ -558,49 +558,35 @@ export default function TopupShop({ onBackToTools }) {
               )}
             </section>
 
-            {/* Step 4: Payment Gateway (ABA PayWay & Bakong KHQR) */}
+            {/* Step 4: Payment Gateway (Bakong KHQR Only) */}
             <section className="topup-card">
               <div className="topup-step-indicator">
                 <div>
-                  <h2 className="step-title">Select Payment Method</h2>
-                  <p className="step-desc">Choose whether to pay via ABA PayWay or Bakong KHQR.</p>
+                  <h2 className="step-title">Payment Method</h2>
+                  <p className="step-desc">Scan to pay with any mobile banking app in Cambodia</p>
                 </div>
               </div>
 
-              <div className="topup-payment-grid">
-                <button
-                  type="button"
-                  onClick={() => setPaymentMethod('payway')}
-                  className={`topup-payment-card ${paymentMethod === 'payway' ? 'selected' : ''}`}
-                >
-                  <div className="topup-pay-icon aba">
-                    <span>ABA</span>
-                  </div>
-                  <div className="topup-pay-info">
-                    <h4 className="topup-pay-title">ABA PayWay</h4>
-                    <p className="topup-pay-subtitle">ABA Mobile App &amp; Cards</p>
-                  </div>
-                  <div className="topup-radio-circle">
-                    {paymentMethod === 'payway' && <div className="topup-radio-dot" />}
-                  </div>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setPaymentMethod('khqr')}
-                  className={`topup-payment-card ${paymentMethod === 'khqr' ? 'selected' : ''}`}
-                >
+              <div className="topup-payment-grid" style={{ gridTemplateColumns: '1fr' }}>
+                <div className="topup-payment-card selected" style={{ cursor: 'default' }}>
                   <div className="topup-pay-icon khqr">
                     <span>KHQR</span>
                   </div>
                   <div className="topup-pay-info">
-                    <h4 className="topup-pay-title">Bakong KHQR</h4>
-                    <p className="topup-pay-subtitle">All Banks in Cambodia</p>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                      <h4 className="topup-pay-title" style={{ margin: 0 }}>Bakong KHQR</h4>
+                      <span className="topup-method-badge khqr" style={{ fontSize: '10px', padding: '2px 8px' }}>
+                        ALL BANKS
+                      </span>
+                    </div>
+                    <p className="topup-pay-subtitle" style={{ marginTop: '4px' }}>
+                      Scan &amp; Pay with <strong>ABA Mobile</strong>, <strong>Bakong</strong>, <strong>Wing</strong> &amp; all Cambodian banking apps
+                    </p>
                   </div>
                   <div className="topup-radio-circle">
-                    {paymentMethod === 'khqr' && <div className="topup-radio-dot" />}
+                    <div className="topup-radio-dot" />
                   </div>
-                </button>
+                </div>
               </div>
             </section>
           </div>
@@ -615,8 +601,8 @@ export default function TopupShop({ onBackToTools }) {
               <div className="topup-total-box">
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
                   <span className="topup-total-label" style={{ margin: 0 }}>Payment Method</span>
-                  <span className={`topup-method-badge ${paymentMethod}`}>
-                    {paymentMethod === 'payway' ? 'ABA PayWay' : 'Bakong KHQR'}
+                  <span className="topup-method-badge khqr">
+                    Bakong KHQR
                   </span>
                 </div>
                 <p className="topup-total-label">Total</p>
@@ -663,7 +649,7 @@ export default function TopupShop({ onBackToTools }) {
               >
                 <span>{isSubmitting ? "Processing..." : "Pay Now"}</span>
                 <span className="topup-pay-badge">
-                  {paymentMethod === 'payway' ? 'ABA PAY' : 'KHQR'}
+                  KHQR
                 </span>
               </button>
 
@@ -699,7 +685,7 @@ export default function TopupShop({ onBackToTools }) {
             className="topup-mobile-float-btn"
           >
             {isSubmitting ? <RefreshCw size={16} className="animate-spin" /> : <Zap size={16} />}
-            <span>Pay Now ({paymentMethod === 'payway' ? 'ABA' : 'KHQR'})</span>
+            <span>Pay Now (KHQR)</span>
           </button>
         </div>
       )}
