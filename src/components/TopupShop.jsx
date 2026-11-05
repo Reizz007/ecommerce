@@ -339,7 +339,7 @@ export default function TopupShop({ onBackToTools }) {
             <Gamepad2 size={24} className="text-cyan-400" />
           </div>
           <div>
-            <div className="flex items-center gap-2">
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
               <h1 className="topup-main-title">Game Top-Up Center</h1>
               <span className="topup-live-pill">
                 <span className="topup-pulse-dot"></span> LIVE 24/7
@@ -415,9 +415,9 @@ export default function TopupShop({ onBackToTools }) {
                         <div className="topup-game-icon-box">
                           <span className="topup-game-badge-txt">{badge}</span>
                         </div>
-                        <div className="text-left flex-1 min-w-0 pr-2">
+                        <div className="topup-game-info">
                           <h3 className="topup-game-name">{g.name}</h3>
-                          <span className="topup-game-count text-xs text-slate-400">
+                          <span className="topup-game-count">
                             {g.packages?.length || 0} packages available
                           </span>
                         </div>
@@ -520,7 +520,7 @@ export default function TopupShop({ onBackToTools }) {
               </div>
 
               {selectedGame?.packages?.length === 0 ? (
-                <p className="text-sm text-slate-400 py-4">No packages currently active for this game.</p>
+                <p style={{ fontSize: '0.875rem', color: '#94a3b8', padding: '1rem 0' }}>No packages currently active for this game.</p>
               ) : (
                 <div className="topup-packages-list">
                   {selectedGame?.packages?.map((pkg) => {
