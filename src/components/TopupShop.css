@@ -3,26 +3,36 @@
    Cyber Neon • High Contrast Glassmorphism • 100% Mobile Responsive
    ========================================================================== */
 
+.topup-site-section,
+section#topup.topup-site-section {
+  position: relative;
+  width: 100%;
+  padding: 0 !important;
+  box-sizing: border-box;
+  overflow-x: clip;
+}
+
 .topup-container {
   position: relative;
   z-index: 1;
   max-width: 1200px;
   margin: 0 auto;
-  padding: 32px 36px 80px;
+  padding: 28px 20px 80px;
   color: var(--text-main, #f8fafc);
   font-family: var(--font-display, 'Outfit', sans-serif);
   box-sizing: border-box;
+  width: 100%;
 }
 
 @media (max-width: 768px) {
   .topup-container {
-    padding: 24px 32px 80px;
+    padding: 20px 16px 70px;
   }
 }
 
-@media (max-width: 420px) {
+@media (max-width: 480px) {
   .topup-container {
-    padding: 20px 24px 70px;
+    padding: 16px 14px 60px;
   }
 }
 
@@ -182,12 +192,22 @@
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(168, 85, 247, 0.12);
   border-radius: 20px;
-  padding: 24px 22px;
+  padding: 22px 20px !important;
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   box-shadow: 0 12px 30px -10px rgba(0, 0, 0, 0.5);
   transition: border-color 0.25s ease;
   box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow: hidden;
+}
+
+@media (max-width: 640px) {
+  .topup-card {
+    padding: 18px 16px !important;
+  }
 }
 
 .topup-card:hover {
@@ -227,11 +247,20 @@
    -------------------------------------------------------------------------- */
 .topup-games-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
+  grid-template-columns: 1fr;
+  gap: 10px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
-@media (min-width: 640px) {
+@media (min-width: 480px) {
+  .topup-games-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+}
+
+@media (min-width: 768px) {
   .topup-games-grid {
     grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
   }
@@ -251,6 +280,9 @@
   overflow: hidden;
   text-align: left;
   width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .topup-game-card:hover {
@@ -445,7 +477,7 @@
 .topup-packages-list,
 .topup-packages-grid {
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: minmax(0, 1fr);
   gap: 12px;
   width: 100%;
   box-sizing: border-box;
@@ -454,7 +486,7 @@
 @media (min-width: 500px) {
   .topup-packages-list,
   .topup-packages-grid {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
@@ -472,6 +504,8 @@
   text-align: left;
   font-family: inherit;
   width: 100%;
+  max-width: 100%;
+  min-width: 0;
   box-sizing: border-box;
   position: relative;
 }
@@ -564,8 +598,10 @@
    -------------------------------------------------------------------------- */
 .topup-payment-grid {
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: minmax(0, 1fr);
   gap: 12px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .topup-payment-card {
@@ -581,9 +617,12 @@
   text-align: left;
   font-family: inherit;
   width: 100%;
+  max-width: 100%;
+  min-width: 0;
   color: #fff;
   position: relative;
   box-sizing: border-box;
+  overflow: hidden;
 }
 
 .topup-payment-card:hover {
@@ -626,6 +665,7 @@
 .topup-pay-info {
   flex: 1;
   min-width: 0;
+  overflow: hidden;
 }
 
 .topup-pay-title {
@@ -641,11 +681,10 @@
 
 .topup-pay-subtitle {
   font-size: 11px;
-  color: #475569;
+  color: #94a3b8;
   margin: 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  line-height: 1.4;
+  word-break: break-word;
 }
 
 .topup-radio-circle {
@@ -1647,7 +1686,6 @@
   }
 }
 
-/* Step 1 Games: 2 columns on mobile (< 640px) matching Dyzztopup Game.jsx */
 @media (max-width: 640px) {
   .topup-header-bar {
     padding: 16px 16px;
@@ -1659,9 +1697,20 @@
     font-size: 1.35rem;
   }
 
+  .topup-card {
+    padding: 18px 16px !important;
+  }
+
+  .topup-summary-box {
+    padding: 18px 16px !important;
+  }
+}
+
+/* Step 1 Games: 1 Column on mobile (< 480px), 2 Columns on >= 480px */
+@media (max-width: 479px) {
   .topup-games-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 12px;
+    grid-template-columns: 1fr;
+    gap: 10px;
   }
 }
 
@@ -1685,7 +1734,7 @@
 @media (min-width: 500px) {
   .topup-packages-list,
   .topup-packages-grid {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 

@@ -357,7 +357,7 @@ export default function TopupShop({ onBackToTools }) {
         {/* Left Column: Form & Selection */}
         <div className="topup-main-column">
             {/* Step 1: Select Game */}
-            <section className="topup-card">
+            <div className="topup-card">
               <div className="topup-step-indicator">
                 <div>
                   <h2 className="step-title">Select Game</h2>
@@ -431,10 +431,10 @@ export default function TopupShop({ onBackToTools }) {
                   })}
                 </div>
               )}
-            </section>
+            </div>
 
             {/* Step 2: Player ID & Server Verification */}
-            <section className="topup-card">
+            <div className="topup-card">
               <div className="topup-step-indicator">
                 <div>
                   <h2 className="step-title">Player Details</h2>
@@ -509,10 +509,10 @@ export default function TopupShop({ onBackToTools }) {
                   </span>
                 </div>
               )}
-            </section>
+            </div>
 
             {/* Step 3: Choose Package */}
-            <section className="topup-card">
+            <div className="topup-card">
               <div className="topup-step-indicator" style={{ marginBottom: '14px' }}>
                 <div>
                   <h2 className="step-title">Select Package</h2>
@@ -556,10 +556,10 @@ export default function TopupShop({ onBackToTools }) {
                   })}
                 </div>
               )}
-            </section>
+            </div>
 
             {/* Step 4: Payment Gateway (Bakong KHQR Only) */}
-            <section className="topup-card">
+            <div className="topup-card">
               <div className="topup-step-indicator">
                 <div>
                   <h2 className="step-title">Payment Method</h2>
@@ -567,7 +567,7 @@ export default function TopupShop({ onBackToTools }) {
                 </div>
               </div>
 
-              <div className="topup-payment-grid" style={{ gridTemplateColumns: '1fr' }}>
+              <div className="topup-payment-grid">
                 <div className="topup-payment-card selected" style={{ cursor: 'default' }}>
                   <div className="topup-pay-icon khqr">
                     <span>KHQR</span>
@@ -580,7 +580,7 @@ export default function TopupShop({ onBackToTools }) {
                       </span>
                     </div>
                     <p className="topup-pay-subtitle" style={{ marginTop: '4px' }}>
-                      Scan &amp; Pay with <strong>ABA Mobile</strong>, <strong>Bakong</strong>, <strong>Wing</strong> &amp; all Cambodian banking apps
+                      Scan &amp; Pay with ABA Mobile, Bakong, Wing &amp; all Cambodian banking apps
                     </p>
                   </div>
                   <div className="topup-radio-circle">
@@ -588,7 +588,7 @@ export default function TopupShop({ onBackToTools }) {
                   </div>
                 </div>
               </div>
-            </section>
+            </div>
           </div>
 
           {/* Right Column: Checkout Summary Sticky Widget */}
