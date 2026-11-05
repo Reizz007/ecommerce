@@ -667,28 +667,7 @@ export default function TopupShop({ onBackToTools }) {
           </div>
         </div>
 
-      {/* Mobile Floating Checkout Bar (< 1024px) */}
-      {activePackage && playerId.trim() && (
-        <div className="topup-mobile-floating-bar">
-          <div className="topup-mobile-float-info">
-            <span className="topup-mobile-float-item">
-              💎 {activePackage.diamond_amount} Diamonds ({selectedGame?.name || 'Top-Up'})
-            </span>
-            <span className="topup-mobile-float-price">
-              ${Number(activePackage.price).toFixed(2)} USD
-            </span>
-          </div>
-          <button
-            type="button"
-            disabled={isSubmitting}
-            onClick={handleCreateOrder}
-            className="topup-mobile-float-btn"
-          >
-            {isSubmitting ? <RefreshCw size={16} className="animate-spin" /> : <Zap size={16} />}
-            <span>Pay Now (KHQR)</span>
-          </button>
-        </div>
-      )}
+
 
       {/* Payment & Polling Modal */}
       {isPaymentModalOpen && activeOrder && (
