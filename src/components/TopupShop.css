@@ -8,10 +8,22 @@
   z-index: 1;
   max-width: 1200px;
   margin: 0 auto;
-  padding: 20px 16px 70px;
+  padding: 32px 36px 80px;
   color: var(--text-main, #f8fafc);
   font-family: var(--font-display, 'Outfit', sans-serif);
   box-sizing: border-box;
+}
+
+@media (max-width: 768px) {
+  .topup-container {
+    padding: 24px 32px 80px;
+  }
+}
+
+@media (max-width: 420px) {
+  .topup-container {
+    padding: 20px 24px 70px;
+  }
 }
 
 /* --------------------------------------------------------------------------
@@ -170,7 +182,7 @@
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(168, 85, 247, 0.12);
   border-radius: 20px;
-  padding: 22px;
+  padding: 24px 22px;
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   box-shadow: 0 12px 30px -10px rgba(0, 0, 0, 0.5);
