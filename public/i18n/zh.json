@@ -129,5 +129,20 @@
   "account_tab_licenses": "许可证与下载",
   "account_badge_active": "生效中",
   "account_create_key_btn": "生成新密钥",
-  "trust_marquee_label": "深受全球 185,000+ 开发者、创作者与创新团队的信赖"
+  "trust_marquee_label": "深受全球 185,000+ 开发者、创作者与创新团队的信赖",
+  "footer_col_topup": "游戏充值",
+  "footer_col_tools": "AI 软件与工具",
+  "footer_col_support": "订单与支持",
+  "footer_topup_mlbb": "无尽对决 (Mobile Legends)",
+  "footer_topup_chess": "魔法棋 (Magic Chess)",
+  "footer_topup_freefire": "Free Fire 钻石",
+  "footer_topup_khqr": "Bakong KHQR 即时充值",
+  "footer_tools_lifetime": "永久 AI 许可证",
+  "footer_tools_api": "开发者 API 凭证",
+  "footer_tools_browse": "浏览工具市场 →",
+  "footer_support_cart": "购物车与快速结账",
+  "footer_support_delivery": "24/7 自动化即时交付",
+  "footer_support_khqr": "Bakong KHQR 国家清算系统",
+  "footer_support_telegram": "Telegram 官方客服 (@dyzzstore_bot)",
+  "footer_support_email": "官方服务邮箱 (admin@dyzzstore.com)"
 }

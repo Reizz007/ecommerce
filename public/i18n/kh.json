@@ -129,5 +129,20 @@
   "account_tab_licenses": "អាជ្ញាប័ណ្ណ & ទាញយក",
   "account_badge_active": "សកម្ម",
   "account_create_key_btn": "បង្កើតកូដថ្មី",
-  "trust_marquee_label": "ទទួលបានការជឿទុកចិត្តពីអ្នកអភិវឌ្ឍន៍ និងស្ទូឌីយោជាង 185,000+"
+  "trust_marquee_label": "ទទួលបានការជឿទុកចិត្តពីអ្នកអភិវឌ្ឍន៍ និងស្ទូឌីយោជាង 185,000+",
+  "footer_col_topup": "បញ្ចូលលុយហ្គេម",
+  "footer_col_tools": "កម្មវិធី & ឧបករណ៍ AI",
+  "footer_col_support": "ការបញ្ជាទិញ & ជំនួយ",
+  "footer_topup_mlbb": "Mobile Legends: Bang Bang",
+  "footer_topup_chess": "Magic Chess Go Go",
+  "footer_topup_freefire": "Free Fire Diamonds",
+  "footer_topup_khqr": "បញ្ចូលភ្លាមៗតាម Bakong KHQR",
+  "footer_tools_lifetime": "អាជ្ញាប័ណ្ណ AI មួយជីវិត",
+  "footer_tools_api": "កូដ API អ្នកអភិវឌ្ឍន៍",
+  "footer_tools_browse": "រុករកបញ្ជីឧបករណ៍ →",
+  "footer_support_cart": "កន្ត្រកទំនិញ & ការទូទាត់",
+  "footer_support_delivery": "ដឹកជញ្ជូនស្វ័យប្រវត្តិ 24/7 ភ្លាមៗ",
+  "footer_support_khqr": "ការទូទាត់ជាតិបាគង KHQR",
+  "footer_support_telegram": "ជំនួយតាម Telegram (@dyzzstore_bot)",
+  "footer_support_email": "អ៊ីមែលផ្លូវការ (admin@dyzzstore.com)"
 }
