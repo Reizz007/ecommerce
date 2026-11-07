@@ -3,7 +3,6 @@ import { AppProvider, useApp } from './context/AppContext';
 import Navbar from './components/Navbar';
 import Hero from './components/Hero';
 import ToolsCatalog from './components/ToolsCatalog';
-import Testimonials from './components/Testimonials';
 import FaqSection from './components/FaqSection';
 import CartDrawer from './components/CartDrawer';
 import CheckoutModal from './components/CheckoutModal';
@@ -243,9 +242,6 @@ function MainContent() {
 
         {/* AI Tools Catalog / Marketplace */}
         <ToolsCatalog searchRef={searchInputRef} />
-
-        {/* Customer Testimonials & Reviews */}
-        <Testimonials />
 
         {/* FAQ Section */}
         <FaqSection />
