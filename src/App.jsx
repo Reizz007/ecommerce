@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { AppProvider, useApp } from './context/AppContext';
+import { apiUrl } from './utils/api';
 import Navbar from './components/Navbar';
 import Hero from './components/Hero';
 import ToolsCatalog from './components/ToolsCatalog';
