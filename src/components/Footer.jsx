@@ -42,7 +42,7 @@ const DiscordIcon = () => (
 );
 
 export default function Footer() {
-  const { setIsCartOpen } = useApp();
+  const { setIsCartOpen, t } = useApp();
 
   return (
     <footer className="site-footer">
@@ -57,12 +57,12 @@ export default function Footer() {
           </a>
 
           <p className="footer-bio">
-            The premier digital marketplace to buy verified AI tools, autonomous coding agents, and perpetual software licenses. Pay once via Cambodia National KHQR or Card — zero recurring subscriptions.
+            {t('footer_desc', 'The premier digital marketplace to buy verified AI tools, autonomous coding agents, and perpetual software licenses. Pay once via Cambodia National KHQR or Card — zero recurring subscriptions.')}
           </p>
 
           <div className="system-status">
             <span className="status-dot-active"></span>
-            <span>Store Open 24/7 • Automated Instant Delivery</span>
+            <span>{t('footer_open_status', 'Store Open 24/7 • Automated Instant Delivery')}</span>
           </div>
 
           <div className="footer-socials">
@@ -140,7 +140,7 @@ export default function Footer() {
       {/* Footer Bottom Bar */}
       <div className="footer-bottom">
         <div className="container footer-bottom-inner">
-          <p>&copy; 2026 Dyzzstore. All rights reserved. Registered Digital Software Marketplace.</p>
+          <p>&copy; 2026 Dyzzstore. {t('footer_all_rights', 'All rights reserved.')} Registered Digital Software Marketplace.</p>
           
           <div className="footer-trust-tags">
             <span className="footer-trust-tag"><Zap size={13} className="text-cyan" /> Instant Delivery</span>

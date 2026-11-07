@@ -69,7 +69,8 @@ export default function AiChatBot() {
     totalUSD,
     setIsCheckoutOpen,
     setIsAccountOpen,
-    addToast
+    addToast,
+    t
   } = useApp();
 
   const [isOpen, setIsOpen] = useState(false);
@@ -348,10 +349,10 @@ export default function AiChatBot() {
               </div>
               <div className="ai-chat-header-text">
                 <h3 className="ai-chat-title">
-                  Dyzzstore AI Support <Sparkles size={14} className="inline text-amber-400" />
+                  {t('chat_agent_name', 'Dyzzstore AI Support')} <Sparkles size={14} className="inline text-amber-400" />
                 </h3>
                 <p className="ai-chat-subtitle">
-                  <span className="status-live-dot" /> Online • Instant KHQR Guide
+                  <span className="status-live-dot" /> {t('chat_status_online', 'Online • Instant Support')}
                 </p>
               </div>
             </div>
@@ -493,7 +494,7 @@ export default function AiChatBot() {
               className="ai-chat-input"
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
-              placeholder="Ask anything (e.g. How to pay, tools, licenses...)"
+              placeholder={t('chat_placeholder', 'Ask anything (e.g. How to pay, tools, licenses...)')}
               disabled={isTyping}
             />
             <button

@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 
 export default function LoginModal({ isOpen, onClose, onLoginSuccess }) {
-  const { addToast } = useApp();
+  const { addToast, t } = useApp();
 
   // Mode: 'otp' | 'password'
   const [loginMode, setLoginMode] = useState('otp');
@@ -347,20 +347,20 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }) {
             </div>
             <h2>
               {loginMode === 'password' ? (
-                <span>Admin <span className="gradient-text">Password</span></span>
+                <span>{t('auth_modal_title_pwd', 'Admin Password')}</span>
               ) : step === 'otp' ? (
-                <span>Verify <span className="gradient-text">OTP Code</span></span>
+                <span>{t('auth_modal_title_otp_verify', 'Verify OTP Code')}</span>
               ) : (
-                <span>Sign In with <span className="gradient-text">{otpChannel === 'phone' ? 'SMS Code' : 'OTP'}</span></span>
+                <span>{t('auth_modal_title_signin', 'Sign In with')} <span className="gradient-text">{otpChannel === 'phone' ? 'SMS Code' : 'OTP'}</span></span>
               )}
             </h2>
             <p className="login-subtitle">
               {loginMode === 'password' ? (
-                <>Sign in with your administrator email and password.</>
+                <>{t('auth_sub_pwd', 'Sign in with your administrator email and password.')}</>
               ) : step === 'otp' ? (
-                <>Enter the 6-digit code sent to <strong className="text-cyan">{otpChannel === 'phone' ? phone : email}</strong></>
+                <>{t('auth_sub_otp_verify', 'Enter the 6-digit code sent to')} <strong className="text-cyan">{otpChannel === 'phone' ? phone : email}</strong></>
               ) : (
-                <>Passwordless secure login. Get an instant verification code via {otpChannel === 'phone' ? 'SMS' : 'email'}.</>
+                <>{t('auth_sub_otp', 'Passwordless secure login. Get an instant verification code via email or SMS.')}</>
               )}
             </p>
           </div>
@@ -379,7 +379,7 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }) {
           {loginMode === 'password' ? (
             <form onSubmit={handlePasswordLogin} className="login-form" autoComplete="off">
               <div className="form-group">
-                <label htmlFor="loginEmail">Email Address</label>
+                <label htmlFor="loginEmail">{t('auth_lbl_email', 'Email Address')}</label>
                 <div className="input-with-icon-wrap">
                   <Mail size={16} className="input-field-icon" />
                   <input
@@ -395,7 +395,7 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }) {
               </div>
 
               <div className="form-group">
-                <label htmlFor="loginPassword">Password</label>
+                <label htmlFor="loginPassword">{t('auth_lbl_password', 'Password')}</label>
                 <div className="input-with-icon-wrap">
                   <Lock size={16} className="input-field-icon" />
                   <input
@@ -416,7 +416,7 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }) {
                 className="btn btn-primary btn-glow btn-full"
                 disabled={isLoading}
               >
-                <span>{isLoading ? 'Signing In...' : 'Sign In as Administrator'}</span>
+                <span>{isLoading ? t('auth_btn_signing_in', 'Signing In...') : t('auth_btn_signin_admin', 'Sign In as Administrator')}</span>
                 <ArrowRight size={16} />
               </button>
 
@@ -426,7 +426,7 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }) {
                   style={{ background: 'none', border: 'none', color: '#94a3b8', fontSize: '0.8rem', cursor: 'pointer', textDecoration: 'underline' }}
                   onClick={() => { setLoginMode('otp'); setErrorMessage(''); }}
                 >
-                  Sign in with OTP Code instead
+                  {t('auth_btn_switch_otp', 'Sign in with OTP Code instead')}
                 </button>
               </div>
             </form>
@@ -455,7 +455,7 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }) {
                   onClick={() => { setOtpChannel('email'); setErrorMessage(''); }}
                 >
                   <Mail size={14} />
-                  <span>Email Code</span>
+                  <span>{t('auth_tab_email', 'Email Code')}</span>
                 </button>
                 <button
                   type="button"
@@ -478,13 +478,13 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }) {
                   onClick={() => { setOtpChannel('phone'); setErrorMessage(''); }}
                 >
                   <Smartphone size={14} />
-                  <span>SMS (Plasgate)</span>
+                  <span>{t('auth_tab_sms', 'SMS (Plasgate)')}</span>
                 </button>
               </div>
 
               {otpChannel === 'phone' ? (
                 <div className="form-group">
-                  <label htmlFor="loginPhone">Cambodian Mobile Phone Number</label>
+                  <label htmlFor="loginPhone">{t('auth_lbl_phone', 'Cambodian Mobile Phone Number')}</label>
                   <div className="input-with-icon-wrap">
                     <Smartphone size={16} className="input-field-icon text-success" />
                     <input
@@ -499,12 +499,12 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }) {
                     />
                   </div>
                   <span style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '5px', display: 'block' }}>
-                    Instant SMS delivery via <strong>Plasgate Gateway</strong> (Smart, Cellcard, Metfone).
+                    {t('auth_sms_gateway_note', 'Instant SMS delivery via Plasgate Gateway (Smart, Cellcard, Metfone).')}
                   </span>
                 </div>
               ) : (
                 <div className="form-group">
-                  <label htmlFor="loginEmail">Email Address</label>
+                  <label htmlFor="loginEmail">{t('auth_lbl_email', 'Email Address')}</label>
                   <div className="input-with-icon-wrap">
                     <Mail size={16} className="input-field-icon" />
                     <input
@@ -526,7 +526,7 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }) {
                 className="btn btn-primary btn-glow btn-full"
                 disabled={isLoading}
               >
-                <span>{isLoading ? 'Sending Verification Code...' : 'Send Login Code'}</span>
+                <span>{isLoading ? t('auth_btn_sending_code', 'Sending Verification Code...') : t('auth_btn_send_code', 'Send Login Code')}</span>
                 <ArrowRight size={16} />
               </button>
 
@@ -536,7 +536,7 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }) {
                   style={{ background: 'none', border: 'none', color: '#64748b', fontSize: '0.8rem', cursor: 'pointer' }}
                   onClick={() => { setLoginMode('password'); setErrorMessage(''); }}
                 >
-                  🔐 Administrator? Sign in with Password
+                  {t('auth_btn_admin_pwd', '🔐 Administrator? Sign in with Password')}
                 </button>
               </div>
             </form>
@@ -544,7 +544,7 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }) {
             /* STEP 2: 6-Digit OTP Verification */
             <form onSubmit={handleVerifyOtp} className="login-form" autoComplete="off">
               <div className="form-group">
-                <label htmlFor="loginOtp">Enter 6-Digit Verification Code</label>
+                <label htmlFor="loginOtp">{t('auth_lbl_enter_otp', 'Enter 6-Digit Verification Code')}</label>
                 <div className="input-with-icon-wrap">
                   <KeyRound size={16} className="input-field-icon" />
                   <input
@@ -574,7 +574,7 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }) {
                 className="btn btn-primary btn-glow btn-full mt-3"
                 disabled={isLoading || otp.length < 4}
               >
-                <span>{isLoading ? 'Verifying Code...' : 'Verify & Sign In'}</span>
+                <span>{isLoading ? t('auth_btn_verifying', 'Verifying Code...') : t('auth_btn_verify', 'Verify & Sign In')}</span>
                 <ArrowRight size={16} />
               </button>
 
@@ -607,7 +607,7 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }) {
                   }}
                 >
                   <ArrowLeft size={14} />
-                  <span>Change Email</span>
+                  <span>{t('auth_btn_change_channel', 'Change Contact Info')}</span>
                 </button>
 
                 <button
@@ -625,7 +625,7 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }) {
                   onClick={() => handleSendOtp()}
                 >
                   <RotateCw size={14} className={isLoading ? 'animate-spin' : ''} />
-                  <span>{resendCooldown > 0 ? `Resend in ${resendCooldown}s` : 'Resend Code'}</span>
+                  <span>{resendCooldown > 0 ? (t('auth_btn_resend_in', 'Resend in {0}s').replace('{0}', resendCooldown)) : t('auth_btn_resend', 'Resend Code')}</span>
                 </button>
               </div>
             </form>

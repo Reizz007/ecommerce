@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 
 export default function Hero() {
-  const { tools, addToCart, setIsCartOpen, formatPrice } = useApp();
+  const { tools, addToCart, setIsCartOpen, formatPrice, t } = useApp();
 
   // Find a flagship tool for the featured storefront showcase card
   const featuredProduct = (tools && tools.length > 0) 
@@ -48,22 +48,22 @@ export default function Hero() {
         <div className="hero-content">
           <div className="hero-badge store-badge-pulse">
             <span className="badge-icon"><ShoppingBag size={14} className="text-cyan" /></span>
-            <span className="badge-text">Official AI Software Store & Perpetual License Marketplace</span>
-            <span className="badge-tag">FLASH SALE LIVE</span>
+            <span className="badge-text">{t('hero_badge_text', 'Official AI Software Store & Perpetual License Marketplace')}</span>
+            <span className="badge-tag">{t('hero_badge_sale', 'FLASH SALE LIVE')}</span>
           </div>
 
           <h1 className="hero-title">
-            Buy Verified AI Tools. <span className="gradient-text">Pay Once, Own Forever.</span>
+            {t('hero_title_1', 'Buy Verified AI Tools.')} <span className="gradient-text">{t('hero_title_2', 'Pay Once, Own Forever.')}</span>
           </h1>
 
           <p className="hero-subtitle">
-            The premier digital store for developers and creators. Purchase perpetual licenses for frontier AI models, autonomous coding agents, and generative design studios. Instant delivery via Cambodia National KHQR or Card — zero subscriptions, zero monthly fees.
+            {t('hero_subtitle', 'The premier digital store for developers and creators. Purchase perpetual licenses for frontier AI models, autonomous coding agents, and generative design studios. Instant delivery via Cambodia National KHQR or Card — zero subscriptions, zero monthly fees.')}
           </p>
 
           <div className="hero-cta-group">
             <a href="#tools" className="btn btn-primary btn-xl btn-glow" id="hero-btn-shop">
               <ShoppingBag size={20} />
-              <span>Shop All AI Tools & Deals</span>
+              <span>{t('hero_btn_shop', 'Shop All AI Tools & Deals')}</span>
             </a>
             <button 
               type="button" 
@@ -72,7 +72,7 @@ export default function Hero() {
               id="hero-btn-cart"
             >
               <ShoppingCart size={20} />
-              <span>View Cart & Instant Checkout</span>
+              <span>{t('hero_btn_cart', 'View Cart & Instant Checkout')}</span>
             </button>
           </div>
 
@@ -104,16 +104,16 @@ export default function Hero() {
           {/* Store Trust Guarantees */}
           <div className="hero-guarantees">
             <span className="guarantee-item">
-              <Zap size={16} /> Instant Digital Delivery
+              <Zap size={16} /> {t('hero_guarantee_1', 'Instant Digital Delivery')}
             </span>
             <span className="guarantee-item">
-              <QrCode size={16} /> Cambodia National KHQR Checkout
+              <QrCode size={16} /> {t('hero_guarantee_2', 'Cambodia National KHQR Checkout')}
             </span>
             <span className="guarantee-item">
-              <ShieldCheck size={16} /> 100% Genuine Lifetime License
+              <ShieldCheck size={16} /> {t('hero_guarantee_3', '100% Genuine Lifetime License')}
             </span>
             <span className="guarantee-item">
-              <RotateCcw size={16} /> 14-Day Money-Back Guarantee
+              <RotateCcw size={16} /> {t('hero_guarantee_4', '14-Day Money-Back Guarantee')}
             </span>
             <span className="guarantee-item">
               <FileCheck size={16} /> Commercial Use Included

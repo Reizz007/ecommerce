@@ -28,7 +28,8 @@ export default function CartDrawer() {
     formatPrice,
     subtotalUSD,
     discountUSD,
-    totalUSD
+    totalUSD,
+    t
   } = useApp();
 
   const [inputPromo, setInputPromo] = useState('');
@@ -54,7 +55,7 @@ export default function CartDrawer() {
         <div className="cart-header">
           <div className="cart-header-title">
             <ShoppingCart size={20} className="text-accent" />
-            <h3>Your Cart</h3>
+            <h3>{t('cart_title', 'Your Cart')}</h3>
             <span className="cart-badge-count">{totalItemsCount}</span>
           </div>
           <button
@@ -99,7 +100,7 @@ export default function CartDrawer() {
                   className="btn-clear-cart"
                   onClick={clearCart}
                 >
-                  Clear all items
+                  {t('cart_clear_all', 'Clear all items')}
                 </button>
               </div>
             </div>
@@ -108,13 +109,13 @@ export default function CartDrawer() {
               <div className="empty-cart-icon">
                 <ShoppingCart size={40} />
               </div>
-              <h4>Your cart is empty</h4>
-              <p>Explore our AI tool catalog to add tools and models to your order.</p>
+              <h4>{t('cart_empty_title', 'Your cart is empty')}</h4>
+              <p>{t('cart_empty_desc', 'Explore our AI tool catalog to add tools and models to your order.')}</p>
               <button
                 className="btn btn-secondary btn-sm mt-3"
                 onClick={() => setIsCartOpen(false)}
               >
-                Browse AI Catalog
+                {t('cart_browse_catalog', 'Browse AI Catalog')}
               </button>
             </div>
           )}
@@ -123,43 +124,17 @@ export default function CartDrawer() {
         {/* Cart Footer & Totals */}
         {cart.length > 0 && (
           <div className="cart-footer">
-            {/* Promo Code Box */}
-            {/* <div className="promo-box">
-              <div className="promo-input-wrap">
-                <Tag size={16} className="text-muted ml-2" />
-                <input
-                  type="text"
-                  placeholder="Promo code (try NEURON20)"
-                  value={inputPromo}
-                  onChange={(e) => setInputPromo(e.target.value)}
-                />
-                <button
-                  className="btn btn-secondary btn-sm"
-                  onClick={() => applyPromo(inputPromo)}
-                >
-                  Apply
-                </button>
-              </div>
-
-              {promoMessage && (
-                <div className={`promo-feedback ${promoMessage.type}`}>
-                  {promoMessage.type === 'success' ? <Check size={14} /> : <X size={14} />}
-                  <span>{promoMessage.text}</span>
-                </div>
-              )}
-            </div> */}
-
             {/* Price Breakdown */}
             <div className="cart-summary">
               <div className="summary-row">
-                <span>Subtotal</span>
+                <span>{t('cart_subtotal', 'Subtotal')}</span>
                 <span>{formatPrice(subtotalUSD)}</span>
               </div>
 
               {appliedDiscount && (
                 <div className="summary-row discount-row">
                   <span>
-                    Discount (<strong>{appliedDiscount.code}</strong>)
+                    {t('cart_discount', 'Discount')} (<strong>{appliedDiscount.code}</strong>)
                   </span>
                   <span className="text-success">
                     -{formatPrice(discountUSD)}
@@ -168,12 +143,12 @@ export default function CartDrawer() {
               )}
 
               <div className="summary-row">
-                <span>Tax & Gateway Processing</span>
-                <span className="text-success">Included ($0.00)</span>
+                <span>{t('cart_tax_gateway', 'Tax & Gateway Processing')}</span>
+                <span className="text-success">{t('cart_included', 'Included ($0.00)')}</span>
               </div>
 
               <div className="summary-row total-row">
-                <span>Total Due</span>
+                <span>{t('cart_total_due', 'Total Due')}</span>
                 <span className="total-amount">{formatPrice(totalUSD)}</span>
               </div>
             </div>
@@ -183,14 +158,14 @@ export default function CartDrawer() {
               onClick={handleProceedToCheckout}
             >
               <ShieldCheck size={18} />
-              <span>Proceed to Checkout</span>
+              <span>{t('cart_btn_checkout', 'Proceed to Checkout')}</span>
               <ArrowRight size={16} />
             </button>
 
             <div className="cart-trust-badges">
-              <span><ShieldCheck size={13} /> 256-Bit Encrypted</span>
-              <span><Sparkles size={13} /> Instant API Keys</span>
-              <span className="text-cyan"><span className="aba-mini-tag">KHQR</span> National Banking</span>
+              <span><ShieldCheck size={13} /> {t('cart_encrypted', '256-Bit Encrypted')}</span>
+              <span><Sparkles size={13} /> {t('cart_instant_keys', 'Instant API Keys')}</span>
+              <span className="text-cyan"><span className="aba-mini-tag">KHQR</span> {t('cart_national_banking', 'National Banking')}</span>
             </div>
           </div>
         )}

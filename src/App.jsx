@@ -3,7 +3,6 @@ import { AppProvider, useApp } from './context/AppContext';
 import Navbar from './components/Navbar';
 import Hero from './components/Hero';
 import ToolsCatalog from './components/ToolsCatalog';
-import PlatformFeatures from './components/PlatformFeatures';
 import Testimonials from './components/Testimonials';
 import FaqSection from './components/FaqSection';
 import CartDrawer from './components/CartDrawer';
@@ -19,7 +18,7 @@ import TopupShop from './components/TopupShop';
 import { Sparkles, ArrowRight, ShieldCheck, Zap } from 'lucide-react';
 
 function MainContent() {
-  const { addToast, setIsCheckoutOpen } = useApp();
+  const { addToast, setIsCheckoutOpen, t } = useApp();
 
   useEffect(() => {
     window.__openCheckout = (open = true) => setIsCheckoutOpen(open);
@@ -220,7 +219,7 @@ function MainContent() {
         {/* Marquee Trust Banner */}
         <section className="trust-banner">
           <div className="container">
-            <p className="trust-label">TRUSTED BY 185,000+ DEVELOPERS, CREATORS, AND INNOVATION LABS</p>
+            <p className="trust-label">{t('trust_marquee_label', 'TRUSTED BY 185,000+ DEVELOPERS, CREATORS, AND INNOVATION LABS')}</p>
             <div className="logo-marquee">
               <div className="marquee-track">
                 <span className="partner-logo"> CloudScale AI</span>
@@ -244,9 +243,6 @@ function MainContent() {
 
         {/* AI Tools Catalog / Marketplace */}
         <ToolsCatalog searchRef={searchInputRef} />
-
-        {/* Platform & Infrastructure Highlights */}
-        {/* <PlatformFeatures /> */}
 
         {/* Customer Testimonials & Reviews */}
         <Testimonials />

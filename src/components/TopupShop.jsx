@@ -65,7 +65,7 @@ const FALLBACK_GAMES = [
 ];
 
 export default function TopupShop({ onBackToTools }) {
-  const { addToast, currency, formatPrice } = useApp();
+  const { addToast, currency, formatPrice, t } = useApp();
 
   const [games, setGames] = useState(FALLBACK_GAMES);
   const [loadingGames, setLoadingGames] = useState(false);
@@ -340,13 +340,13 @@ export default function TopupShop({ onBackToTools }) {
           </div>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-              <h1 className="topup-main-title">Game Top-Up Center</h1>
+              <h1 className="topup-main-title">{t('topup_center_title', 'Game Top-Up Center')}</h1>
               <span className="topup-live-pill">
-                <span className="topup-pulse-dot"></span> LIVE 24/7
+                <span className="topup-pulse-dot"></span> {t('topup_live_badge', 'LIVE 24/7')}
               </span>
             </div>
             <p className="topup-subtitle">
-              Instant mobile game diamond delivery via Bakong KHQR
+              {t('topup_center_sub', 'Instant mobile game diamond delivery via Bakong KHQR')}
             </p>
           </div>
         </div>
@@ -360,8 +360,8 @@ export default function TopupShop({ onBackToTools }) {
             <div className="topup-card">
               <div className="topup-step-indicator">
                 <div>
-                  <h2 className="step-title">Select Game</h2>
-                  <p className="step-desc">Choose the game you wish to reload</p>
+                  <h2 className="step-title">{t('topup_step1_title', 'Select Game')}</h2>
+                  <p className="step-desc">{t('topup_step1_desc', 'Choose the game you wish to reload')}</p>
                 </div>
               </div>
 
@@ -437,16 +437,16 @@ export default function TopupShop({ onBackToTools }) {
             <div className="topup-card">
               <div className="topup-step-indicator">
                 <div>
-                  <h2 className="step-title">Player Details</h2>
+                  <h2 className="step-title">{t('topup_step2_title', 'Player Details')}</h2>
                   <p className="step-desc">
-                    Fill in your info exactly as shown in your game account.
+                    {t('topup_step2_desc', 'Fill in your info exactly as shown in your game account.')}
                   </p>
                 </div>
               </div>
 
               <div className="topup-inputs-row">
                 <div className="topup-field-box">
-                  <label className="topup-field-label">USER ID / PLAYER ID</label>
+                  <label className="topup-field-label">{t('topup_lbl_userid', 'USER ID / PLAYER ID')}</label>
                   <input
                     type="text"
                     placeholder="702425515"
@@ -458,7 +458,7 @@ export default function TopupShop({ onBackToTools }) {
 
                 {isZoneRequired && (
                   <div className="topup-field-box">
-                    <label className="topup-field-label">SERVER / ZONE ID</label>
+                    <label className="topup-field-label">{t('topup_lbl_zoneid', 'SERVER / ZONE ID')}</label>
                     <input
                       type="text"
                       placeholder="10301"
@@ -477,7 +477,7 @@ export default function TopupShop({ onBackToTools }) {
                 {verifiedName && (
                   <div className="topup-verified-badge" style={{ marginRight: 'auto' }}>
                     <CheckCircle2 size={16} className="text-emerald-400" />
-                    <span>In-Game Name: <b>{verifiedName}</b></span>
+                    <span>{t('topup_in_game_name', 'In-Game Name:')} <b>{verifiedName}</b></span>
                   </div>
                 )}
 
@@ -490,10 +490,10 @@ export default function TopupShop({ onBackToTools }) {
                   {isCheckingId ? (
                     <>
                       <RefreshCw size={14} className="animate-spin" />
-                      <span>CHECKING...</span>
+                      <span>{t('topup_btn_checking', 'CHECKING...')}</span>
                     </>
                   ) : (
-                    <span>CHECK ID</span>
+                    <span>{t('topup_btn_check_id', 'CHECK ID')}</span>
                   )}
                 </button>
               </div>
@@ -515,7 +515,7 @@ export default function TopupShop({ onBackToTools }) {
             <div className="topup-card">
               <div className="topup-step-indicator" style={{ marginBottom: '14px' }}>
                 <div>
-                  <h2 className="step-title">Select Package</h2>
+                  <h2 className="step-title">{t('topup_step3_title', 'Select Package')}</h2>
                 </div>
               </div>
 
@@ -562,8 +562,8 @@ export default function TopupShop({ onBackToTools }) {
             <div className="topup-card">
               <div className="topup-step-indicator">
                 <div>
-                  <h2 className="step-title">Payment Method</h2>
-                  <p className="step-desc">Scan to pay with any mobile banking app in Cambodia</p>
+                  <h2 className="step-title">{t('topup_step4_title', 'Payment Method')}</h2>
+                  <p className="step-desc">{t('topup_step4_desc', 'Scan to pay with any mobile banking app in Cambodia')}</p>
                 </div>
               </div>
 
@@ -594,18 +594,18 @@ export default function TopupShop({ onBackToTools }) {
           {/* Right Column: Checkout Summary Sticky Widget */}
           <div className="topup-sidebar-column">
             <aside className="topup-summary-box">
-              <p className="topup-aside-tag">Before Payment</p>
+              <p className="topup-aside-tag">{t('topup_summary_before', 'Before Payment')}</p>
               <h3 className="topup-aside-sel">{activePackage?.name || "No Selection"}</h3>
-              <p className="topup-aside-hint">Review your package and confirm to continue.</p>
+              <p className="topup-aside-hint">{t('topup_summary_hint', 'Review your package and confirm to continue.')}</p>
 
               <div className="topup-total-box">
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                  <span className="topup-total-label" style={{ margin: 0 }}>Payment Method</span>
+                  <span className="topup-total-label" style={{ margin: 0 }}>{t('topup_step4_title', 'Payment Method')}</span>
                   <span className="topup-method-badge khqr">
                     Bakong KHQR
                   </span>
                 </div>
-                <p className="topup-total-label">Total</p>
+                <p className="topup-total-label">{t('topup_summary_total', 'Total')}</p>
                 <p className="topup-total-price">
                   ${Number(activePackage?.price || 0).toFixed(2)}
                 </p>
@@ -613,19 +613,19 @@ export default function TopupShop({ onBackToTools }) {
 
               <div className="topup-summary-list">
                 <div className="topup-summary-row">
-                  <span className="topup-summary-label">Selected Game</span>
+                  <span className="topup-summary-label">{t('topup_summary_selected_game', 'Selected Game')}</span>
                   <span className="topup-summary-val game-val">{selectedGame?.name || '—'}</span>
                 </div>
 
                 <div className="topup-summary-row">
-                  <span className="topup-summary-label">Recharge Item</span>
+                  <span className="topup-summary-label">{t('topup_summary_recharge_item', 'Recharge Item')}</span>
                   <span className="topup-summary-val diamond-val">
                     {activePackage ? `💎 ${activePackage.diamond_amount} Diamonds` : 'None selected'}
                   </span>
                 </div>
 
                 <div className="topup-summary-row">
-                  <span className="topup-summary-label">Player ID</span>
+                  <span className="topup-summary-label">{t('topup_summary_player_id', 'Player ID')}</span>
                   <span className="topup-summary-val" style={{ fontFamily: 'monospace' }}>
                     {playerId ? `${playerId}${zoneId ? ` (${zoneId})` : ''}` : 'Not entered'}
                   </span>
@@ -647,7 +647,7 @@ export default function TopupShop({ onBackToTools }) {
                 onClick={handleCreateOrder}
                 className="topup-pay-btn"
               >
-                <span>{isSubmitting ? "Processing..." : "Pay Now"}</span>
+                <span>{isSubmitting ? t('topup_btn_processing', 'Processing...') : t('topup_btn_pay_now', 'Pay Now')}</span>
                 <span className="topup-pay-badge">
                   KHQR
                 </span>
@@ -656,11 +656,11 @@ export default function TopupShop({ onBackToTools }) {
               <div className="topup-trust-badges">
                 <div className="topup-trust-item">
                   <ShieldCheck size={14} className="topup-trust-icon" />
-                  <span>100% Authorized Game Reseller</span>
+                  <span>{t('topup_trust_reseller', '100% Authorized Game Reseller')}</span>
                 </div>
                 <div className="topup-trust-item">
                   <CheckCircle2 size={14} className="topup-trust-icon" />
-                  <span>Official Top-Up Gateway API</span>
+                  <span>{t('topup_trust_gateway', 'Official Top-Up Gateway API')}</span>
                 </div>
               </div>
             </aside>

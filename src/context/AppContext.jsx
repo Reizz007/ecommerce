@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { TOOLS_DATA } from '../data/toolsData';
 import { apiUrl } from '../utils/api';
 
@@ -7,6 +7,12 @@ const AppContext = createContext();
 export const CURRENCIES = {
   USD: { symbol: '$', rate: 1.0, label: 'USD ($)', code: 'USD' },
   KHR: { symbol: '៛', rate: 4100, label: 'Riel (៛)', code: 'KHR' }
+};
+
+export const LANGUAGES = {
+  kh: { code: 'kh', label: 'ភាសាខ្មែរ', flag: '/kh-flag-icon.svg', shortLabel: 'KH' },
+  en: { code: 'en', label: 'English', flag: '/en-flag-icon.svg', shortLabel: 'EN' },
+  zh: { code: 'zh', label: '中文', flag: '/ch-flag-icon.svg', shortLabel: 'ZH' }
 };
 
 export function AppProvider({ children }) {
@@ -58,13 +64,13 @@ export function AppProvider({ children }) {
         }
       }
     } catch (e) {
-      console.warn('Could not fetch products from database API:', e);
+      console.warn('Failed to fetch live products, keeping current state:', e);
     } finally {
       setToolsLoading(false);
     }
   }, []);
 
-  // Categories state — purely live list from Laravel database API
+  // Categories state
   const [categories, setCategories] = useState([]);
   const [categoriesLoading, setCategoriesLoading] = useState(true);
 
@@ -74,12 +80,13 @@ export function AppProvider({ children }) {
       const res = await fetch(apiUrl('/api/categories'));
       if (res.ok) {
         const data = await res.json();
-        if (Array.isArray(data.categories)) {
-          setCategories(data.categories);
+        const list = data.categories || data;
+        if (Array.isArray(list)) {
+          setCategories(list);
         }
       }
     } catch (e) {
-      console.warn('Could not fetch categories from database API:', e);
+      console.warn('Failed to fetch categories:', e);
     } finally {
       setCategoriesLoading(false);
     }
@@ -127,6 +134,69 @@ export function AppProvider({ children }) {
     }
   }, [theme]);
 
+  // Language & i18n state
+  const [language, setLanguageState] = useState(() => {
+    try {
+      const saved = localStorage.getItem('octopos_lang') || localStorage.getItem('synapse_lang');
+      if (saved && (saved === 'kh' || saved === 'en' || saved === 'zh')) {
+        return saved;
+      }
+    } catch {}
+    return 'kh';
+  });
+
+  const [translations, setTranslations] = useState({});
+  const [fallbackTranslations, setFallbackTranslations] = useState({});
+
+  // Load language dictionaries from /i18n/{code}.json
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadTranslations() {
+      try {
+        const [langRes, fallbackRes] = await Promise.all([
+          fetch(`/i18n/${language}.json`),
+          fetch('/i18n/en.json')
+        ]);
+
+        if (fallbackRes.ok) {
+          const fallbackData = await fallbackRes.json();
+          if (isMounted) setFallbackTranslations(fallbackData);
+        }
+
+        if (langRes.ok) {
+          const langData = await langRes.json();
+          if (isMounted) setTranslations(langData);
+        }
+      } catch (err) {
+        console.warn('Could not load i18n translation files:', err);
+      }
+    }
+
+    loadTranslations();
+    return () => { isMounted = false; };
+  }, [language]);
+
+  const setLanguage = useCallback((langCode) => {
+    const validLang = (langCode === 'kh' || langCode === 'en' || langCode === 'zh') ? langCode : 'kh';
+    setLanguageState(validLang);
+    try {
+      localStorage.setItem('octopos_lang', validLang);
+      localStorage.setItem('synapse_lang', validLang);
+      document.cookie = `octopos_lang=${validLang}; path=/; max-age=31536000`;
+    } catch (e) {
+      console.warn('Could not persist language choice:', e);
+    }
+  }, []);
+
+  // Translation helper function
+  const t = useCallback((key, fallback = '') => {
+    if (!key) return '';
+    if (translations && translations[key]) return translations[key];
+    if (fallbackTranslations && fallbackTranslations[key]) return fallbackTranslations[key];
+    return fallback || key;
+  }, [translations, fallbackTranslations]);
+
   // Currency
   const [currency, setCurrency] = useState('USD');
 
@@ -161,140 +231,155 @@ export function AppProvider({ children }) {
     },
     {
       id: 'key_2',
-      name: 'Local Dev & Testing',
-      key: 'sk_synapse_test_54b3a8d11c8842109fe1299c104',
-      created: 'Oct 14, 2026',
+      name: 'Staging / Internal Agent API',
+      key: 'sk_synapse_live_77190ca382ef6b12a9d8011c750',
+      created: 'Nov 03, 2026',
       status: 'Active',
-      lastUsed: '4 hours ago'
+      lastUsed: '2 hrs ago'
     }
   ]);
 
   const [purchasedLicenses, setPurchasedLicenses] = useState([
     {
       id: 'lic_1',
-      toolName: 'DeepCode Copilot Pro',
-      licenseKey: 'LIC-DCP-9812-7801-XC',
-      version: 'v4.5 Enterprise',
-      date: 'Oct 15, 2026'
+      toolId: 'claude-3-opus',
+      toolName: 'Claude 3.5 Sonnet & Opus',
+      type: 'Perpetual Commercial License',
+      key: 'CLD-OPUS-8912-8812-PRO',
+      downloadUrl: '#',
+      docsUrl: 'https://docs.anthropic.com',
+      date: 'Oct 18, 2026'
+    },
+    {
+      id: 'lic_2',
+      toolId: 'midjourney-v6',
+      toolName: 'Midjourney v6 Unlimited',
+      type: '1-Year Enterprise Tier',
+      key: 'MJ-UNLIMITED-TURBO-7729',
+      downloadUrl: '#',
+      docsUrl: 'https://midjourney.com',
+      date: 'Nov 01, 2026'
     }
   ]);
 
-  // Format currency helper
-  // Format currency helper - supports exact decimals (e.g. $2.10)
-  const formatPrice = (usdAmount) => {
-    const num = Number(usdAmount) || 0;
+  // Cart operations
+  const addToCart = useCallback((tool, tierId = 'monthly') => {
+    setCart((prevCart) => {
+      const existing = prevCart.find((item) => item.tool.id === tool.id && item.tierId === tierId);
+      if (existing) {
+        return prevCart.map((item) =>
+          item.tool.id === tool.id && item.tierId === tierId
+            ? { ...item, quantity: item.quantity + 1 }
+            : item
+        );
+      }
+      return [...prevCart, { tool, tierId, quantity: 1 }];
+    });
+    addToast(`Added "${tool.name}" to cart`, 'success');
+  }, []);
+
+  const removeFromCart = useCallback((toolId, tierId) => {
+    setCart((prevCart) => prevCart.filter((item) => !(item.tool.id === toolId && item.tierId === tierId)));
+  }, []);
+
+  const updateQuantity = useCallback((toolId, tierId, quantity) => {
+    if (quantity <= 0) {
+      removeFromCart(toolId, tierId);
+      return;
+    }
+    setCart((prevCart) =>
+      prevCart.map((item) =>
+        item.tool.id === toolId && item.tierId === tierId
+          ? { ...item, quantity }
+          : item
+      )
+    );
+  }, [removeFromCart]);
+
+  const clearCart = useCallback(() => {
+    setCart([]);
+  }, []);
+
+  // Promo Code Operations
+  const applyPromoCode = useCallback((code) => {
+    const clean = code.trim().toUpperCase();
+    if (clean === 'NEURON20' || clean === 'SYNAPSE20' || clean === 'AI2026') {
+      setAppliedDiscount({ code: clean, percent: 20 });
+      setPromoMessage({ type: 'success', text: 'Promo code applied! 20% discount activated.' });
+      return true;
+    } else if (clean === 'DEV50') {
+      setAppliedDiscount({ code: clean, percent: 50 });
+      setPromoMessage({ type: 'success', text: 'Dev tier activated! 50% discount applied.' });
+      return true;
+    } else {
+      setPromoMessage({ type: 'error', text: 'Invalid promo code. Try "NEURON20" for 20% off.' });
+      return false;
+    }
+  }, []);
+
+  const removePromoCode = useCallback(() => {
+    setAppliedDiscount(null);
+    setPromoMessage(null);
+  }, []);
+
+  // Calculation helpers
+  const getSubtotal = useCallback(() => {
+    return cart.reduce((sum, item) => {
+      const price = item.tool.priceTier ? item.tool.priceTier[item.tierId] || item.tool.price : item.tool.price;
+      return sum + price * item.quantity;
+    }, 0);
+  }, [cart]);
+
+  const getDiscountAmount = useCallback(() => {
+    if (!appliedDiscount) return 0;
+    return (getSubtotal() * appliedDiscount.percent) / 100;
+  }, [appliedDiscount, getSubtotal]);
+
+  const getTotal = useCallback(() => {
+    return Math.max(0, getSubtotal() - getDiscountAmount());
+  }, [getSubtotal, getDiscountAmount]);
+
+  const formatPrice = useCallback((amountInUSD) => {
     const cur = CURRENCIES[currency] || CURRENCIES.USD;
-    const converted = num * cur.rate;
+    const converted = amountInUSD * cur.rate;
     if (currency === 'KHR') {
       return `${Math.round(converted).toLocaleString()} ៛`;
     }
-    const formatted = num % 1 === 0 ? num.toLocaleString() : num.toFixed(2);
-    return `${cur.symbol}${formatted}`;
-  };
+    return `$${converted.toFixed(2)}`;
+  }, [currency]);
 
-  const addToast = (message, type = 'success') => {
-    const id = Date.now() + Math.random();
+  // Toast Management
+  const addToast = useCallback((message, type = 'info') => {
+    const id = Date.now() + Math.random().toString(36).substring(2, 9);
     setToasts((prev) => [...prev, { id, message, type }]);
     setTimeout(() => {
       removeToast(id);
     }, 4000);
-  };
+  }, []);
 
-  const removeToast = (id) => {
+  const removeToast = useCallback((id) => {
     setToasts((prev) => prev.filter((t) => t.id !== id));
-  };
+  }, []);
 
-  // Cart operations with immediate synchronous localStorage sync
-  const addToCart = (item) => {
-    setCart((prev) => {
-      const existing = prev.find((i) => i.id === item.id);
-      let updated;
-      if (existing) {
-        addToast(`Increased quantity for ${item.name}`, 'info');
-        updated = prev.map((i) =>
-          i.id === item.id ? { ...i, quantity: (i.quantity || 1) + 1 } : i
-        );
-      } else {
-        addToast(`Added "${item.name}" to cart!`, 'success');
-        updated = [...prev, { ...item, quantity: 1 }];
-      }
-      try {
-        localStorage.setItem('synapse_cart', JSON.stringify(updated));
-      } catch (e) {}
-      return updated;
-    });
-    setIsCartOpen(true);
-  };
-
-  const removeFromCart = (itemId) => {
-    setCart((prev) => {
-      const updated = prev.filter((i) => i.id !== itemId);
-      try {
-        localStorage.setItem('synapse_cart', JSON.stringify(updated));
-      } catch (e) {}
-      return updated;
-    });
-    addToast('Item removed from cart', 'info');
-  };
-
-  const clearCart = () => {
-    setCart([]);
-    try {
-      localStorage.setItem('synapse_cart', JSON.stringify([]));
-    } catch (e) {}
-  };
-
-  // Promo code apply
-  const applyPromo = (codeToTest) => {
-    const code = (codeToTest || promoCode).trim().toUpperCase();
-    if (code === 'NEURON20') {
-      setAppliedDiscount({ code: 'NEURON20', percent: 20, type: 'percent' });
-      setPromoMessage({ text: '20% discount applied successfully!', type: 'success' });
-      addToast('🎉 Promo code NEURON20 applied: 20% OFF!', 'success');
-    } else if (code === 'AIWELCOME') {
-      setAppliedDiscount({ code: 'AIWELCOME', amount: 10, type: 'fixed' });
-      setPromoMessage({ text: '$10 discount applied successfully!', type: 'success' });
-      addToast('🎉 Promo code AIWELCOME applied: $10 OFF!', 'success');
-    } else {
-      setPromoMessage({ text: 'Invalid promo code. Try NEURON20', type: 'error' });
-      addToast('Invalid promo code. Use NEURON20', 'error');
-    }
-  };
-
-  // Totals
-  const subtotalUSD = cart.reduce((acc, item) => acc + item.price * (item.quantity || 1), 0);
-  let discountUSD = 0;
-  if (appliedDiscount) {
-    if (appliedDiscount.type === 'percent') {
-      discountUSD = (subtotalUSD * appliedDiscount.percent) / 100;
-    } else if (appliedDiscount.type === 'fixed') {
-      discountUSD = Math.min(subtotalUSD, appliedDiscount.amount);
-    }
-  }
-  const totalUSD = Math.max(0, subtotalUSD - discountUSD);
-
-  // Generate new API Key
-  const generateNewApiKey = (name = 'New Production Key') => {
-    const randomHex = Array.from({ length: 32 }, () =>
-      Math.floor(Math.random() * 16).toString(16)
-    ).join('');
+  // API Key Actions
+  const generateNewApiKey = useCallback((name) => {
+    const randomHex = Array.from({ length: 32 }, () => Math.floor(Math.random() * 16).toString(16)).join('');
     const newKey = {
       id: `key_${Date.now()}`,
-      name: name,
-      key: `sk_synapse_live_${randomHex}`,
+      name: name || `Agent Cluster #${apiKeys.length + 1}`,
+      key: `sk_synapse_live_${randomHex.slice(0, 24)}`,
       created: 'Just now',
       status: 'Active',
       lastUsed: 'Never'
     };
     setApiKeys((prev) => [newKey, ...prev]);
-    addToast(`Generated new API key: ${name}`, 'success');
-    return newKey;
-  };
+    addToast('New high-throughput API key generated!', 'success');
+  }, [apiKeys.length, addToast]);
 
-  const revokeApiKey = (keyId) => {
+  const revokeApiKey = useCallback((keyId) => {
     setApiKeys((prev) => prev.filter((k) => k.id !== keyId));
     addToast('API key revoked successfully', 'info');
-  };
+  }, [addToast]);
 
   return (
     <AppContext.Provider
@@ -302,18 +387,20 @@ export function AppProvider({ children }) {
         cart,
         addToCart,
         removeFromCart,
+        updateQuantity,
         clearCart,
-        promoCode,
-        setPromoCode,
-        appliedDiscount,
-        applyPromo,
-        promoMessage,
         currency,
         setCurrency,
         formatPrice,
-        subtotalUSD,
-        discountUSD,
-        totalUSD,
+        promoCode,
+        setPromoCode,
+        appliedDiscount,
+        applyPromoCode,
+        removePromoCode,
+        promoMessage,
+        getSubtotal,
+        getDiscountAmount,
+        getTotal,
         isCartOpen,
         setIsCartOpen,
         isCheckoutOpen,
@@ -342,7 +429,11 @@ export function AppProvider({ children }) {
         refreshCategories,
         theme,
         setTheme,
-        toggleTheme
+        toggleTheme,
+        language,
+        setLanguage,
+        t,
+        translations
       }}
     >
       {children}

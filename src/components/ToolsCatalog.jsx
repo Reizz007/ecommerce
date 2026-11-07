@@ -83,7 +83,7 @@ const DEFAULT_CATEGORIES = [
 ];
 
 export default function ToolsCatalog({ searchRef }) {
-  const { addToCart, formatPrice, setSelectedToolModal, tools: catalogTools, toolsLoading, categories: adminCategories } = useApp();
+  const { addToCart, formatPrice, setSelectedToolModal, tools: catalogTools, toolsLoading, categories: adminCategories, t } = useApp();
   const sourceTools = useMemo(() => {
     return Array.isArray(catalogTools) ? catalogTools : [];
   }, [catalogTools]);
@@ -235,13 +235,13 @@ export default function ToolsCatalog({ searchRef }) {
       <div className="container">
         <div className="section-header text-center">
           <span className="section-tag">
-            <Zap size={14} /> TOOL CATALOG
+            <Zap size={14} /> {t('catalog_section_tag', 'TOOL CATALOG')}
           </span>
           <h2 className="section-title">
-            Explore 45+ Premier <span className="gradient-text">AI Engines & Tools</span>
+            {t('catalog_title_1', 'Explore 45+ Premier')} <span className="gradient-text">{t('catalog_title_2', 'AI Engines & Tools')}</span>
           </h2>
           <p className="section-desc">
-            Purchase perpetual lifetime licenses with zero recurring fees, or access all tools via our unified Pro AI Suite subscription.
+            {t('catalog_desc', 'Purchase perpetual lifetime licenses with zero recurring fees, or access all tools via our unified Pro AI Suite subscription.')}
           </p>
         </div>
 
@@ -319,7 +319,7 @@ export default function ToolsCatalog({ searchRef }) {
               <input
                 ref={searchRef}
                 type="text"
-                placeholder="Search tools, models, capabilities..."
+                placeholder={t('catalog_search_ph', 'Search tools, models, capabilities...')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />

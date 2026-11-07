@@ -12,7 +12,8 @@ export default function ToolQuickViewModal() {
     selectedToolModal, 
     setSelectedToolModal, 
     addToCart, 
-    formatPrice 
+    formatPrice,
+    t
   } = useApp();
 
   if (!selectedToolModal) return null;
@@ -56,7 +57,7 @@ export default function ToolQuickViewModal() {
               </span>
               {tool.created_at && (
                 <span className="text-muted" style={{ fontSize: '0.75rem' }}>
-                  Released {new Date(tool.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                  {t('modal_tool_released', 'Released')} {new Date(tool.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                 </span>
               )}
             </div>
@@ -64,7 +65,7 @@ export default function ToolQuickViewModal() {
             <div className="tool-rating-line">
               <Star size={15} className="fill-warning text-warning" />
               <strong>{tool.rating || 5.0}</strong>
-              <span className="text-muted">({(tool.reviewsCount || tool.reviews_count || 100).toLocaleString()} verified developers)</span>
+              <span className="text-muted">({(tool.reviewsCount || tool.reviews_count || 100).toLocaleString()} {t('modal_tool_verified_devs', 'verified developers')})</span>
               <span className="engine-tag">{tool.engineVersion || tool.engine_version || 'Production Release'}</span>
             </div>
           </div>
@@ -74,7 +75,7 @@ export default function ToolQuickViewModal() {
           <p className="tool-full-description">{tool.shortDesc || tool.short_desc || tool.description || ''}</p>
 
           <div className="tool-capabilities-section">
-            <h4>Core Model Capabilities</h4>
+            <h4>{t('modal_tool_core_caps', 'Core Model Capabilities')}</h4>
             <div className="capabilities-grid">
               {toolCapabilities.map((cap, idx) => (
                 <div key={idx} className="capability-card">
@@ -88,15 +89,15 @@ export default function ToolQuickViewModal() {
           {/* Pricing & Checkout Options */}
           <div className="tool-details-actions" style={{ gridTemplateColumns: '1fr', marginTop: '1.5rem' }}>
             <div className="action-col" style={{ maxWidth: '480px', margin: '0 auto', width: '100%' }}>
-              <div className="action-price-label">Perpetual Commercial License</div>
+              <div className="action-price-label">{t('modal_tool_commercial_license', 'Perpetual Commercial License')}</div>
               <div className="action-price-val">{formatPrice(toolPrice)}</div>
-              <p className="action-sub">Pay once, own forever. Instant production API keys and updates included.</p>
+              <p className="action-sub">{t('modal_tool_commercial_sub', 'Pay once, own forever. Instant production API keys and updates included.')}</p>
               <button
                 className="btn btn-primary btn-glow btn-full"
                 onClick={handleAddLifetime}
               >
                 <ShoppingCart size={16} />
-                <span>Buy Commercial License</span>
+                <span>{t('modal_tool_btn_buy', 'Buy Commercial License')}</span>
               </button>
             </div>
           </div>

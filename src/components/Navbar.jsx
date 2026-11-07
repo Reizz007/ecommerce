@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { useApp, CURRENCIES } from '../context/AppContext';
+import { useApp, CURRENCIES, LANGUAGES } from '../context/AppContext';
+import LanguageSelector from './LanguageSelector';
 import { 
   Brain, 
   ShoppingCart, 
@@ -28,7 +29,8 @@ export default function Navbar({ onOpenSearch, onOpenAdmin, currentUser, onOpenL
     setIsCartOpen, 
     setIsAccountOpen,
     theme,
-    toggleTheme
+    toggleTheme,
+    t
   } = useApp();
 
   const [isScrolled, setIsScrolled] = useState(false);
@@ -66,28 +68,28 @@ export default function Navbar({ onOpenSearch, onOpenAdmin, currentUser, onOpenL
           <nav className="nav-links">
             <a href="#topup" className="nav-link topup-highlight-link">
               <Gamepad2 size={16} className="text-cyan-400" />
-              <span>Game Top-Up</span>
+              <span>{t('nav_game_topup', 'Game Top-Up')}</span>
               <span style={{ background: 'linear-gradient(135deg, #06b6d4, #8b5cf6)', color: '#fff', fontSize: '0.62rem', padding: '2px 6px', borderRadius: '4px', fontWeight: 800 }}>NEW</span>
             </a>
             <a href="#tools" className="nav-link">
               <Boxes size={16} />
-              <span>AI Tools</span>
-            </a>
-            <a href="#features" className="nav-link">
-              <span>Platform</span>
+              <span>{t('nav_ai_tools', 'AI Tools')}</span>
             </a>
             <a href="#testimonials" className="nav-link">
               <Star size={16} />
-              <span>Reviews</span>
+              <span>{t('nav_reviews', 'Reviews')}</span>
             </a>
             <a href="#faq" className="nav-link">
               <HelpCircle size={16} />
-              <span>FAQ</span>
+              <span>{t('nav_faq', 'FAQ')}</span>
             </a>
           </nav>
 
           {/* Header Action Controls */}
           <div className="header-actions">
+            {/* Language Switcher */}
+            <LanguageSelector />
+
             {/* Currency Selector */}
             <div className="currency-picker">
               <select 
@@ -111,7 +113,7 @@ export default function Navbar({ onOpenSearch, onOpenAdmin, currentUser, onOpenL
               title="Search AI Tools"
             >
               <Search size={15} />
-              <span className="search-text">Search...</span>
+              <span className="search-text">{t('nav_search_placeholder', 'Search...')}</span>
               <kbd className="kbd-shortcut">Ctrl+K</kbd>
             </button>
 
@@ -126,7 +128,7 @@ export default function Navbar({ onOpenSearch, onOpenAdmin, currentUser, onOpenL
                     title="Control Center (Role: Admin)"
                   >
                     <ShieldCheck size={16} className="text-cyan" />
-                    <span>Admin Panel</span>
+                    <span>{t('nav_admin_panel', 'Admin Panel')}</span>
                     <span className="badge-admin-dot"></span>
                   </button>
                 )}
@@ -199,19 +201,16 @@ export default function Navbar({ onOpenSearch, onOpenAdmin, currentUser, onOpenL
           <div className="mobile-menu-drawer">
             <nav className="mobile-nav-links">
               <a href="#topup" onClick={() => setMobileMenuOpen(false)} className="mobile-nav-link text-cyan">
-                <Gamepad2 size={18} /> Game Top-Up Shop
+                <Gamepad2 size={18} /> {t('nav_game_topup', 'Game Top-Up')}
               </a>
               <a href="#tools" onClick={() => setMobileMenuOpen(false)} className="mobile-nav-link">
-                <Boxes size={18} /> AI Tools Marketplace
-              </a>
-              <a href="#features" onClick={() => setMobileMenuOpen(false)} className="mobile-nav-link">
-                Platform Architecture
+                <Boxes size={18} /> {t('nav_ai_tools', 'AI Tools')}
               </a>
               <a href="#testimonials" onClick={() => setMobileMenuOpen(false)} className="mobile-nav-link">
-                <Star size={18} /> Customer Stories
+                <Star size={18} /> {t('nav_reviews', 'Reviews')}
               </a>
               <a href="#faq" onClick={() => setMobileMenuOpen(false)} className="mobile-nav-link">
-                <HelpCircle size={18} /> FAQ
+                <HelpCircle size={18} /> {t('nav_faq', 'FAQ')}
               </a>
               <div className="mobile-actions-stack">
                 {isAdmin && (
@@ -244,10 +243,15 @@ export default function Navbar({ onOpenSearch, onOpenAdmin, currentUser, onOpenL
                         onLogout();
                       }}
                     >
-                      <LogOut size={16} /> Sign Out
+                      <LogOut size={16} /> {t('nav_sign_out', 'Sign Out')}
                     </button>
                   </>
                 ) : null}
+
+                {/* Mobile Language Selector */}
+                <div style={{ margin: '6px 0' }}>
+                  <LanguageSelector />
+                </div>
 
                 <button 
                   type="button"
@@ -258,7 +262,7 @@ export default function Navbar({ onOpenSearch, onOpenAdmin, currentUser, onOpenL
                   }}
                 >
                   {theme === 'dark' ? <Sun size={16} className="text-warning" /> : <Moon size={16} className="text-primary" />}
-                  <span>{theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}</span>
+                  <span>{theme === 'dark' ? (t('theme_switch_light', 'Switch to Light Mode')) : (t('theme_switch_dark', 'Switch to Dark Mode'))}</span>
                 </button>
 
                 <a 
@@ -266,7 +270,7 @@ export default function Navbar({ onOpenSearch, onOpenAdmin, currentUser, onOpenL
                   className="btn btn-primary btn-glow btn-full"
                   onClick={() => setMobileMenuOpen(false)}
                 >
-                  <Boxes size={16} /> Explore AI Marketplace
+                  <Boxes size={16} /> {t('nav_explore_marketplace', 'Explore AI Marketplace')}
                 </a>
               </div>
             </nav>

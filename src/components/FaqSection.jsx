@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
+import { useApp } from '../context/AppContext';
 import { FAQS_DATA } from '../data/faqsData';
 import { HelpCircle, ChevronDown } from 'lucide-react';
 
 export default function FaqSection() {
+  const { t } = useApp();
   const [openIndex, setOpenIndex] = useState(0);
 
   const toggleFaq = (idx) => {
@@ -14,13 +16,13 @@ export default function FaqSection() {
       <div className="container">
         <div className="section-header text-center">
           <span className="section-tag">
-            <HelpCircle size={14} /> COMMON QUESTIONS
+            <HelpCircle size={14} /> {t('faq_section_tag', 'HELP & FAQS')}
           </span>
           <h2 className="section-title">
-            Frequently Asked <span className="gradient-text">Questions</span>
+            {t('faq_title_1', 'Frequently Asked')} <span className="gradient-text">{t('faq_title_2', 'Questions')}</span>
           </h2>
           <p className="section-desc">
-            Everything you need to know about purchasing AI tools, managing API keys, and subscription billing.
+            {t('faq_desc', 'Everything you need to know about purchasing AI tools, managing API keys, and subscription billing.')}
           </p>
         </div>
 
