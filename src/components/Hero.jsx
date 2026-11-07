@@ -5,13 +5,8 @@ import {
   ShoppingCart,
   Sparkles, 
   ShieldCheck, 
-  RotateCcw, 
-  QrCode, 
-  FileCheck, 
-  Star, 
   Tag, 
   CheckCircle2, 
-  Zap, 
   Flame,
   ArrowRight
 } from 'lucide-react';
@@ -74,50 +69,6 @@ export default function Hero() {
               <ShoppingCart size={20} />
               <span>{t('hero_btn_cart', 'View Cart & Instant Checkout')}</span>
             </button>
-          </div>
-
-          {/* Real-Time E-Commerce Store Stats Grid */}
-          <div className="hero-stats-grid">
-            <div className="stat-card">
-              <div className="stat-number">45+</div>
-              <div className="stat-label">AI Tools In Stock</div>
-            </div>
-            <div className="stat-divider"></div>
-            <div className="stat-card">
-              <div className="stat-number">$0</div>
-              <div className="stat-label">Monthly Subscriptions</div>
-            </div>
-            <div className="stat-divider"></div>
-            <div className="stat-card">
-              <div className="stat-number">18,500+</div>
-              <div className="stat-label">Licenses Delivered</div>
-            </div>
-            <div className="stat-divider"></div>
-            <div className="stat-card">
-              <div className="stat-number flex-items-center">
-                <Star size={16} className="text-warning fill-warning mr-1" /> 4.98/5
-              </div>
-              <div className="stat-label">14,200+ Verified Buyers</div>
-            </div>
-          </div>
-
-          {/* Store Trust Guarantees */}
-          <div className="hero-guarantees">
-            <span className="guarantee-item">
-              <Zap size={16} /> {t('hero_guarantee_1', 'Instant Digital Delivery')}
-            </span>
-            <span className="guarantee-item">
-              <QrCode size={16} /> {t('hero_guarantee_2', 'Cambodia National KHQR Checkout')}
-            </span>
-            <span className="guarantee-item">
-              <ShieldCheck size={16} /> {t('hero_guarantee_3', '100% Genuine Lifetime License')}
-            </span>
-            <span className="guarantee-item">
-              <RotateCcw size={16} /> {t('hero_guarantee_4', '14-Day Money-Back Guarantee')}
-            </span>
-            <span className="guarantee-item">
-              <FileCheck size={16} /> Commercial Use Included
-            </span>
           </div>
         </div>
 
