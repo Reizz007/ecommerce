@@ -232,7 +232,7 @@ export default function Navbar({ onOpenSearch, onOpenAdmin, currentUser, onOpenL
                   </>
                 ) : null}
 
-                {/* Mobile Preferences (Currency & Language) */}
+                {/* Mobile Currency Selector */}
                 <div className="mobile-drawer-settings-card">
                   <div className="mobile-drawer-setting-row">
                     <span className="mobile-setting-label">{t('currency', 'Currency')}</span>
@@ -250,10 +250,6 @@ export default function Navbar({ onOpenSearch, onOpenAdmin, currentUser, onOpenL
                         ))}
                       </select>
                     </div>
-                  </div>
-                  <div className="mobile-drawer-setting-row">
-                    <span className="mobile-setting-label">{t('language', 'Language')}</span>
-                    <LanguageSelector />
                   </div>
                 </div>
 
