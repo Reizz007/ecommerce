@@ -123,14 +123,16 @@ export default function Navbar({ onOpenSearch, onOpenAdmin, currentUser, onOpenL
                   </button>
                 )}
 
-                <button 
-                  className="btn-account"
-                  onClick={() => setIsAccountOpen(true)}
-                  title="Dashboard & API Keys"
-                >
-                  <User size={15} />
-                  <span className="account-btn-label">{currentUser.name || 'Account'}</span>
-                </button>
+                {!isAdmin && (
+                  <button 
+                    className="btn-account"
+                    onClick={() => setIsAccountOpen(true)}
+                    title="Dashboard & API Keys"
+                  >
+                    <User size={15} />
+                    <span className="account-btn-label">{currentUser.name || 'Account'}</span>
+                  </button>
+                )}
 
                 <button
                   className="btn-logout-mini"
@@ -211,15 +213,17 @@ export default function Navbar({ onOpenSearch, onOpenAdmin, currentUser, onOpenL
 
                 {currentUser ? (
                   <>
-                    <button 
-                      className="btn btn-secondary btn-full"
-                      onClick={() => {
-                        setMobileMenuOpen(false);
-                        setIsAccountOpen(true);
-                      }}
-                    >
-                      <User size={16} /> Dashboard & API Keys ({currentUser.name})
-                    </button>
+                    {!isAdmin && (
+                      <button 
+                        className="btn btn-secondary btn-full"
+                        onClick={() => {
+                          setMobileMenuOpen(false);
+                          setIsAccountOpen(true);
+                        }}
+                      >
+                        <User size={16} /> Dashboard & API Keys ({currentUser.name})
+                      </button>
+                    )}
                     <button 
                       className="btn btn-outline btn-full text-danger"
                       onClick={() => {
