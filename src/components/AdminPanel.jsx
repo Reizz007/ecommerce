@@ -59,6 +59,8 @@ import {
   History,
   Filter,
   Gamepad2,
+  Share2,
+  Globe,
   X
 } from 'lucide-react';
 
@@ -126,7 +128,21 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
     topupAutoFulfill: true,
     topupGameLookupEndpoint: '',
     topupGameLookupApiKey: '',
-    topupGameLookupTimeout: 20
+    topupGameLookupTimeout: 20,
+    // SEO & Search Engine Keywords
+    seoTitle: 'Dyzzstore | Premier AI Tools Marketplace & Game Top-Up',
+    seoDescription: 'Discover, buy, and top-up MLBB diamonds, Magic Chess, Free Fire, and premier AI software tools. Instant delivery via Cambodia National KHQR or Card.',
+    seoKeywords: 'Dyzzstore, MLBB topup, Diamond Mobile Legends, Magic Chess, Free Fire topup, AI tools, Midjourney, ChatGPT, perpetual license, KHQR Bakong payment, cheap game topup Cambodia',
+    googleVerification: 'RhwAQDXFLfwzFSBq0YM1kouGUUJ228ZjagAQ3Zr6K_I',
+    seoRobots: 'index, follow',
+    // Social Media Channels
+    socialFacebook: 'https://www.facebook.com/softpointautoid',
+    socialInstagram: 'https://www.instagram.com/softpoint_autoid/',
+    socialTwitter: 'https://x.com/yourhandle',
+    socialLinkedin: 'https://linkedin.com/company/yourcompany',
+    socialTelegram: 'https://t.me/dyzzstore_bot',
+    socialWhatsapp: 'https://wa.me/qr/MZQQIASMQZQGK1',
+    socialTiktok: 'https://www.tiktok.com/@softpointautoid'
   });
   const [showTopupFlashSecret, setShowTopupFlashSecret] = useState(false);
   const [testingFlashTopup, setTestingFlashTopup] = useState(false);
@@ -1142,12 +1158,15 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
     }
   };
 
-  // Filtered products list
+  // Filtered products list (Search by keyword, product name, tags, features, category)
   const filteredTools = tools.filter(t => {
     const nameStr = String(t.name || '').toLowerCase();
-    const descStr = String(t.shortDesc || t.short_desc || '').toLowerCase();
+    const descStr = String(t.shortDesc || t.short_desc || t.description || '').toLowerCase();
+    const tagsStr = Array.isArray(t.tags) ? t.tags.join(' ').toLowerCase() : String(t.tags || '').toLowerCase();
+    const featStr = Array.isArray(t.features) ? t.features.join(' ').toLowerCase() : '';
+    const catStr = String(t.category_slug || t.category || '').toLowerCase();
     const query = (searchTerm || '').toLowerCase();
-    const matchesSearch = !query || nameStr.includes(query) || descStr.includes(query);
+    const matchesSearch = !query || nameStr.includes(query) || descStr.includes(query) || tagsStr.includes(query) || featStr.includes(query) || catStr.includes(query);
 
     const toolCat = String(t.category_slug || t.category || t.category_id || '').toLowerCase();
     const selectedCat = String(selectedCategoryFilter || 'all').toLowerCase();
@@ -1516,7 +1535,7 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
                     <Search size={15} />
                     <input
                       type="text"
-                      placeholder="Search by product name..."
+                      placeholder="Search by keyword, product name, tags..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
                     />
@@ -3522,9 +3541,227 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
                       <h4>Active Promo Codes</h4>
                     </div>
                     <div className="promo-codes-list">
-                      <div className="promo-pill"><strong>NEURON20</strong> â€” 20% OFF Everything</div>
-                      <div className="promo-pill"><strong>AIWELCOME</strong> â€” $10 Flat Discount</div>
+                      <div className="promo-pill"><strong>NEURON20</strong> — 20% OFF Everything</div>
+                      <div className="promo-pill"><strong>AIWELCOME</strong> — $10 Flat Discount</div>
                     </div>
+                  </div>
+
+                  {/* CARD: SEARCH ENGINE OPTIMIZATION (SEO) & SEARCH BY KEYWORD */}
+                  <div className="settings-card mt-4 seo-settings-card">
+                    <div className="settings-card-header">
+                      <Search size={20} className="text-cyan" />
+                      <div>
+                        <h4>Search Engine Optimization (SEO) & Search by Keyword</h4>
+                        <p className="text-muted text-xs">
+                          Configure search meta tags, keywords, and indexing so Google, Bing, and shoppers find your store when searching by keyword.
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Google Search Live SERP Preview */}
+                    <div className="seo-serp-preview-box">
+                      <div className="seo-preview-header">
+                        <span className="seo-preview-tag">Google Search Live SERP Preview</span>
+                      </div>
+                      <div className="seo-serp-inner">
+                        <div className="seo-serp-site">
+                          <span className="seo-serp-favicon">D</span>
+                          <span className="seo-serp-url">https://dyzzstore.store › home</span>
+                        </div>
+                        <div className="seo-serp-title">
+                          {settings.seoTitle || 'Dyzzstore | Premier AI Tools Marketplace & Game Top-Up'}
+                        </div>
+                        <div className="seo-serp-desc">
+                          {settings.seoDescription || 'Discover, buy, and top-up MLBB diamonds, Magic Chess, Free Fire, and premier AI software tools. Instant delivery via Cambodia National KHQR or Card.'}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="form-group mt-3">
+                      <label className="flex justify-between">
+                        <span>Meta Title (Google Search Title):</span>
+                        <span className="text-xs text-muted">{(settings.seoTitle || '').length} / 65 chars</span>
+                      </label>
+                      <input
+                        type="text"
+                        className="admin-input"
+                        placeholder="Dyzzstore | Premier AI Tools Marketplace & Game Top-Up"
+                        value={settings.seoTitle || ''}
+                        onChange={(e) => setSettings({ ...settings, seoTitle: e.target.value })}
+                      />
+                      <small className="form-text-hint">This title appears in Google search engine result links and browser tabs.</small>
+                    </div>
+
+                    <div className="form-group mt-3">
+                      <label className="flex justify-between">
+                        <span>Meta Description (Google Snippet):</span>
+                        <span className="text-xs text-muted">{(settings.seoDescription || '').length} / 160 chars</span>
+                      </label>
+                      <textarea
+                        rows={3}
+                        className="admin-textarea"
+                        placeholder="Discover, buy, and top-up MLBB diamonds, Magic Chess, Free Fire, and premier AI software tools..."
+                        value={settings.seoDescription || ''}
+                        onChange={(e) => setSettings({ ...settings, seoDescription: e.target.value })}
+                      />
+                      <small className="form-text-hint">Summary displayed beneath your title in Google search results.</small>
+                    </div>
+
+                    <div className="form-group mt-3">
+                      <label>SEO Search Keywords (Target Search Query Terms):</label>
+                      <textarea
+                        rows={3}
+                        className="admin-textarea"
+                        placeholder="MLBB topup, Diamond Mobile Legends, Magic Chess, Free Fire, AI tools, Midjourney, ChatGPT, Dyzzstore..."
+                        value={settings.seoKeywords || ''}
+                        onChange={(e) => setSettings({ ...settings, seoKeywords: e.target.value })}
+                      />
+                      <small className="form-text-hint">
+                        Comma-separated keywords used for search engine indexing. When customers search Google or Bing with these terms, your store matches the query.
+                      </small>
+                      <div className="seo-suggested-keywords mt-2">
+                        <span className="text-xs text-muted mr-2">Quick Add Keywords:</span>
+                        {[
+                          'MLBB Top-Up',
+                          'Diamond Mobile Legends',
+                          'Magic Chess Pass',
+                          'Free Fire Diamonds',
+                          'AI Tools Marketplace',
+                          'Midjourney Commercial',
+                          'Bakong KHQR Checkout'
+                        ].map((kw) => (
+                          <button
+                            key={kw}
+                            type="button"
+                            className="badge-kw-pill"
+                            onClick={() => {
+                              const curr = settings.seoKeywords || '';
+                              if (!curr.toLowerCase().includes(kw.toLowerCase())) {
+                                const updated = curr ? `${curr}, ${kw}` : kw;
+                                setSettings({ ...settings, seoKeywords: updated });
+                              }
+                            }}
+                          >
+                            + {kw}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="form-row-2col mt-3">
+                      <div className="form-group">
+                        <label>Google Site Verification ID:</label>
+                        <input
+                          type="text"
+                          className="admin-input"
+                          placeholder="google-site-verification token..."
+                          value={settings.googleVerification || ''}
+                          onChange={(e) => setSettings({ ...settings, googleVerification: e.target.value })}
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label>Robots Indexing Directive:</label>
+                        <select
+                          className="admin-select"
+                          value={settings.seoRobots || 'index, follow'}
+                          onChange={(e) => setSettings({ ...settings, seoRobots: e.target.value })}
+                        >
+                          <option value="index, follow">index, follow (Allow Google & Crawlers)</option>
+                          <option value="noindex, nofollow">noindex, nofollow (Block Search Engines)</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* CARD: SOCIAL MEDIA (EXACT REPLICA OF USER SCREENSHOT) */}
+                  <div className="settings-card mt-4 social-media-settings-card">
+                    <div className="settings-card-header">
+                      <Share2 size={20} className="text-primary" />
+                      <h4>Social Media</h4>
+                    </div>
+
+                    <div className="social-media-grid-2col">
+                      <div className="form-group">
+                        <label className="social-label-caps">FACEBOOK</label>
+                        <input
+                          type="url"
+                          className="admin-input"
+                          placeholder="https://www.facebook.com/yourpage"
+                          value={settings.socialFacebook || ''}
+                          onChange={(e) => setSettings({ ...settings, socialFacebook: e.target.value })}
+                        />
+                      </div>
+
+                      <div className="form-group">
+                        <label className="social-label-caps">INSTAGRAM</label>
+                        <input
+                          type="url"
+                          className="admin-input"
+                          placeholder="https://www.instagram.com/yourhandle/"
+                          value={settings.socialInstagram || ''}
+                          onChange={(e) => setSettings({ ...settings, socialInstagram: e.target.value })}
+                        />
+                      </div>
+
+                      <div className="form-group">
+                        <label className="social-label-caps">TWITTER / X</label>
+                        <input
+                          type="url"
+                          className="admin-input"
+                          placeholder="https://x.com/yourhandle"
+                          value={settings.socialTwitter || ''}
+                          onChange={(e) => setSettings({ ...settings, socialTwitter: e.target.value })}
+                        />
+                      </div>
+
+                      <div className="form-group">
+                        <label className="social-label-caps">LINKEDIN</label>
+                        <input
+                          type="url"
+                          className="admin-input"
+                          placeholder="https://linkedin.com/company/yourcompany"
+                          value={settings.socialLinkedin || ''}
+                          onChange={(e) => setSettings({ ...settings, socialLinkedin: e.target.value })}
+                        />
+                      </div>
+
+                      <div className="form-group">
+                        <label className="social-label-caps">TELEGRAM</label>
+                        <input
+                          type="text"
+                          className="admin-input"
+                          placeholder="https://t.me/dyzzstore_bot"
+                          value={settings.socialTelegram || ''}
+                          onChange={(e) => setSettings({ ...settings, socialTelegram: e.target.value })}
+                        />
+                      </div>
+
+                      <div className="form-group">
+                        <label className="social-label-caps">WHATSAPP</label>
+                        <input
+                          type="text"
+                          className="admin-input"
+                          placeholder="https://wa.me/qr/..."
+                          value={settings.socialWhatsapp || ''}
+                          onChange={(e) => setSettings({ ...settings, socialWhatsapp: e.target.value })}
+                        />
+                      </div>
+
+                      <div className="form-group full-width-field">
+                        <label className="social-label-caps">TIKTOK</label>
+                        <input
+                          type="url"
+                          className="admin-input"
+                          placeholder="https://www.tiktok.com/@yourchannel"
+                          value={settings.socialTiktok || ''}
+                          onChange={(e) => setSettings({ ...settings, socialTiktok: e.target.value })}
+                        />
+                      </div>
+                    </div>
+
+                    <p className="social-footer-hint">
+                      Links appear in the public footer and on the contact page. Telegram and WhatsApp also get a scannable QR code on the contact page. Leave a field empty to hide that icon.
+                    </p>
                   </div>
 
                   <div className="settings-actions mt-4">

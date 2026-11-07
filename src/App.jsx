@@ -21,6 +21,47 @@ function MainContent() {
     window.__openCheckout = (open = true) => setIsCheckoutOpen(open);
   }, [setIsCheckoutOpen]);
 
+  // Apply Live SEO Meta Tags & Target Search Keywords from Admin Settings
+  useEffect(() => {
+    fetch(apiUrl('/api/settings'))
+      .then(r => r.json())
+      .then(data => {
+        const s = data?.settings;
+        if (s) {
+          if (s.seoTitle) {
+            document.title = s.seoTitle;
+            const ogTitle = document.querySelector('meta[property="og:title"]');
+            if (ogTitle) ogTitle.content = s.seoTitle;
+          }
+          if (s.seoDescription) {
+            const metaDesc = document.querySelector('meta[name="description"]');
+            if (metaDesc) metaDesc.content = s.seoDescription;
+            const ogDesc = document.querySelector('meta[property="og:description"]');
+            if (ogDesc) ogDesc.content = s.seoDescription;
+          }
+          if (s.seoKeywords) {
+            let metaKey = document.querySelector('meta[name="keywords"]');
+            if (!metaKey) {
+              metaKey = document.createElement('meta');
+              metaKey.name = 'keywords';
+              document.head.appendChild(metaKey);
+            }
+            metaKey.content = s.seoKeywords;
+          }
+          if (s.googleVerification) {
+            let gv = document.querySelector('meta[name="google-site-verification"]');
+            if (!gv) {
+              gv = document.createElement('meta');
+              gv.name = 'google-site-verification';
+              document.head.appendChild(gv);
+            }
+            gv.content = s.googleVerification;
+          }
+        }
+      })
+      .catch(() => {});
+  }, []);
+
   // Authentication & Role State
   const [currentUser, setCurrentUser] = useState(() => {
     try {

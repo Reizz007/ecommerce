@@ -10663,4 +10663,172 @@ input:checked+.slider:before {
   text-decoration: underline;
 }
 
+/* ==========================================================================
+   ADMIN SEO & KEYWORD SEARCH + SOCIAL MEDIA SETTINGS
+   ========================================================================== */
+
+.seo-settings-card,
+.social-media-settings-card {
+  position: relative;
+  overflow: hidden;
+}
+
+/* Google Search SERP Preview Box */
+.seo-serp-preview-box {
+  background: #ffffff;
+  color: #1f2937;
+  border-radius: 12px;
+  padding: 1.15rem 1.25rem;
+  margin-top: 1rem;
+  margin-bottom: 1.25rem;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
+}
+
+.seo-preview-header {
+  margin-bottom: 0.65rem;
+}
+
+.seo-preview-tag {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: #f3f4f6;
+  color: #4b5563;
+}
+
+.seo-serp-inner {
+  font-family: Arial, sans-serif;
+}
+
+.seo-serp-site {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.seo-serp-favicon {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #7c3aed;
+  color: #ffffff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.seo-serp-url {
+  font-size: 0.8rem;
+  color: #4d5156;
+}
+
+.seo-serp-title {
+  font-size: 1.15rem;
+  font-weight: 400;
+  color: #1a0dab;
+  line-height: 1.35;
+  cursor: pointer;
+  margin-bottom: 4px;
+}
+
+.seo-serp-title:hover {
+  text-decoration: underline;
+}
+
+.seo-serp-desc {
+  font-size: 0.85rem;
+  color: #4d5156;
+  line-height: 1.5;
+  word-break: break-word;
+}
+
+.seo-suggested-keywords {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.badge-kw-pill {
+  background: rgba(139, 92, 246, 0.12);
+  border: 1px solid rgba(139, 92, 246, 0.3);
+  color: #a78bfa;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.badge-kw-pill:hover {
+  background: rgba(139, 92, 246, 0.25);
+  border-color: #a78bfa;
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+
+/* Social Media Grid (Exact replica of user screenshot) */
+.social-media-grid-2col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+  margin-top: 1rem;
+}
+
+@media (max-width: 640px) {
+  .social-media-grid-2col {
+    grid-template-columns: 1fr;
+  }
+}
+
+.social-label-caps {
+  font-size: 0.74rem !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.06em !important;
+  color: var(--text-muted);
+  margin-bottom: 0.45rem !important;
+}
+
+.full-width-field {
+  grid-column: 1 / -1;
+}
+
+.social-footer-hint {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+  margin-top: 1.25rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-light);
+}
+
+[data-theme="light"] .seo-settings-card,
+.light-theme .seo-settings-card,
+[data-theme="light"] .social-media-settings-card,
+.light-theme .social-media-settings-card {
+  background: #ffffff !important;
+  border-color: rgba(15, 23, 42, 0.08) !important;
+  box-shadow: 0 4px 18px rgba(15, 23, 42, 0.04);
+}
+
+[data-theme="light"] .social-label-caps {
+  color: #64748b !important;
+}
+
+[data-theme="light"] .social-footer-hint {
+  color: #64748b !important;
+  border-top-color: rgba(15, 23, 42, 0.08) !important;
+}
+
+
 
