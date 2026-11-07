@@ -290,6 +290,10 @@ section.topup-site-section {
   box-shadow: 0 8px 24px rgba(6, 182, 212, 0.15);
 }
 
+.topup-game-card:hover .topup-game-name {
+  color: #38bdf8;
+}
+
 .topup-game-card.selected {
   background: linear-gradient(135deg, rgba(139, 92, 246, 0.22), rgba(6, 182, 212, 0.15));
   border-color: #06b6d4;
@@ -518,6 +522,13 @@ section.topup-site-section {
   background: rgba(20, 10, 48, 0.8);
 }
 
+.topup-package-row:hover .topup-package-row-name,
+.topup-package-card:hover .topup-package-row-name,
+.topup-package-row:hover .topup-diamond-num,
+.topup-package-card:hover .topup-diamond-num {
+  color: #38bdf8;
+}
+
 .topup-package-row.selected,
 .topup-package-card.selected {
   border-color: rgba(0, 229, 255, 0.45);
@@ -630,6 +641,10 @@ section.topup-site-section {
 .topup-payment-card:hover {
   border-color: rgba(168, 85, 247, 0.32);
   background: rgba(20, 10, 48, 0.8);
+}
+
+.topup-payment-card:hover .topup-pay-title {
+  color: #38bdf8;
 }
 
 .topup-payment-card.selected {
@@ -1430,9 +1445,15 @@ section.topup-site-section {
 
 [data-theme="light"] .topup-game-card:hover,
 .light-theme .topup-game-card:hover {
-  background: #ffffff;
-  border-color: #0284c7;
-  box-shadow: 0 6px 20px rgba(2, 132, 199, 0.12);
+  background: #ffffff !important;
+  border-color: #0284c7 !important;
+  box-shadow: 0 6px 20px rgba(2, 132, 199, 0.12) !important;
+  transform: translateY(-2px);
+}
+
+[data-theme="light"] .topup-game-card:hover .topup-game-name,
+.light-theme .topup-game-card:hover .topup-game-name {
+  color: #0284c7 !important;
 }
 
 [data-theme="light"] .topup-game-card.selected,
@@ -1446,6 +1467,7 @@ section.topup-site-section {
 .light-theme .topup-game-name {
   color: #0f172a !important;
   font-weight: 700;
+  transition: color 0.2s ease;
 }
 
 [data-theme="light"] .topup-game-card.selected .topup-game-name,
@@ -1454,14 +1476,26 @@ section.topup-site-section {
   font-weight: 800;
 }
 
+[data-theme="light"] .topup-game-count,
+.light-theme .topup-game-count,
 [data-theme="light"] .topup-game-packages-count,
 .light-theme .topup-game-packages-count {
   color: #64748b !important;
+  transition: color 0.2s ease;
 }
 
+[data-theme="light"] .topup-game-card.selected .topup-game-count,
+.light-theme .topup-game-card.selected .topup-game-count,
 [data-theme="light"] .topup-game-card.selected .topup-game-packages-count,
 .light-theme .topup-game-card.selected .topup-game-packages-count {
   color: #0369a1 !important;
+  font-weight: 600 !important;
+}
+
+[data-theme="light"] .topup-game-card.selected .topup-check-mark,
+.light-theme .topup-game-card.selected .topup-check-mark {
+  background: #0284c7 !important;
+  color: #ffffff !important;
 }
 
 [data-theme="light"] .topup-field-label,
@@ -1521,9 +1555,32 @@ section.topup-site-section {
 .light-theme .topup-package-row:hover,
 [data-theme="light"] .topup-package-card:hover,
 .light-theme .topup-package-card:hover {
-  background: #ffffff !important;
+  background: #f8fafc !important;
   border-color: #0284c7 !important;
   box-shadow: 0 4px 14px rgba(2, 132, 199, 0.12) !important;
+  transform: translateY(-1px);
+}
+
+[data-theme="light"] .topup-package-row:hover .topup-package-row-name,
+.light-theme .topup-package-row:hover .topup-package-row-name,
+[data-theme="light"] .topup-package-card:hover .topup-package-row-name,
+.light-theme .topup-package-card:hover .topup-package-row-name {
+  color: #0284c7 !important;
+}
+
+[data-theme="light"] .topup-package-row:hover .topup-diamond-num,
+.light-theme .topup-package-row:hover .topup-diamond-num,
+[data-theme="light"] .topup-package-card:hover .topup-diamond-num,
+.light-theme .topup-package-card:hover .topup-diamond-num {
+  color: #0284c7 !important;
+}
+
+[data-theme="light"] .topup-package-row:hover .topup-package-price-pill,
+.light-theme .topup-package-row:hover .topup-package-price-pill,
+[data-theme="light"] .topup-package-card:hover .topup-package-price-pill,
+.light-theme .topup-package-card:hover .topup-package-price-pill {
+  border-color: #0284c7 !important;
+  color: #0284c7 !important;
 }
 
 /* SELECTED PACKAGE CARD - High Contrast & Crystal Clear Text */
@@ -1576,15 +1633,52 @@ section.topup-site-section {
 
 [data-theme="light"] .topup-payment-card,
 .light-theme .topup-payment-card {
-  background: #f8fafc;
-  border: 1px solid rgba(15, 23, 42, 0.08);
+  background: #ffffff !important;
+  border: 1.5px solid #e2e8f0 !important;
+  transition: all 0.2s ease;
+}
+
+[data-theme="light"] .topup-payment-card:hover,
+.light-theme .topup-payment-card:hover {
+  background: #f8fafc !important;
+  border-color: #0284c7 !important;
+  box-shadow: 0 4px 14px rgba(2, 132, 199, 0.12) !important;
+  transform: translateY(-1px);
+}
+
+[data-theme="light"] .topup-payment-card:hover .topup-pay-title,
+.light-theme .topup-payment-card:hover .topup-pay-title {
+  color: #0284c7 !important;
 }
 
 [data-theme="light"] .topup-payment-card.selected,
 .light-theme .topup-payment-card.selected {
-  background: rgba(2, 132, 199, 0.06);
-  border-color: #0284c7;
-  box-shadow: 0 0 18px rgba(2, 132, 199, 0.15);
+  background: #f0f9ff !important;
+  border: 2px solid #0284c7 !important;
+  box-shadow: 0 4px 16px rgba(2, 132, 199, 0.18) !important;
+}
+
+[data-theme="light"] .topup-payment-card.selected .topup-pay-title,
+.light-theme .topup-payment-card.selected .topup-pay-title {
+  color: #0284c7 !important;
+  font-weight: 800 !important;
+}
+
+[data-theme="light"] .topup-payment-card .topup-radio-circle,
+.light-theme .topup-payment-card .topup-radio-circle {
+  border-color: #cbd5e1 !important;
+  background: #ffffff !important;
+}
+
+[data-theme="light"] .topup-payment-card.selected .topup-radio-circle,
+.light-theme .topup-payment-card.selected .topup-radio-circle {
+  border-color: #0284c7 !important;
+}
+
+[data-theme="light"] .topup-radio-dot,
+.light-theme .topup-radio-dot {
+  background: #0284c7 !important;
+  box-shadow: 0 0 6px rgba(2, 132, 199, 0.4) !important;
 }
 
 [data-theme="light"] .topup-pay-title,

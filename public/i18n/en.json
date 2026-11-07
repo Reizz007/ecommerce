@@ -144,5 +144,6 @@
   "footer_support_delivery": "24/7 Automated Instant Delivery",
   "footer_support_khqr": "Bakong KHQR National Payment",
   "footer_support_telegram": "Telegram Support (@dyzzstore_bot)",
-  "footer_support_email": "Official Email (admin@dyzzstore.com)"
+  "footer_support_email": "Official Email (admin@dyzzstore.com)",
+  "currency": "Currency"
 }

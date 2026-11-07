@@ -81,7 +81,7 @@ export default function Navbar({ onOpenSearch, onOpenAdmin, currentUser, onOpenL
             <LanguageSelector />
 
             {/* Currency Selector */}
-            <div className="currency-picker">
+            <div className="currency-picker header-currency-picker">
               <select 
                 value={currency} 
                 onChange={(e) => setCurrency(e.target.value)}
@@ -232,9 +232,29 @@ export default function Navbar({ onOpenSearch, onOpenAdmin, currentUser, onOpenL
                   </>
                 ) : null}
 
-                {/* Mobile Language Selector */}
-                <div style={{ margin: '6px 0' }}>
-                  <LanguageSelector />
+                {/* Mobile Preferences (Currency & Language) */}
+                <div className="mobile-drawer-settings-card">
+                  <div className="mobile-drawer-setting-row">
+                    <span className="mobile-setting-label">{t('currency', 'Currency')}</span>
+                    <div className="currency-picker mobile-currency-picker">
+                      <select 
+                        value={currency} 
+                        onChange={(e) => setCurrency(e.target.value)}
+                        aria-label="Select Currency"
+                        className="currency-select"
+                      >
+                        {Object.entries(CURRENCIES).map(([code, cur]) => (
+                          <option key={code} value={code}>
+                            {cur.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                  <div className="mobile-drawer-setting-row">
+                    <span className="mobile-setting-label">{t('language', 'Language')}</span>
+                    <LanguageSelector />
+                  </div>
                 </div>
 
                 <button 
