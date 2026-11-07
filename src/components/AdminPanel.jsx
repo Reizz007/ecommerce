@@ -2542,20 +2542,24 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
                     </small>
 
                     <div className="seo-suggested-keywords mt-3">
-                      <span className="text-xs text-muted mr-2" style={{ fontWeight: 600 }}>Quick Add Popular Keywords:</span>
+                      <span className="text-xs text-muted mr-2" style={{ fontWeight: 600 }}>Quick Add Popular Keywords (Khmer & English):</span>
                       {[
                         'MLBB Top-Up',
+                        'បុកលុយ Mobile Legends',
+                        'បុកពេជ្រ MLBB',
+                        'ទិញ Diamonds MLBB',
                         'Diamond Mobile Legends',
+                        'Weekly Diamond Pass',
                         'Magic Chess Pass',
                         'Free Fire Diamonds',
                         'Dyzzstore Top-Up',
                         'Cambodia KHQR Payment',
                         'ABA PayWay Scan',
-                        'Cheap Diamonds MLBB',
+                        'MLBB KH Topup',
+                        'ថោកជាងគេ ស្រុកខ្មែរ',
                         'AI Tools Marketplace',
                         'Midjourney Lifetime',
-                        'ChatGPT Plus Cambodia',
-                        'Genshin Impact Crystals'
+                        'ChatGPT Plus Cambodia'
                       ].map((kw) => (
                         <button
                           key={kw}
@@ -3964,15 +3968,21 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
                         Comma-separated keywords used for search engine indexing. When customers search Google or Bing with these terms, your store matches the query.
                       </small>
                       <div className="seo-suggested-keywords mt-2">
-                        <span className="text-xs text-muted mr-2">Quick Add Keywords:</span>
+                        <span className="text-xs text-muted mr-2">Quick Add Popular Keywords (Khmer & English):</span>
                         {[
                           'MLBB Top-Up',
+                          'បុកលុយ Mobile Legends',
+                          'បុកពេជ្រ MLBB',
+                          'ទិញ Diamonds MLBB',
                           'Diamond Mobile Legends',
+                          'Weekly Diamond Pass',
                           'Magic Chess Pass',
                           'Free Fire Diamonds',
+                          'Dyzzstore Top-Up',
+                          'Bakong KHQR Topup',
+                          'ថោកជាងគេ ស្រុកខ្មែរ',
                           'AI Tools Marketplace',
-                          'Midjourney Commercial',
-                          'Bakong KHQR Checkout'
+                          'Midjourney Commercial'
                         ].map((kw) => (
                           <button
                             key={kw}

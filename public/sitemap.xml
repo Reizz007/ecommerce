@@ -3,18 +3,24 @@
         xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
   <url>
     <loc>https://dyzzstore.store/</loc>
-    <lastmod>2026-10-25</lastmod>
+    <lastmod>2026-11-07</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
     <image:image>
       <image:loc>https://dyzzstore.store/android-chrome-512x512.png</image:loc>
       <image:title>Dyzzstore Logo</image:title>
-      <image:caption>Dyzzstore — Premier AI Tools Marketplace Icon</image:caption>
+      <image:caption>Dyzzstore — Premier Game Top-Up and AI Tools Icon</image:caption>
     </image:image>
     <image:image>
       <image:loc>https://dyzzstore.store/og-image.png</image:loc>
       <image:title>Dyzzstore Platform Preview</image:title>
-      <image:caption>Dyzzstore AI Models and Unified Subscription Platform</image:caption>
+      <image:caption>Dyzzstore Mobile Legends Top-Up, Diamond Recharge, and AI Marketplace</image:caption>
     </image:image>
+  </url>
+  <url>
+    <loc>https://dyzzstore.store/#topup</loc>
+    <lastmod>2026-11-07</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
   </url>
 </urlset>
