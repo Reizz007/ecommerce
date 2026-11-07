@@ -7727,6 +7727,33 @@ input:checked+.slider:before {
   border-color: var(--primary);
 }
 
+/* Filter Dropdown Selects in Light Mode */
+[data-theme="light"] .filter-select,
+.light-theme .filter-select {
+  background: #ffffff !important;
+  border: 1px solid rgba(15, 23, 42, 0.16) !important;
+  color: #0f172a !important;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);
+}
+
+[data-theme="light"] .filter-select:hover,
+.light-theme .filter-select:hover {
+  background: #f8fafc !important;
+  border-color: var(--primary) !important;
+}
+
+[data-theme="light"] .filter-select:focus,
+.light-theme .filter-select:focus {
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.12) !important;
+}
+
+[data-theme="light"] .filter-select option,
+.light-theme .filter-select option {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+}
+
 /* Account Dashboard & Modals in Light Mode */
 [data-theme="light"] .account-header {
   background: #ffffff;
