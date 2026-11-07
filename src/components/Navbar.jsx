@@ -13,7 +13,6 @@ import {
   Boxes,
   Zap,
   Gamepad2,
-  HelpCircle,
   ShieldCheck,
   LogOut,
   Sun,
@@ -73,10 +72,6 @@ export default function Navbar({ onOpenSearch, onOpenAdmin, currentUser, onOpenL
             <a href="#tools" className="nav-link">
               <Boxes size={16} />
               <span>{t('nav_ai_tools', 'AI Tools')}</span>
-            </a>
-            <a href="#faq" className="nav-link">
-              <HelpCircle size={16} />
-              <span>{t('nav_faq', 'FAQ')}</span>
             </a>
           </nav>
 
@@ -200,9 +195,6 @@ export default function Navbar({ onOpenSearch, onOpenAdmin, currentUser, onOpenL
               </a>
               <a href="#tools" onClick={() => setMobileMenuOpen(false)} className="mobile-nav-link">
                 <Boxes size={18} /> {t('nav_ai_tools', 'AI Tools')}
-              </a>
-              <a href="#faq" onClick={() => setMobileMenuOpen(false)} className="mobile-nav-link">
-                <HelpCircle size={18} /> {t('nav_faq', 'FAQ')}
               </a>
               <div className="mobile-actions-stack">
                 {isAdmin && (

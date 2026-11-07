@@ -3,7 +3,6 @@ import { AppProvider, useApp } from './context/AppContext';
 import Navbar from './components/Navbar';
 import Hero from './components/Hero';
 import ToolsCatalog from './components/ToolsCatalog';
-import FaqSection from './components/FaqSection';
 import CartDrawer from './components/CartDrawer';
 import CheckoutModal from './components/CheckoutModal';
 import AccountDashboardModal from './components/AccountDashboardModal';
@@ -12,7 +11,6 @@ import ToastContainer from './components/ToastContainer';
 import Footer from './components/Footer';
 import AdminPanel from './components/AdminPanel';
 import LoginModal from './components/LoginModal';
-import AiChatBot from './components/AiChatBot';
 import TopupShop from './components/TopupShop';
 import { Sparkles, ArrowRight, ShieldCheck, Zap } from 'lucide-react';
 
@@ -242,37 +240,6 @@ function MainContent() {
 
         {/* AI Tools Catalog / Marketplace */}
         <ToolsCatalog searchRef={searchInputRef} />
-
-        {/* FAQ Section */}
-        <FaqSection />
-
-        {/* High-Impact CTA Banner */}
-        {/* <section className="cta-banner-section">
-          <div className="container">
-            <div className="cta-card">
-              <div className="cta-card-glow"></div>
-              <div className="cta-content">
-                <span className="badge-pill">
-                  <Zap size={14} className="inline mr-1" /> READY TO BUILD?
-                </span>
-                <h2>Start Supercharging Your Workflow with 45+ AI Engines</h2>
-                <p>
-                  Join 185,000+ engineers, designers, and founders who replaced monthly AI subscriptions with Dyzzstore perpetual licenses.
-                </p>
-                <div className="cta-action-row">
-                  <a href="#tools" className="btn btn-primary btn-xl btn-glow">
-                    <Sparkles size={18} />
-                    <span>Shop AI Tools & Deals</span>
-                  </a>
-                  <a href="#faq" className="btn btn-secondary btn-xl">
-                    <span>Payment & Licensing FAQ</span>
-                    <ArrowRight size={18} />
-                  </a>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section> */}
       </main>
 
       {/* Footer */}
@@ -294,7 +261,6 @@ function MainContent() {
         onLoginSuccess={handleLoginSuccess}
       />
       <ToastContainer />
-      <AiChatBot />
     </div>
   );
 }
