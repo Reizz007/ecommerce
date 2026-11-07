@@ -58,6 +58,15 @@ function MainContent() {
             }
             gv.content = s.googleVerification;
           }
+          if (s.seoRobots) {
+            let robots = document.querySelector('meta[name="robots"]');
+            if (!robots) {
+              robots = document.createElement('meta');
+              robots.name = 'robots';
+              document.head.appendChild(robots);
+            }
+            robots.content = s.seoRobots;
+          }
         }
       })
       .catch(() => {});

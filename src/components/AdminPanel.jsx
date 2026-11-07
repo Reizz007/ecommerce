@@ -797,14 +797,58 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
         if (newAdminPassword) {
           setNewAdminPassword('');
           setConfirmAdminPassword('');
-          addToast('ðŸ”‘ Admin password updated successfully! Keep your new password safe.', 'success');
+          addToast('🔑 Admin password updated successfully! Keep your new password safe.', 'success');
         }
-        addToast('âœ… Store & Gateway settings saved to Laravel database!', 'success');
+        addToast('✅ Store & Gateway settings saved to Laravel database!', 'success');
       } else {
         addToast(data.message || 'Error saving settings: Device may be restricted.', 'error');
       }
     } catch (err) {
       addToast('Error saving settings', 'error');
+    }
+  };
+
+  const [savingSeo, setSavingSeo] = useState(false);
+
+  // Dedicated Handler to save SEO & Search Keywords directly
+  const handleSaveSeoSettings = async (e) => {
+    if (e && e.preventDefault) e.preventDefault();
+    setSavingSeo(true);
+    try {
+      const payload = {
+        seoTitle: settings.seoTitle || '',
+        seoDescription: settings.seoDescription || '',
+        seoKeywords: settings.seoKeywords || '',
+        googleVerification: settings.googleVerification || '',
+        seoRobots: settings.seoRobots || 'index, follow',
+        socialFacebook: settings.socialFacebook || '',
+        socialInstagram: settings.socialInstagram || '',
+        socialTwitter: settings.socialTwitter || '',
+        socialLinkedin: settings.socialLinkedin || '',
+        socialTelegram: settings.socialTelegram || '',
+        socialWhatsapp: settings.socialWhatsapp || '',
+        socialTiktok: settings.socialTiktok || '',
+      };
+
+      const res = await fetch(apiUrl('/api/settings'), {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          ...getDeviceHeaders()
+        },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setSettings(prev => ({ ...prev, ...data.settings }));
+        addToast('🎯 SEO keywords & browser search configuration saved successfully!', 'success');
+      } else {
+        addToast(data.message || 'Failed to save SEO settings', 'error');
+      }
+    } catch {
+      addToast('Network error while saving SEO settings', 'error');
+    } finally {
+      setSavingSeo(false);
     }
   };
 
@@ -1325,6 +1369,15 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
               >
                 <Gamepad2 size={18} />
                 <span>Game Top-Up & Orders</span>
+              </button>
+
+              {/* TAB: SEO & SEARCH KEYWORDS */}
+              <button
+                className={`admin-menu-item ${activeTab === 'seo' ? 'active' : ''}`}
+                onClick={() => setActiveTab('seo')}
+              >
+                <Globe size={18} />
+                <span>SEO & Browser Search</span>
               </button>
               {(!settings.singleDeviceLocked || settings.isPrimaryDevice) && (
                 <button
@@ -2397,6 +2450,297 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
             {/* TAB: GAME TOP-UP STORE & ORDERS */}
             {activeTab === 'topup' && (
               <AdminTopupTab formatPrice={formatPrice} addToast={addToast} />
+            )}
+
+            {/* TAB: SEO & SEARCH ENGINE KEYWORDS */}
+            {activeTab === 'seo' && (
+              <div className="admin-tab-pane seo-admin-tab">
+                {/* Header */}
+                <div className="tab-pane-header">
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <Globe size={24} style={{ color: '#06b6d4' }} />
+                      <h3 style={{ margin: 0, fontSize: '1.4rem', fontWeight: 700 }}>SEO & Browser Search Keywords</h3>
+                    </div>
+                    <p className="text-muted" style={{ margin: '6px 0 0 0', fontSize: '0.88rem' }}>
+                      Configure search meta keywords, Google search title, snippets, and verification tokens so Google, Bing, and mobile browsers rank Dyzzstore when shoppers search for game top-ups and tools.
+                    </p>
+                  </div>
+                  <div className="pane-header-actions">
+                    <button
+                      type="button"
+                      className="btn btn-primary"
+                      onClick={handleSaveSeoSettings}
+                      disabled={savingSeo}
+                      style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
+                    >
+                      {savingSeo ? <RefreshCw size={14} className="spin-icon" /> : <Save size={14} />}
+                      <span>{savingSeo ? 'Saving...' : 'Save SEO Keywords'}</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Google Search Live SERP Preview */}
+                <div className="settings-card">
+                  <div className="settings-card-header">
+                    <Eye size={20} className="text-cyan" />
+                    <div>
+                      <h4>Google Search Live SERP Preview</h4>
+                      <p className="text-muted text-xs">
+                        This is how your store appears in Google and Bing search engine results.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="seo-serp-preview-box">
+                    <div className="seo-preview-header">
+                      <span className="seo-preview-tag">Google Search Live Result</span>
+                    </div>
+                    <div className="seo-serp-inner">
+                      <div className="seo-serp-site">
+                        <span className="seo-serp-favicon">D</span>
+                        <span className="seo-serp-url">https://dyzzstore.store › home</span>
+                      </div>
+                      <div className="seo-serp-title">
+                        {settings.seoTitle || 'Dyzzstore | Premier AI Tools Marketplace & Game Top-Up'}
+                      </div>
+                      <div className="seo-serp-desc">
+                        {settings.seoDescription || 'Discover, buy, and top-up MLBB diamonds, Magic Chess, Free Fire, and premier AI software tools. Instant delivery via Cambodia National KHQR or Card.'}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* CARD: TARGET SEARCH KEYWORDS */}
+                <div className="settings-card mt-4">
+                  <div className="settings-card-header">
+                    <Search size={20} className="text-purple" />
+                    <div>
+                      <h4>Target Search Keywords (Browser & Search Engine Ranking)</h4>
+                      <p className="text-muted text-xs">
+                        Add keywords that customers type into browser search bars (Google, Bing, Yahoo). Comma-separated.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="form-group">
+                    <label className="flex justify-between">
+                      <span>Search Keywords (Comma-separated terms):</span>
+                      <span className="text-xs text-muted">
+                        {(settings.seoKeywords || '').split(',').filter(k => k.trim()).length} keywords entered
+                      </span>
+                    </label>
+                    <textarea
+                      rows={4}
+                      className="admin-textarea"
+                      placeholder="MLBB topup, Diamond Mobile Legends, Magic Chess Pass, Free Fire Diamonds, AI tools, Dyzzstore, KHQR Cambodia, cheap diamond topup..."
+                      value={settings.seoKeywords || ''}
+                      onChange={(e) => setSettings({ ...settings, seoKeywords: e.target.value })}
+                    />
+                    <small className="form-text-hint">
+                      Search crawlers index these keywords to show your website when users search for diamonds, game passes, or software tools.
+                    </small>
+
+                    <div className="seo-suggested-keywords mt-3">
+                      <span className="text-xs text-muted mr-2" style={{ fontWeight: 600 }}>Quick Add Popular Keywords:</span>
+                      {[
+                        'MLBB Top-Up',
+                        'Diamond Mobile Legends',
+                        'Magic Chess Pass',
+                        'Free Fire Diamonds',
+                        'Dyzzstore Top-Up',
+                        'Cambodia KHQR Payment',
+                        'ABA PayWay Scan',
+                        'Cheap Diamonds MLBB',
+                        'AI Tools Marketplace',
+                        'Midjourney Lifetime',
+                        'ChatGPT Plus Cambodia',
+                        'Genshin Impact Crystals'
+                      ].map((kw) => (
+                        <button
+                          key={kw}
+                          type="button"
+                          className="badge-kw-pill"
+                          onClick={() => {
+                            const curr = settings.seoKeywords || '';
+                            if (!curr.toLowerCase().includes(kw.toLowerCase())) {
+                              const updated = curr ? `${curr}, ${kw}` : kw;
+                              setSettings({ ...settings, seoKeywords: updated });
+                            }
+                          }}
+                        >
+                          + {kw}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* CARD: GOOGLE SEARCH METADATA & VERIFICATION */}
+                <div className="settings-card mt-4">
+                  <div className="settings-card-header">
+                    <Tag size={20} className="text-cyan" />
+                    <div>
+                      <h4>Search Engine Meta Tags & Crawl Directives</h4>
+                      <p className="text-muted text-xs">
+                        Meta title, description snippet, site verification token, and crawler robots directive.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="form-group">
+                    <label className="flex justify-between">
+                      <span>Meta Title (Browser Tab & Google Search Title):</span>
+                      <span className="text-xs text-muted">{(settings.seoTitle || '').length} / 65 chars</span>
+                    </label>
+                    <input
+                      type="text"
+                      className="admin-input"
+                      placeholder="Dyzzstore | Premier AI Tools Marketplace & Game Top-Up"
+                      value={settings.seoTitle || ''}
+                      onChange={(e) => setSettings({ ...settings, seoTitle: e.target.value })}
+                    />
+                    <small className="form-text-hint">Optimal length: 50–60 characters. Displayed on browser tabs and Google SERP links.</small>
+                  </div>
+
+                  <div className="form-group mt-3">
+                    <label className="flex justify-between">
+                      <span>Meta Description (Google Search Snippet):</span>
+                      <span className="text-xs text-muted">{(settings.seoDescription || '').length} / 160 chars</span>
+                    </label>
+                    <textarea
+                      rows={3}
+                      className="admin-textarea"
+                      placeholder="Discover, buy, and top-up MLBB diamonds, Magic Chess, Free Fire, and premier AI software tools..."
+                      value={settings.seoDescription || ''}
+                      onChange={(e) => setSettings({ ...settings, seoDescription: e.target.value })}
+                    />
+                    <small className="form-text-hint">Optimal length: 140–160 characters. A brief summary displayed beneath your title in Google search results.</small>
+                  </div>
+
+                  <div className="form-row-2col mt-3">
+                    <div className="form-group">
+                      <label>Google Site Verification ID Token:</label>
+                      <input
+                        type="text"
+                        className="admin-input"
+                        placeholder="e.g. RhwAQDXFLfwzFSBq0YM1kouGUUJ228ZjagAQ3Zr6K_I"
+                        value={settings.googleVerification || ''}
+                        onChange={(e) => setSettings({ ...settings, googleVerification: e.target.value })}
+                      />
+                      <small className="form-text-hint">From Google Search Console (HTML tag method).</small>
+                    </div>
+
+                    <div className="form-group">
+                      <label>Robots Indexing Directive:</label>
+                      <select
+                        className="admin-select"
+                        value={settings.seoRobots || 'index, follow'}
+                        onChange={(e) => setSettings({ ...settings, seoRobots: e.target.value })}
+                      >
+                        <option value="index, follow">index, follow (Allow Google & All Search Engines)</option>
+                        <option value="noindex, nofollow">noindex, nofollow (Block Search Engines)</option>
+                      </select>
+                      <small className="form-text-hint">Keep "index, follow" to allow Google, Bing, and crawlers to index your pages.</small>
+                    </div>
+                  </div>
+                </div>
+
+                {/* CARD: SOCIAL MEDIA INTEGRATION */}
+                <div className="settings-card mt-4">
+                  <div className="settings-card-header">
+                    <Share2 size={20} className="text-primary" />
+                    <div>
+                      <h4>Connected Social Media & Channels</h4>
+                      <p className="text-muted text-xs">
+                        Social links displayed in footer and used by social networks (Facebook, Telegram, Instagram) when sharing links.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="social-media-grid-2col">
+                    <div className="form-group">
+                      <label className="social-label-caps">FACEBOOK PAGE</label>
+                      <input
+                        type="url"
+                        className="admin-input"
+                        placeholder="https://www.facebook.com/yourpage"
+                        value={settings.socialFacebook || ''}
+                        onChange={(e) => setSettings({ ...settings, socialFacebook: e.target.value })}
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label className="social-label-caps">INSTAGRAM PROFILE</label>
+                      <input
+                        type="url"
+                        className="admin-input"
+                        placeholder="https://www.instagram.com/yourhandle/"
+                        value={settings.socialInstagram || ''}
+                        onChange={(e) => setSettings({ ...settings, socialInstagram: e.target.value })}
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label className="social-label-caps">TELEGRAM CHANNEL / BOT</label>
+                      <input
+                        type="url"
+                        className="admin-input"
+                        placeholder="https://t.me/dyzzstore_bot"
+                        value={settings.socialTelegram || ''}
+                        onChange={(e) => setSettings({ ...settings, socialTelegram: e.target.value })}
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label className="social-label-caps">WHATSAPP DIRECT LINK</label>
+                      <input
+                        type="url"
+                        className="admin-input"
+                        placeholder="https://wa.me/..."
+                        value={settings.socialWhatsapp || ''}
+                        onChange={(e) => setSettings({ ...settings, socialWhatsapp: e.target.value })}
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label className="social-label-caps">TIKTOK CHANNEL</label>
+                      <input
+                        type="url"
+                        className="admin-input"
+                        placeholder="https://www.tiktok.com/@youraccount"
+                        value={settings.socialTiktok || ''}
+                        onChange={(e) => setSettings({ ...settings, socialTiktok: e.target.value })}
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label className="social-label-caps">TWITTER / X PROFILE</label>
+                      <input
+                        type="url"
+                        className="admin-input"
+                        placeholder="https://x.com/yourhandle"
+                        value={settings.socialTwitter || ''}
+                        onChange={(e) => setSettings({ ...settings, socialTwitter: e.target.value })}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Bottom Save Action */}
+                <div style={{ marginTop: '24px', display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
+                  <button
+                    type="button"
+                    className="btn btn-primary"
+                    onClick={handleSaveSeoSettings}
+                    disabled={savingSeo}
+                    style={{ padding: '12px 28px', fontSize: '1rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px' }}
+                  >
+                    {savingSeo ? <RefreshCw size={16} className="spin-icon" /> : <Save size={16} />}
+                    <span>{savingSeo ? 'Saving Configuration...' : 'Save SEO & Keywords Configuration'}</span>
+                  </button>
+                </div>
+              </div>
             )}
 
             {/* TAB 7: ABA PAYWAY & SETTINGS */}
