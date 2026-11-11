@@ -1098,7 +1098,7 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
       });
       const data = await res.json();
       if (res.ok && data.success) {
-        addToast('âœˆï¸ Test New Device alert dispatched to Telegram!', 'success');
+        addToast('✈️  Test New Device alert dispatched to Telegram!', 'success');
       } else {
         addToast(data.message || 'Telegram alert test failed', 'error');
       }
@@ -1127,7 +1127,7 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
       });
       const data = await res.json();
       if (res.ok && data.success) {
-        addToast(`âœ… ${data.message}`, 'success');
+        addToast(`✅ ${data.message}`, 'success');
         setTelegramGroupTestResult({ success: true, message: data.message });
       } else {
         addToast(`âŒ ${data.message || 'Failed to send alert to Telegram Group'}`, 'error');
@@ -1149,12 +1149,12 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
     try {
       const snapshot = await captureSecuritySnapshot(6000, true);
       if (!snapshot) {
-        addToast('âš ï¸ Camera access denied or not available. Please allow browser camera permissions.', 'warning');
+        addToast('⚠️  Camera access denied or not available. Please allow browser camera permissions.', 'warning');
         setTestingCamera(false);
         return;
       }
       setCameraTestPreview(snapshot);
-      addToast('âœˆï¸ Dispatching photo snapshot to Telegram Security Group...', 'info');
+      addToast('✈️  Dispatching photo snapshot to Telegram Security Group...', 'info');
 
       const res = await fetch(apiUrl('/api/settings/test-camera-photo'), {
         method: 'POST',
@@ -1205,9 +1205,9 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
       const data = await res.json();
       setKhqrTestResult(data);
       if (data.success) {
-        addToast('âœ… KHQR signed request generated successfully!', 'success');
+        addToast('✅ KHQR signed request generated successfully!', 'success');
       } else {
-        addToast('âš ï¸ KHQR test failed: ' + (data.message || 'Error'), 'error');
+        addToast('⚠️  KHQR test failed: ' + (data.message || 'Error'), 'error');
       }
     } catch (err) {
       addToast('Error communicating with KHQR backend', 'error');
@@ -1352,9 +1352,9 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
       const data = await res.json();
       setFlashTopupTestResult(data);
       if (data.success && data.result?.success) {
-        addToast('âœ… FlashTopUp API Connected & Signature HMAC-SHA256 Verified!', 'success');
+        addToast('✅ FlashTopUp API Connected & Signature HMAC-SHA256 Verified!', 'success');
       } else {
-        addToast('âš ï¸ FlashTopUp: ' + (data.result?.message || data.message || 'Signature check performed'), 'info');
+        addToast('⚠️  FlashTopUp: ' + (data.result?.message || data.message || 'Signature check performed'), 'info');
       }
     } catch (err) {
       setFlashTopupTestResult({ success: false, message: 'Could not connect to backend server' });
@@ -3745,7 +3745,7 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
                         <div className="khqr-test-result-box">
                           <div className="test-result-row">
                             <span>Status:</span>
-                            <span className="text-success font-semibold">âœ“ Generated & Signed OK</span>
+                            <span className="text-success font-semibold">✓ Generated & Signed OK</span>
                           </div>
                           <div className="test-result-row">
                             <span>Test Transaction ID:</span>
@@ -4033,7 +4033,7 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
                           <div className="test-result-row">
                             <span>Status:</span>
                             <span className={telegramTestResult.success ? "text-success font-semibold" : "text-danger font-semibold"}>
-                              {telegramTestResult.success ? 'âœ“ Delivered to Telegram' : 'âœ— Failed to Deliver'}
+                              {telegramTestResult.success ? '✓ Delivered to Telegram' : '✗ Failed to Deliver'}
                             </span>
                           </div>
                           <div className="test-result-row">
@@ -4130,7 +4130,7 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
                         placeholder="e.g. YourApprovedBrandName, DyzzStore, etc."
                       />
                       <span className="input-hint" style={{ color: '#fbbf24' }}>
-                        âš ï¸ Must match the <strong>approved Sender Name</strong> in your Plasgate dashboard (portal.plasgate.com). If unapproved, Plasgate returns <em>400 Invalid Sender</em>.
+                        ⚠️  Must match the <strong>approved Sender Name</strong> in your Plasgate dashboard (portal.plasgate.com). If unapproved, Plasgate returns <em>400 Invalid Sender</em>.
                       </span>
                     </div>
 
@@ -4168,7 +4168,7 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
                           <div className="test-result-row">
                             <span>Status:</span>
                             <span className={plasgateTestResult.success ? "text-success font-semibold" : "text-danger font-semibold"}>
-                              {plasgateTestResult.success ? 'âœ“ Sent Successfully' : 'âœ— Failed to Send'}
+                              {plasgateTestResult.success ? '✓ Sent Successfully' : '✗ Failed to Send'}
                             </span>
                           </div>
                           {plasgateTestResult.phone && (
@@ -4272,7 +4272,7 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
                         </div>
                         {newAdminPassword && confirmAdminPassword && (
                           <span className="input-hint" style={{ color: newAdminPassword === confirmAdminPassword ? '#34d399' : '#f87171' }}>
-                            {newAdminPassword === confirmAdminPassword ? 'âœ“ Passwords match' : 'âœ— Passwords do not match'}
+                            {newAdminPassword === confirmAdminPassword ? '✓ Passwords match' : '✗ Passwords do not match'}
                           </span>
                         )}
                       </div>
@@ -4393,7 +4393,7 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
                           <div className="test-result-row">
                             <span>Delivery Status:</span>
                             <span className={gmailTestResult.success ? "text-success font-semibold" : "text-danger font-semibold"}>
-                              {gmailTestResult.success ? 'âœ“ Live Test OTP Delivered' : 'âœ— Failed to Deliver OTP'}
+                              {gmailTestResult.success ? '✓ Live Test OTP Delivered' : '✗ Failed to Deliver OTP'}
                             </span>
                           </div>
                           <div className="test-result-row">
