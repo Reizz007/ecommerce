@@ -61,6 +61,9 @@ import {
   Gamepad2,
   Share2,
   Globe,
+  Server,
+  HardDrive,
+  Download,
   X
 } from 'lucide-react';
 
@@ -852,6 +855,165 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
     }
   };
 
+  // Database Management & Dynamic Switcher State
+  const [dbStatus, setDbStatus] = useState(null);
+  const [loadingDbStatus, setLoadingDbStatus] = useState(false);
+  const [testingDb, setTestingDb] = useState(false);
+  const [updatingDb, setUpdatingDb] = useState(false);
+  const [backingUpDb, setBackingUpDb] = useState(false);
+  const [restoringDb, setRestoringDb] = useState(false);
+  const [testResult, setTestResult] = useState(null);
+  const [showDbPassword, setShowDbPassword] = useState(false);
+
+  const [dbForm, setDbForm] = useState({
+    driver: 'mysql',
+    host: 'gateway01.ap-northeast-1.prod.aws.tidbcloud.com',
+    port: '4000',
+    database: 'dyzzstore',
+    username: '3vHri7ttZ37Koov.root',
+    password: ''
+  });
+
+  const fetchDbStatus = useCallback(async () => {
+    setLoadingDbStatus(true);
+    try {
+      const res = await fetch(apiUrl('/api/admin/database/status'), {
+        headers: getDeviceHeaders()
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setDbStatus(data);
+        if (data.connection) {
+          setDbForm(prev => ({
+            ...prev,
+            driver: data.connection.driver || 'mysql',
+            host: data.connection.host || '',
+            port: String(data.connection.port || '3306'),
+            database: data.connection.database || '',
+            username: data.connection.username || '',
+          }));
+        }
+      }
+    } catch {
+      // ignore
+    } finally {
+      setLoadingDbStatus(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (activeTab === 'database') {
+      fetchDbStatus();
+    }
+  }, [activeTab, fetchDbStatus]);
+
+  const handleTestDbConnection = async () => {
+    setTestingDb(true);
+    setTestResult(null);
+    try {
+      const res = await fetch(apiUrl('/api/admin/database/test'), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...getDeviceHeaders()
+        },
+        body: JSON.stringify(dbForm)
+      });
+      const data = await res.json();
+      setTestResult({
+        success: Boolean(res.ok && data.success),
+        message: data.message || (res.ok ? 'Connection successful!' : 'Connection failed')
+      });
+      if (res.ok && data.success) {
+        addToast('✅ Database connection test succeeded!', 'success');
+      } else {
+        addToast(data.message || 'Database test failed', 'error');
+      }
+    } catch {
+      setTestResult({ success: false, message: 'Network error communicating with server' });
+      addToast('Network error while testing connection', 'error');
+    } finally {
+      setTestingDb(false);
+    }
+  };
+
+  const handleApplyDbConnection = async () => {
+    if (!window.confirm(`Are you sure you want to switch live database to ${dbForm.host}:${dbForm.port}/${dbForm.database}?`)) {
+      return;
+    }
+    setUpdatingDb(true);
+    try {
+      const res = await fetch(apiUrl('/api/admin/database/update'), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...getDeviceHeaders()
+        },
+        body: JSON.stringify(dbForm)
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        addToast('🚀 Database connection switched successfully!', 'success');
+        fetchDbStatus();
+      } else {
+        addToast(data.message || 'Failed to update database connection', 'error');
+      }
+    } catch {
+      addToast('Error updating database connection', 'error');
+    } finally {
+      setUpdatingDb(false);
+    }
+  };
+
+  const handleTriggerBackup = async () => {
+    setBackingUpDb(true);
+    try {
+      const res = await fetch(apiUrl('/api/admin/database/backup'), {
+        method: 'POST',
+        headers: getDeviceHeaders()
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        addToast('📦 Database backup generated successfully in storage/backups!', 'success');
+        fetchDbStatus();
+      } else {
+        addToast(data.message || 'Backup failed', 'error');
+      }
+    } catch {
+      addToast('Error creating backup', 'error');
+    } finally {
+      setBackingUpDb(false);
+    }
+  };
+
+  const handleRestoreDb = async (filename = '') => {
+    if (!window.confirm(`Are you sure you want to restore database from ${filename || 'latest backup'}? Current tables will be imported and updated.`)) {
+      return;
+    }
+    setRestoringDb(true);
+    try {
+      const res = await fetch(apiUrl('/api/admin/database/restore'), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...getDeviceHeaders()
+        },
+        body: JSON.stringify({ filename })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        addToast('🔄 Database restored successfully from backup!', 'success');
+        fetchDbStatus();
+      } else {
+        addToast(data.message || 'Restore failed', 'error');
+      }
+    } catch {
+      addToast('Error restoring database', 'error');
+    } finally {
+      setRestoringDb(false);
+    }
+  };
+
   // Toggle Single Device Privacy Lock (with optimistic state & spam-click prevention)
   const handleToggleSingleDevice = async () => {
     if (togglingSingleDevice) return;
@@ -1378,6 +1540,15 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
               >
                 <Globe size={18} />
                 <span>SEO & Browser Search</span>
+              </button>
+
+              {/* TAB: DATABASE MANAGEMENT */}
+              <button
+                className={`admin-menu-item ${activeTab === 'database' ? 'active' : ''}`}
+                onClick={() => setActiveTab('database')}
+              >
+                <Database size={18} />
+                <span>Database & Cloud</span>
               </button>
               {(!settings.singleDeviceLocked || settings.isPrimaryDevice) && (
                 <button
@@ -2743,6 +2914,377 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
                     {savingSeo ? <RefreshCw size={16} className="spin-icon" /> : <Save size={16} />}
                     <span>{savingSeo ? 'Saving Configuration...' : 'Save SEO & Keywords Configuration'}</span>
                   </button>
+                </div>
+              </div>
+            )}
+
+            {/* TAB: DATABASE MANAGEMENT & DYNAMIC SWITCHER */}
+            {activeTab === 'database' && (
+              <div className="admin-tab-pane database-admin-tab">
+                {/* Header */}
+                <div className="tab-pane-header">
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <Database size={24} style={{ color: '#38bdf8' }} />
+                      <h3 style={{ margin: 0, fontSize: '1.4rem', fontWeight: 700 }}>Database & Cloud Connection Manager</h3>
+                    </div>
+                    <p className="text-muted" style={{ margin: '6px 0 0 0', fontSize: '0.88rem' }}>
+                      Monitor active database connection telemetry, test credentials safely before applying, switch between TiDB Cloud, Aiven MySQL, or PostgreSQL, and manage database backups.
+                    </p>
+                  </div>
+                  <div className="pane-header-actions">
+                    <button
+                      type="button"
+                      className="btn btn-secondary"
+                      onClick={fetchDbStatus}
+                      disabled={loadingDbStatus}
+                      style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
+                    >
+                      <RefreshCw size={14} className={loadingDbStatus ? 'spin-icon' : ''} />
+                      <span>{loadingDbStatus ? 'Checking...' : 'Refresh Status'}</span>
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-primary"
+                      onClick={handleTriggerBackup}
+                      disabled={backingUpDb}
+                      style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
+                    >
+                      {backingUpDb ? <RefreshCw size={14} className="spin-icon" /> : <HardDrive size={14} />}
+                      <span>{backingUpDb ? 'Creating Backup...' : 'One-Click Backup'}</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* CARD 1: ACTIVE DATABASE TELEMETRY */}
+                <div className="settings-card">
+                  <div className="settings-card-header" style={{ justifyContent: 'space-between', flexWrap: 'wrap' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <Server size={20} className="text-cyan" />
+                      <div>
+                        <h4>Current Active Database</h4>
+                        <p className="text-muted text-xs">Live configuration loaded from server environment (.env).</p>
+                      </div>
+                    </div>
+                    <div>
+                      {dbStatus?.connection?.connected ? (
+                        <span className="badge-status-pill badge-active" style={{ fontSize: '0.8rem', padding: '6px 14px', background: 'rgba(16, 185, 129, 0.15)', color: '#10b981', border: '1px solid rgba(16, 185, 129, 0.3)', borderRadius: '20px', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                          <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#10b981', boxShadow: '0 0 8px #10b981' }}></span>
+                          ONLINE &bull; {dbStatus.connection.latency_ms} ms Latency
+                        </span>
+                      ) : (
+                        <span className="badge-status-pill badge-danger" style={{ fontSize: '0.8rem', padding: '6px 14px', background: 'rgba(239, 68, 68, 0.15)', color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.3)', borderRadius: '20px', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                          <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#ef4444' }}></span>
+                          OFFLINE / UNREACHABLE
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '14px', marginTop: '14px' }}>
+                    <div style={{ background: 'rgba(255,255,255,0.03)', padding: '12px 16px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.06)' }}>
+                      <span className="text-muted text-xs font-semibold uppercase">Engine / Driver</span>
+                      <div style={{ fontSize: '1.05rem', fontWeight: 700, color: '#38bdf8', marginTop: '4px' }}>
+                        {dbStatus?.connection?.driver?.toUpperCase() || 'MYSQL'}
+                      </div>
+                    </div>
+
+                    <div style={{ background: 'rgba(255,255,255,0.03)', padding: '12px 16px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.06)' }}>
+                      <span className="text-muted text-xs font-semibold uppercase">Database Name</span>
+                      <div style={{ fontSize: '1.05rem', fontWeight: 700, color: '#ffffff', marginTop: '4px' }}>
+                        {dbStatus?.connection?.database || '—'}
+                      </div>
+                    </div>
+
+                    <div style={{ background: 'rgba(255,255,255,0.03)', padding: '12px 16px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.06)' }}>
+                      <span className="text-muted text-xs font-semibold uppercase">Host &amp; Port</span>
+                      <div style={{ fontSize: '0.86rem', fontWeight: 600, color: '#94a3b8', marginTop: '6px', wordBreak: 'break-all' }}>
+                        {dbStatus?.connection?.host ? `${dbStatus.connection.host}:${dbStatus.connection.port}` : '—'}
+                      </div>
+                    </div>
+
+                    <div style={{ background: 'rgba(255,255,255,0.03)', padding: '12px 16px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.06)' }}>
+                      <span className="text-muted text-xs font-semibold uppercase">Tables Loaded</span>
+                      <div style={{ fontSize: '1.05rem', fontWeight: 700, color: '#10b981', marginTop: '4px' }}>
+                        {dbStatus?.connection?.tables_count ?? 0} Tables
+                      </div>
+                    </div>
+                  </div>
+
+                  {dbStatus?.connection?.tables?.length > 0 && (
+                    <div style={{ marginTop: '16px' }}>
+                      <span className="text-xs text-muted" style={{ fontWeight: 600 }}>Detected Schema Tables:</span>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '8px' }}>
+                        {dbStatus.connection.tables.map(tbl => (
+                          <span key={tbl} style={{ fontSize: '0.72rem', padding: '3px 8px', borderRadius: '6px', background: 'rgba(255,255,255,0.06)', color: '#cbd5e1', border: '1px solid rgba(255,255,255,0.08)' }}>
+                            {tbl}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* CARD 2: CONNECTION SWITCHER & TESTER */}
+                <div className="settings-card mt-4">
+                  <div className="settings-card-header">
+                    <Zap size={20} className="text-purple" />
+                    <div>
+                      <h4>Switch or Configure Database Connection</h4>
+                      <p className="text-muted text-xs">
+                        Enter connection details for TiDB Cloud, Aiven, or any MySQL/PostgreSQL host. Safe testing protects your live store from broken credentials.
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* One-click Presets */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', margin: '14px 0 16px 0' }}>
+                    <span className="text-xs text-muted font-semibold">Quick Presets:</span>
+                    <button
+                      type="button"
+                      className="badge-kw-pill"
+                      style={{ padding: '6px 12px', fontSize: '0.8rem', cursor: 'pointer' }}
+                      onClick={() => {
+                        setDbForm({
+                          driver: 'mysql',
+                          host: 'gateway01.ap-northeast-1.prod.aws.tidbcloud.com',
+                          port: '4000',
+                          database: 'dyzzstore',
+                          username: '3vHri7ttZ37Koov.root',
+                          password: dbForm.password || ''
+                        });
+                        setTestResult(null);
+                      }}
+                    >
+                      🐬 Preset: TiDB Cloud (5 GB Free)
+                    </button>
+                    <button
+                      type="button"
+                      className="badge-kw-pill"
+                      style={{ padding: '6px 12px', fontSize: '0.8rem', cursor: 'pointer' }}
+                      onClick={() => {
+                        setDbForm({
+                          driver: 'mysql',
+                          host: 'mysql-34f613a5-chetranicky-703c.d.aivencloud.com',
+                          port: '28849',
+                          database: 'dyzzdb',
+                          username: 'avnadmin',
+                          password: ''
+                        });
+                        setTestResult(null);
+                      }}
+                    >
+                      ⚡ Preset: Aiven MySQL
+                    </button>
+                  </div>
+
+                  <div className="form-row-2col">
+                    <div className="form-group">
+                      <label>Database Engine / Driver:</label>
+                      <select
+                        className="admin-select"
+                        value={dbForm.driver}
+                        onChange={(e) => setDbForm({ ...dbForm, driver: e.target.value })}
+                      >
+                        <option value="mysql">MySQL / TiDB Cloud Compatible</option>
+                        <option value="pgsql">PostgreSQL (Supabase / Neon)</option>
+                      </select>
+                    </div>
+
+                    <div className="form-group">
+                      <label>Host Endpoint:</label>
+                      <input
+                        type="text"
+                        className="admin-input"
+                        placeholder="e.g. gateway01.ap-northeast-1.prod.aws.tidbcloud.com"
+                        value={dbForm.host}
+                        onChange={(e) => setDbForm({ ...dbForm, host: e.target.value })}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="form-row-2col mt-3">
+                    <div className="form-group">
+                      <label>Port:</label>
+                      <input
+                        type="text"
+                        className="admin-input"
+                        placeholder="4000 (TiDB) or 3306 (MySQL) or 5432 (PostgreSQL)"
+                        value={dbForm.port}
+                        onChange={(e) => setDbForm({ ...dbForm, port: e.target.value })}
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label>Database Name:</label>
+                      <input
+                        type="text"
+                        className="admin-input"
+                        placeholder="e.g. dyzzstore or dyzzdb"
+                        value={dbForm.database}
+                        onChange={(e) => setDbForm({ ...dbForm, database: e.target.value })}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="form-row-2col mt-3">
+                    <div className="form-group">
+                      <label>Username:</label>
+                      <input
+                        type="text"
+                        className="admin-input"
+                        placeholder="e.g. 3vHri7ttZ37Koov.root or avnadmin"
+                        value={dbForm.username}
+                        onChange={(e) => setDbForm({ ...dbForm, username: e.target.value })}
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label>Password:</label>
+                      <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                        <input
+                          type={showDbPassword ? 'text' : 'password'}
+                          className="admin-input"
+                          style={{ paddingRight: '40px' }}
+                          placeholder="Enter database password..."
+                          value={dbForm.password}
+                          onChange={(e) => setDbForm({ ...dbForm, password: e.target.value })}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowDbPassword(!showDbPassword)}
+                          style={{ position: 'absolute', right: '10px', background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', padding: '4px' }}
+                          title={showDbPassword ? 'Hide password' : 'Show password'}
+                        >
+                          {showDbPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                        </button>
+                      </div>
+                      <small className="form-text-hint">Password is transmitted securely and stored in server .env</small>
+                    </div>
+                  </div>
+
+                  {/* Test Connection Result Box */}
+                  {testResult && (
+                    <div
+                      style={{
+                        marginTop: '16px',
+                        padding: '12px 16px',
+                        borderRadius: '10px',
+                        background: testResult.success ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)',
+                        border: `1px solid ${testResult.success ? 'rgba(16, 185, 129, 0.3)' : 'rgba(239, 68, 68, 0.3)'}`,
+                        color: testResult.success ? '#10b981' : '#f87171',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '10px',
+                        fontSize: '0.88rem'
+                      }}
+                    >
+                      {testResult.success ? <CheckCircle2 size={18} /> : <AlertCircle size={18} />}
+                      <span>{testResult.message}</span>
+                    </div>
+                  )}
+
+                  {/* Action Buttons */}
+                  <div style={{ display: 'flex', gap: '12px', marginTop: '20px', flexWrap: 'wrap' }}>
+                    <button
+                      type="button"
+                      className="btn btn-secondary"
+                      onClick={handleTestDbConnection}
+                      disabled={testingDb}
+                      style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
+                    >
+                      {testingDb ? <RefreshCw size={14} className="spin-icon" /> : <Zap size={14} />}
+                      <span>{testingDb ? 'Testing Connection...' : '1. Test Connection'}</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      className="btn btn-primary"
+                      onClick={handleApplyDbConnection}
+                      disabled={updatingDb}
+                      style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
+                    >
+                      {updatingDb ? <RefreshCw size={14} className="spin-icon" /> : <Save size={14} />}
+                      <span>{updatingDb ? 'Switching Database...' : '2. Apply & Switch Database'}</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      className="btn btn-secondary"
+                      onClick={() => handleRestoreDb('')}
+                      disabled={restoringDb}
+                      style={{ display: 'flex', alignItems: 'center', gap: '6px', marginLeft: 'auto' }}
+                      title="Import the latest SQL backup into the active database"
+                    >
+                      {restoringDb ? <RefreshCw size={14} className="spin-icon" /> : <Download size={14} />}
+                      <span>{restoringDb ? 'Restoring Backup...' : '3. Import Latest Backup to This DB'}</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* CARD 3: DATABASE BACKUPS ARCHIVE */}
+                <div className="settings-card mt-4">
+                  <div className="settings-card-header" style={{ justifyContent: 'space-between' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <HardDrive size={20} className="text-cyan" />
+                      <div>
+                        <h4>Database Backups Archive</h4>
+                        <p className="text-muted text-xs">Full SQL and JSON dumps saved in server storage/backups.</p>
+                      </div>
+                    </div>
+                    <span className="text-xs text-muted font-semibold">
+                      {dbStatus?.backups?.length ?? 0} Backups Available
+                    </span>
+                  </div>
+
+                  {dbStatus?.backups?.length > 0 ? (
+                    <div style={{ marginTop: '12px', overflowX: 'auto' }}>
+                      <table className="admin-table" style={{ width: '100%', fontSize: '0.85rem' }}>
+                        <thead>
+                          <tr>
+                            <th>Backup File</th>
+                            <th>Format</th>
+                            <th>Size</th>
+                            <th>Generated Time</th>
+                            <th style={{ textAlign: 'right' }}>Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {dbStatus.backups.map(b => (
+                            <tr key={b.name}>
+                              <td>
+                                <strong style={{ color: '#ffffff' }}>{b.name}</strong>
+                              </td>
+                              <td>
+                                <span style={{ fontSize: '0.72rem', padding: '2px 8px', borderRadius: '4px', background: b.is_sql ? 'rgba(56, 189, 248, 0.15)' : 'rgba(168, 85, 247, 0.15)', color: b.is_sql ? '#38bdf8' : '#c084fc', fontWeight: 600 }}>
+                                  {b.is_sql ? 'SQL DUMP' : 'JSON'}
+                                </span>
+                              </td>
+                              <td style={{ color: '#94a3b8' }}>{b.size}</td>
+                              <td style={{ color: '#94a3b8' }}>{b.modified}</td>
+                              <td style={{ textAlign: 'right' }}>
+                                {b.is_sql && (
+                                  <button
+                                    type="button"
+                                    className="btn btn-secondary btn-sm"
+                                    onClick={() => handleRestoreDb(b.name)}
+                                    disabled={restoringDb}
+                                    style={{ fontSize: '0.76rem', padding: '4px 10px' }}
+                                  >
+                                    🔄 Restore
+                                  </button>
+                                )}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  ) : (
+                    <div style={{ padding: '24px', textAlign: 'center', color: '#64748b' }}>
+                      No backup files found yet. Click "One-Click Backup" above to generate your first snapshot.
+                    </div>
+                  )}
                 </div>
               </div>
             )}
