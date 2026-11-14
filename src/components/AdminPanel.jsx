@@ -127,6 +127,7 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
     plasgateEnabled: false,
     // Admin Security & Gmail OTP
     adminEmail: 'chetranicky@gmail.com',
+    adminAccessList: [],
     mailUsername: 'rrqkh61@gmail.com',
     mailPassword: '',
     mailFromName: 'Dyzzstore Auth',
@@ -353,6 +354,76 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
       addToast('Network error updating setting', 'error');
     } finally {
       setTogglingSettingKey(null);
+    }
+  };
+
+  const [newAdminForm, setNewAdminForm] = useState({
+    email: '',
+    name: '',
+    role: 'admin',
+    password: '',
+  });
+  const [savingAdminAccess, setSavingAdminAccess] = useState(false);
+
+  const handleAddAdminAccess = async (e) => {
+    e.preventDefault();
+    const email = newAdminForm.email.trim();
+    if (!email) {
+      addToast('Please enter an email address.', 'error');
+      return;
+    }
+    setSavingAdminAccess(true);
+    try {
+      const res = await fetch(apiUrl('/api/admin/access/add'), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...getDeviceHeaders(),
+        },
+        body: JSON.stringify({
+          email,
+          name: newAdminForm.name.trim(),
+          role: newAdminForm.role,
+          password: newAdminForm.password.trim() || undefined,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setSettings(prev => ({ ...prev, adminAccessList: data.adminAccessList || [] }));
+        setNewAdminForm({ email: '', name: '', role: 'admin', password: '' });
+        addToast(data.message || 'Admin access granted!', 'success');
+      } else {
+        addToast(data.message || 'Failed to grant admin access', 'error');
+      }
+    } catch {
+      addToast('Network error while adding admin access', 'error');
+    } finally {
+      setSavingAdminAccess(false);
+    }
+  };
+
+  const handleRemoveAdminAccess = async (email) => {
+    if (!window.confirm(`Revoke admin login access for ${email}?`)) {
+      return;
+    }
+    try {
+      const res = await fetch(apiUrl('/api/admin/access/remove'), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...getDeviceHeaders(),
+        },
+        body: JSON.stringify({ email }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setSettings(prev => ({ ...prev, adminAccessList: data.adminAccessList || [] }));
+        addToast(data.message || 'Admin access revoked', 'info');
+      } else {
+        addToast(data.message || 'Failed to revoke access', 'error');
+      }
+    } catch {
+      addToast('Network error while revoking access', 'error');
     }
   };
 
@@ -1739,6 +1810,15 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
                 <span>Database & Cloud</span>
               </button>
 
+              <button
+                className={`admin-menu-item ${activeTab === 'access' ? 'active' : ''}`}
+                onClick={() => handleSelectTab('access')}
+              >
+                <Key size={17} />
+                <span>Admin Access</span>
+                <span className="admin-nav-count">{(settings.adminAccessList?.length || 0) + 3}</span>
+              </button>
+
               {(!settings.singleDeviceLocked || settings.isPrimaryDevice) && (
                 <button
                   className={`admin-menu-item ${activeTab === 'settings' ? 'active' : ''}`}
@@ -2006,6 +2086,10 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
                         <CreditCard size={15} />
                         <span>KHQR Config</span>
                       </button>
+                      <button type="button" className="quick-action-tile" onClick={() => handleSelectTab('access')}>
+                        <Key size={15} />
+                        <span>Admin Access</span>
+                      </button>
                       <button type="button" className="quick-action-tile" onClick={() => handleSelectTab('audit')}>
                         <ClipboardList size={15} />
                         <span>Audit Log</span>
@@ -2203,6 +2287,171 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
                         )}
                       </tbody>
                     </table>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* TAB: ADMIN ACCESS & TEAM PERMISSIONS */}
+            {activeTab === 'access' && (
+              <div className="admin-tab-pane">
+                <div className="tab-pane-header">
+                  <div>
+                    <h2>Admin Login Access & Team Permissions</h2>
+                    <p>Grant or revoke Administrator login access for additional email accounts (OTP & Password login).</p>
+                  </div>
+                  <div className="db-indicator-chip">
+                    <ShieldCheck size={14} className="text-emerald inline mr-1" />
+                    <span>{(settings.adminAccessList?.length || 0) + 3} Authorized Admins</span>
+                  </div>
+                </div>
+
+                <div className="admin-analytics-grid" style={{ alignItems: 'start' }}>
+                  {/* Grant New Admin Access Form */}
+                  <div className="admin-card-section">
+                    <div className="card-section-header" style={{ marginBottom: '1rem' }}>
+                      <div>
+                        <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <Plus size={18} className="text-cyan" />
+                          <span>Grant New Admin Access</span>
+                        </h3>
+                        <p className="card-section-sub">Any email added here can log into the Admin Control Center via Email OTP or Password.</p>
+                      </div>
+                    </div>
+
+                    <form onSubmit={handleAddAdminAccess} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                      <div className="form-group">
+                        <label>Admin Email Address *</label>
+                        <input
+                          type="email"
+                          className="form-control"
+                          required
+                          placeholder="e.g. partner@gmail.com"
+                          value={newAdminForm.email}
+                          onChange={e => setNewAdminForm(prev => ({ ...prev, email: e.target.value }))}
+                        />
+                      </div>
+
+                      <div className="form-row-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.85rem' }}>
+                        <div className="form-group">
+                          <label>Display Name</label>
+                          <input
+                            type="text"
+                            className="form-control"
+                            placeholder="e.g. Store Manager"
+                            value={newAdminForm.name}
+                            onChange={e => setNewAdminForm(prev => ({ ...prev, name: e.target.value }))}
+                          />
+                        </div>
+
+                        <div className="form-group">
+                          <label>Access Role</label>
+                          <select
+                            className="form-control"
+                            value={newAdminForm.role}
+                            onChange={e => setNewAdminForm(prev => ({ ...prev, role: e.target.value }))}
+                          >
+                            <option value="admin">Full Admin (All Access)</option>
+                            <option value="manager">Order Manager</option>
+                            <option value="staff">Top-Up Staff</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      <div className="form-group">
+                        <label>Initial Password (Optional)</label>
+                        <input
+                          type="password"
+                          className="form-control"
+                          placeholder="Leave blank to use Gmail OTP or default password"
+                          value={newAdminForm.password}
+                          onChange={e => setNewAdminForm(prev => ({ ...prev, password: e.target.value }))}
+                        />
+                      </div>
+
+                      <button type="submit" className="btn btn-primary btn-glow" disabled={savingAdminAccess}>
+                        <Key size={15} />
+                        <span>{savingAdminAccess ? 'Granting Access...' : 'Grant Admin Login Access'}</span>
+                      </button>
+                    </form>
+                  </div>
+
+                  {/* Authorized Admins List */}
+                  <div className="admin-card-section">
+                    <div className="card-section-header" style={{ marginBottom: '1rem' }}>
+                      <div>
+                        <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <ShieldCheck size={18} className="text-emerald" />
+                          <span>Authorized Admin Accounts</span>
+                        </h3>
+                        <p className="card-section-sub">Accounts allowed to access #admin dashboard</p>
+                      </div>
+                    </div>
+
+                    <div className="admin-table-responsive">
+                      <table className="admin-table" style={{ minWidth: '420px' }}>
+                        <thead>
+                          <tr>
+                            <th>Email / Account</th>
+                            <th>Role</th>
+                            <th>Action</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {[
+                            { email: 'chetranicky@gmail.com', name: 'Primary Master Admin', role: 'Master', protected: true },
+                            { email: 'admin@dyzzstore.com', name: 'Store System Admin', role: 'System', protected: true },
+                            { email: 'admin@synapse.ai', name: 'Platform Root Admin', role: 'System', protected: true },
+                          ].map(core => (
+                            <tr key={core.email}>
+                              <td>
+                                <strong>{core.email}</strong>
+                                <div className="sub-text">{core.name}</div>
+                              </td>
+                              <td>
+                                <span className="status-pill paid">
+                                  <span className="status-dot-mini"></span>
+                                  {core.role}
+                                </span>
+                              </td>
+                              <td>
+                                <span className="text-muted text-xs">Protected</span>
+                              </td>
+                            </tr>
+                          ))}
+
+                          {(settings.adminAccessList || []).map(item => {
+                            const itemEmail = typeof item === 'string' ? item : item.email;
+                            const itemName = typeof item === 'string' ? item : (item.name || itemEmail);
+                            const itemRole = typeof item === 'string' ? 'admin' : (item.role || 'admin');
+                            return (
+                              <tr key={itemEmail}>
+                                <td>
+                                  <strong>{itemEmail}</strong>
+                                  <div className="sub-text">{itemName}</div>
+                                </td>
+                                <td>
+                                  <span className="gateway-khqr-tag" style={{ textTransform: 'uppercase' }}>
+                                    {itemRole}
+                                  </span>
+                                </td>
+                                <td>
+                                  <button
+                                    type="button"
+                                    className="btn btn-outline btn-sm text-danger"
+                                    onClick={() => handleRemoveAdminAccess(itemEmail)}
+                                    title={`Revoke access for ${itemEmail}`}
+                                  >
+                                    <Trash2 size={13} />
+                                    <span>Revoke</span>
+                                  </button>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
                   </div>
                 </div>
               </div>
