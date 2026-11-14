@@ -325,15 +325,6 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
     loadBackendData();
   }, []);
 
-  useEffect(() => {
-    if (!autoSync) return;
-    const timer = setInterval(() => {
-      loadBackendData();
-      fetchDbStatus();
-    }, 30000);
-    return () => clearInterval(timer);
-  }, [autoSync, fetchDbStatus]);
-
   const handleQuickSettingToggle = async (key, label) => {
     if (togglingSettingKey) return;
     const prevVal = Boolean(settings[key]);
@@ -966,6 +957,15 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
       fetchDbStatus();
     }
   }, [activeTab, fetchDbStatus]);
+
+  useEffect(() => {
+    if (!autoSync) return;
+    const timer = setInterval(() => {
+      loadBackendData();
+      fetchDbStatus();
+    }, 30000);
+    return () => clearInterval(timer);
+  }, [autoSync, fetchDbStatus]);
 
   const handleTestDbConnection = async () => {
     setTestingDb(true);
