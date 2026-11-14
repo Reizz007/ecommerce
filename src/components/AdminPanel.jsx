@@ -64,7 +64,11 @@ import {
   Server,
   HardDrive,
   Download,
-  X
+  X,
+  Menu,
+  Activity,
+  BarChart3,
+  CreditCard
 } from 'lucide-react';
 
 export default function AdminPanel({ onCloseAdmin, onLogout }) {
@@ -72,6 +76,8 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
 
   const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'tools' | 'categories' | 'orders' | 'subscribers' | 'audit' | 'settings'
   const [loading, setLoading] = useState(false);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const [hoveredChartIdx, setHoveredChartIdx] = useState(null);
 
   // Data states from Laravel Backend
   const [stats, setStats] = useState({
@@ -301,9 +307,15 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
     }
   };
 
+  const handleSelectTab = (tab) => {
+    setActiveTab(tab);
+    setMobileSidebarOpen(false);
+  };
+
   useEffect(() => {
     loadBackendData();
-  }, []);
+    fetchDbStatus();
+  }, [fetchDbStatus]);
 
   // Strict Single Device Protection: Auto-redirect away from settings if accessed on unauthorized device
   useEffect(() => {
@@ -1411,34 +1423,98 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
     };
   };
 
+  // Compute live 7-day order & revenue analytics from actual orders
+  const sevenDayMetrics = (() => {
+    const days = [];
+    const now = new Date();
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(now);
+      d.setDate(now.getDate() - i);
+      const key = d.toISOString().slice(0, 10);
+      days.push({
+        key,
+        label: d.toLocaleDateString('en-US', { weekday: 'short' }),
+        dateLabel: d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+        revenue: 0,
+        count: 0,
+      });
+    }
+    const dayMap = Object.fromEntries(days.map(d => [d.key, d]));
+    orders.forEach(o => {
+      const rawDate = o.created_at || o.date;
+      if (!rawDate) return;
+      const iso = new Date(rawDate).toISOString().slice(0, 10);
+      if (dayMap[iso]) {
+        dayMap[iso].revenue += Number(o.amount || 0);
+        dayMap[iso].count += 1;
+      }
+    });
+    const maxRev = Math.max(...days.map(d => d.revenue), 1);
+    return { days, maxRev };
+  })();
+
+  const totalOrdersCount = orders.length;
+  const paidOrdersCount = orders.filter(o => {
+    const s = String(o.status || '').toLowerCase();
+    return s.includes('paid') || s.includes('completed') || s.includes('active') || s.includes('success');
+  }).length;
+  const pendingOrdersCount = orders.filter(o => String(o.status || '').toLowerCase().includes('pending')).length;
+  const otherOrdersCount = Math.max(0, totalOrdersCount - paidOrdersCount - pendingOrdersCount);
+  const paidPct = totalOrdersCount > 0 ? Math.round((paidOrdersCount / totalOrdersCount) * 100) : 0;
+  const pendingPct = totalOrdersCount > 0 ? Math.round((pendingOrdersCount / totalOrdersCount) * 100) : 0;
+  const otherPct = totalOrdersCount > 0 ? Math.max(0, 100 - paidPct - pendingPct) : 0;
+
+  const activeDbDriver = (dbStatus?.connection?.driver || 'mysql').toUpperCase();
+  const activeDbName = dbStatus?.connection?.database || 'dyzzstore';
+  const activeDbLatency = dbStatus?.connection?.latency_ms ?? null;
+  const isDbConnected = dbStatus?.connection?.connected ?? true;
+
+  const computedRevenue = Number(stats.totalRevenue ?? 0);
+
   return (
     <div className="admin-root-container">
       <div className="admin-wrapper">
         {/* Top Control Bar */}
         <header className="admin-top-nav">
-          <div className="admin-badge-logo">
-            <div className="logo-symbol-admin">
-              <img src="/favicon.svg" alt="Dyzzstore Logo" width="22" height="22" style={{ borderRadius: '50%' }} />
-            </div>
-            <div>
-              <span className="admin-title">DYZZSTORE CONTROL CENTER</span>
-              <span className="admin-sub-tag">Laravel 12 REST API & Database Control</span>
+          <div className="admin-nav-left">
+            <button
+              type="button"
+              className="admin-mobile-menu-btn"
+              onClick={() => setMobileSidebarOpen(prev => !prev)}
+              aria-label="Toggle Navigation"
+            >
+              {mobileSidebarOpen ? <X size={18} /> : <Menu size={18} />}
+            </button>
+            <div className="admin-badge-logo">
+              <div className="logo-symbol-admin">
+                <img src="/favicon.svg" alt="Dyzzstore Logo" width="22" height="22" style={{ borderRadius: '50%' }} />
+              </div>
+              <div>
+                <div className="admin-title-row">
+                  <span className="admin-title">DYZZSTORE</span>
+                  <span className="admin-pro-badge">ADMIN PRO</span>
+                </div>
+                <span className="admin-sub-tag">Enterprise Commerce & Top-Up Control Center</span>
+              </div>
             </div>
           </div>
 
           <div className="admin-nav-actions">
-            <div className="server-status-pill">
+            <div className={`server-status-pill ${!isDbConnected ? 'offline' : ''}`}>
               <span className="dot-pulse-green"></span>
-              <span>Laravel 12 REST API Online • Cloud Database</span>
+              <span>
+                API Online &bull; {activeDbDriver} ({activeDbName})
+                {activeDbLatency !== null ? ` • ${activeDbLatency}ms` : ''}
+              </span>
             </div>
 
             <button
               className="btn-admin-refresh"
-              onClick={loadBackendData}
-              title="Sync with Laravel Database"
+              onClick={() => { loadBackendData(); fetchDbStatus(); }}
+              title="Sync with Laravel Backend & Cloud Database"
             >
               <RefreshCw size={14} className={loading ? 'spin' : ''} />
-              <span>Sync DB</span>
+              <span>Sync All</span>
             </button>
 
             <button
@@ -1447,7 +1523,7 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
               title="Return to Public Storefront"
             >
               <ArrowLeft size={14} />
-              <span>Back to Store</span>
+              <span className="hide-sm">Storefront</span>
             </button>
 
             <button
@@ -1456,117 +1532,138 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
               title="Sign out of Admin session"
             >
               <LogOut size={14} />
-              <span>Log Out</span>
+              <span className="hide-sm">Log Out</span>
             </button>
           </div>
         </header>
 
         <div className="admin-layout-body">
+          {mobileSidebarOpen && (
+            <div className="admin-drawer-backdrop" onClick={() => setMobileSidebarOpen(false)} />
+          )}
+
           {/* Left Navigation Sidebar */}
-          <aside className="admin-sidebar">
+          <aside className={`admin-sidebar ${mobileSidebarOpen ? 'open' : ''}`}>
             <nav className="admin-menu">
+              <div className="admin-sidebar-group-label">Core</div>
               <button
                 className={`admin-menu-item ${activeTab === 'overview' ? 'active' : ''}`}
-                onClick={() => setActiveTab('overview')}
+                onClick={() => handleSelectTab('overview')}
               >
-                <LayoutDashboard size={18} />
+                <LayoutDashboard size={17} />
                 <span>Overview</span>
               </button>
 
+              <div className="admin-sidebar-group-label">Commerce & Top-Up</div>
               <button
                 className={`admin-menu-item ${activeTab === 'tools' ? 'active' : ''}`}
-                onClick={() => setActiveTab('tools')}
+                onClick={() => handleSelectTab('tools')}
               >
-                <Boxes size={18} />
-                <span>Products & AI Tools ({tools.length})</span>
+                <Boxes size={17} />
+                <span>Products & AI Tools</span>
+                <span className="admin-nav-count">{tools.length}</span>
               </button>
 
               <button
                 className={`admin-menu-item ${activeTab === 'categories' ? 'active' : ''}`}
-                onClick={() => setActiveTab('categories')}
+                onClick={() => handleSelectTab('categories')}
               >
-                <FolderKanban size={18} />
-                <span>Categories ({categories.length})</span>
+                <FolderKanban size={17} />
+                <span>Categories</span>
+                <span className="admin-nav-count">{categories.length}</span>
               </button>
 
               <button
                 className={`admin-menu-item ${activeTab === 'orders' ? 'active' : ''}`}
-                onClick={() => setActiveTab('orders')}
+                onClick={() => handleSelectTab('orders')}
               >
-                <ShoppingCart size={18} />
-                <span>Customer Orders & KHQR ({orders.length})</span>
-                {pendingActivationCount > 0 && (
+                <ShoppingCart size={17} />
+                <span>Orders & KHQR</span>
+                {pendingActivationCount > 0 ? (
                   <span className="badge-pending-order-count">
                     {pendingActivationCount} NEW
                   </span>
+                ) : (
+                  <span className="admin-nav-count">{orders.length}</span>
                 )}
               </button>
 
               <button
-                className={`admin-menu-item ${activeTab === 'subscribers' ? 'active' : ''}`}
-                onClick={() => setActiveTab('subscribers')}
+                className={`admin-menu-item ${activeTab === 'topup' ? 'active' : ''}`}
+                onClick={() => handleSelectTab('topup')}
               >
-                <Users size={18} />
-                <span>Customer Directory ({subscribers.length})</span>
+                <Gamepad2 size={17} />
+                <span>Game Top-Up</span>
               </button>
 
-              {/* TAB: AUDIT LOG */}
+              <div className="admin-sidebar-group-label">Audience & Growth</div>
+              <button
+                className={`admin-menu-item ${activeTab === 'subscribers' ? 'active' : ''}`}
+                onClick={() => handleSelectTab('subscribers')}
+              >
+                <Users size={17} />
+                <span>Customers</span>
+                <span className="admin-nav-count">{subscribers.length}</span>
+              </button>
+
+              <button
+                className={`admin-menu-item ${activeTab === 'seo' ? 'active' : ''}`}
+                onClick={() => handleSelectTab('seo')}
+              >
+                <Globe size={17} />
+                <span>SEO & Search</span>
+              </button>
+
+              <div className="admin-sidebar-group-label">Infrastructure</div>
               <button
                 className={`admin-menu-item ${activeTab === 'audit' ? 'active' : ''}`}
-                onClick={() => setActiveTab('audit')}
+                onClick={() => handleSelectTab('audit')}
               >
-                <ClipboardList size={18} />
+                <ClipboardList size={17} />
                 <span>Audit Log</span>
                 {auditFilterOnlyMyDevice && (
-                  <span className="badge-primary-pill" style={{ fontSize: '0.62rem', padding: '2px 6px' }}>
+                  <span className="badge-primary-pill" style={{ fontSize: '0.6rem', padding: '2px 6px' }}>
                     MY DEVICE
                   </span>
                 )}
               </button>
 
-              {/* TAB: TOPUP MANAGEMENT */}
-              <button
-                className={`admin-menu-item ${activeTab === 'topup' ? 'active' : ''}`}
-                onClick={() => setActiveTab('topup')}
-              >
-                <Gamepad2 size={18} />
-                <span>Game Top-Up & Orders</span>
-              </button>
-
-              {/* TAB: SEO & SEARCH KEYWORDS */}
-              <button
-                className={`admin-menu-item ${activeTab === 'seo' ? 'active' : ''}`}
-                onClick={() => setActiveTab('seo')}
-              >
-                <Globe size={18} />
-                <span>SEO & Browser Search</span>
-              </button>
-
-              {/* TAB: DATABASE MANAGEMENT */}
               <button
                 className={`admin-menu-item ${activeTab === 'database' ? 'active' : ''}`}
-                onClick={() => setActiveTab('database')}
+                onClick={() => handleSelectTab('database')}
               >
-                <Database size={18} />
+                <Database size={17} />
                 <span>Database & Cloud</span>
               </button>
+
               {(!settings.singleDeviceLocked || settings.isPrimaryDevice) && (
                 <button
                   className={`admin-menu-item ${activeTab === 'settings' ? 'active' : ''}`}
-                  onClick={() => setActiveTab('settings')}
+                  onClick={() => handleSelectTab('settings')}
                 >
-                  <Settings size={18} />
-                  <span>Cambodia KHQR & Settings</span>
+                  <Settings size={17} />
+                  <span>KHQR & Settings</span>
                   {settings.singleDeviceLocked && (
-                    <span className="badge-primary-pill" title="Strict Single Device Security: Only your authorized primary device can view and modify platform settings">
-                      <ShieldCheck size={11} className="inline mr-1" />
-                      MY DEVICE ONLY
+                    <span className="badge-primary-pill" title="Strict Single Device Security">
+                      <ShieldCheck size={11} className="inline" />
                     </span>
                   )}
                 </button>
               )}
             </nav>
 
+            {/* Sidebar Live Health Card */}
+            <div className="admin-sidebar-health" onClick={() => handleSelectTab('database')} role="button" tabIndex={0}>
+              <div className="sidebar-health-top">
+                <span className={`sidebar-health-dot ${isDbConnected ? 'online' : 'offline'}`} />
+                <span className="sidebar-health-title">Cloud Infrastructure</span>
+                <span className="sidebar-health-driver">{activeDbDriver}</span>
+              </div>
+              <div className="sidebar-health-meta">
+                <span>DB: <strong>{activeDbName}</strong></span>
+                <span>{activeDbLatency !== null ? `${activeDbLatency} ms` : 'Ready'}</span>
+              </div>
+            </div>
           </aside>
 
           {/* Main Content Area */}
@@ -1576,13 +1673,13 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
               <div className="admin-tab-pane">
                 <div className="tab-pane-header">
                   <div>
-                    <h2>Platform Performance & Telemetry</h2>
-                    <p>Live metrics synchronized in real-time from the Laravel SQLite database.</p>
+                    <h2>Executive Overview & Telemetry</h2>
+                    <p>Real-time commerce analytics, KHQR payments, and cloud infrastructure status.</p>
                   </div>
                   <div className="tab-header-actions">
-                    <div className="db-indicator-chip">
+                    <div className="db-indicator-chip" onClick={() => handleSelectTab('database')} style={{ cursor: 'pointer' }}>
                       <Database size={14} className="text-cyan inline mr-1" />
-                      <span>Database: <strong>database/database.sqlite</strong></span>
+                      <span>Active DB: <strong>{activeDbDriver} / {activeDbName}</strong></span>
                     </div>
                   </div>
                 </div>
@@ -1591,20 +1688,33 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
                 <div className="admin-metrics-grid">
                   <div className="admin-metric-card metric-card-revenue">
                     <div className="metric-header">
-                      <span>Total Platform Revenue</span>
+                      <span>Platform Revenue</span>
                       <div className="metric-icon-wrap icon-revenue">
                         <DollarSign size={20} />
                       </div>
                     </div>
-                    <div className="metric-val">{formatPrice(stats.totalRevenue || 3336.99)}</div>
+                    <div className="metric-val">{formatPrice(computedRevenue)}</div>
                     <div className="metric-trend up">
-                      <TrendingUp size={14} /> +24.8% from last month
+                      <TrendingUp size={13} /> ≈ {Math.round(computedRevenue * 4100).toLocaleString()} ៛ KHR
+                    </div>
+                  </div>
+
+                  <div className="admin-metric-card metric-card-khqr">
+                    <div className="metric-header">
+                      <span>Orders & KHQR Volume</span>
+                      <div className="metric-icon-wrap icon-khqr">
+                        <SmartphoneNfc size={20} />
+                      </div>
+                    </div>
+                    <div className="metric-val">{orders.length}</div>
+                    <div className="metric-trend up">
+                      <ShieldCheck size={13} /> {paidOrdersCount} Paid &bull; {pendingOrdersCount} Pending
                     </div>
                   </div>
 
                   <div className="admin-metric-card metric-card-products">
                     <div className="metric-header">
-                      <span>Managed Products</span>
+                      <span>Managed Catalog</span>
                       <div className="metric-icon-wrap icon-products">
                         <Boxes size={20} />
                       </div>
@@ -1615,25 +1725,120 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
 
                   <div className="admin-metric-card metric-card-categories">
                     <div className="metric-header">
-                      <span>Product Categories</span>
+                      <span>Registered Customers</span>
                       <div className="metric-icon-wrap icon-categories">
-                        <FolderKanban size={20} />
+                        <Users size={20} />
                       </div>
                     </div>
-                    <div className="metric-val">{categories.length}</div>
-                    <div className="metric-trend info">LLM, Vision, Code, Audio, Video, Agents</div>
+                    <div className="metric-val">{subscribers.length || stats.activeSubscribers || 0}</div>
+                    <div className="metric-trend info">Synced directory & subscribers</div>
+                  </div>
+                </div>
+
+                {/* Analytics & Quick Actions Row */}
+                <div className="admin-analytics-grid">
+                  {/* 7-Day Revenue & Activity Chart */}
+                  <div className="admin-chart-card">
+                    <div className="card-section-header" style={{ marginBottom: '1rem' }}>
+                      <div>
+                        <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <BarChart3 size={18} className="text-cyan" />
+                          <span>7-Day Revenue & Order Pulse</span>
+                        </h3>
+                        <p className="card-section-sub">Daily sales volume across store and game top-ups</p>
+                      </div>
+                      <span className="admin-period-pill">Last 7 Days</span>
+                    </div>
+
+                    <div className="admin-chart-bars">
+                      {sevenDayMetrics.days.map((day, idx) => {
+                        const heightPct = day.revenue > 0 ? Math.max(12, Math.round((day.revenue / sevenDayMetrics.maxRev) * 100)) : 6;
+                        const isHovered = hoveredChartIdx === idx;
+                        return (
+                          <div
+                            key={day.key}
+                            className={`admin-chart-col ${isHovered ? 'hovered' : ''}`}
+                            onMouseEnter={() => setHoveredChartIdx(idx)}
+                            onMouseLeave={() => setHoveredChartIdx(null)}
+                          >
+                            {isHovered && (
+                              <div className="admin-chart-tooltip">
+                                <strong>{day.dateLabel}</strong>
+                                <span>${day.revenue.toFixed(2)} ({day.count} orders)</span>
+                              </div>
+                            )}
+                            <div className="admin-chart-bar-track">
+                              <div
+                                className={`admin-chart-bar-fill ${day.revenue > 0 ? 'has-data' : ''}`}
+                                style={{ height: `${heightPct}%` }}
+                              />
+                            </div>
+                            <span className="admin-chart-day">{day.label}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
 
-                  <div className="admin-metric-card metric-card-khqr">
-                    <div className="metric-header">
-                      <span>Cambodia KHQR Volume</span>
-                      <div className="metric-icon-wrap icon-khqr">
-                        <SmartphoneNfc size={20} />
+                  {/* Order Health & Quick Actions */}
+                  <div className="admin-chart-card">
+                    <div className="card-section-header" style={{ marginBottom: '1rem' }}>
+                      <div>
+                        <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <Activity size={18} className="text-emerald" />
+                          <span>Order Health & Shortcuts</span>
+                        </h3>
+                        <p className="card-section-sub">Fulfillment ratio & frequent admin actions</p>
                       </div>
                     </div>
-                    <div className="metric-val">{orders.length} Orders</div>
-                    <div className="metric-trend up">
-                      <ShieldCheck size={14} /> Instant KHQR verification
+
+                    <div className="admin-health-bars">
+                      <div className="health-bar-item">
+                        <div className="health-bar-labels">
+                          <span>Paid / Completed</span>
+                          <strong>{paidPct}% ({paidOrdersCount})</strong>
+                        </div>
+                        <div className="health-bar-track">
+                          <div className="health-bar-fill emerald" style={{ width: `${paidPct}%` }} />
+                        </div>
+                      </div>
+                      <div className="health-bar-item">
+                        <div className="health-bar-labels">
+                          <span>Pending Verification</span>
+                          <strong>{pendingPct}% ({pendingOrdersCount})</strong>
+                        </div>
+                        <div className="health-bar-track">
+                          <div className="health-bar-fill amber" style={{ width: `${pendingPct}%` }} />
+                        </div>
+                      </div>
+                      <div className="health-bar-item">
+                        <div className="health-bar-labels">
+                          <span>Other / Processing</span>
+                          <strong>{otherPct}% ({otherOrdersCount})</strong>
+                        </div>
+                        <div className="health-bar-track">
+                          <div className="health-bar-fill cyan" style={{ width: `${otherPct}%` }} />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="admin-quick-actions-grid">
+                      <button type="button" className="quick-action-tile" onClick={() => { handleSelectTab('tools'); handleOpenAddTool(); }}>
+                        <Plus size={15} />
+                        <span>Add Product</span>
+                      </button>
+                      <button type="button" className="quick-action-tile" onClick={() => handleSelectTab('topup')}>
+                        <Gamepad2 size={15} />
+                        <span>Game Top-Up</span>
+                      </button>
+                      <button type="button" className="quick-action-tile" onClick={() => handleSelectTab('database')}>
+                        <Database size={15} />
+                        <span>Cloud DB</span>
+                      </button>
+                      <button type="button" className="quick-action-tile" onClick={() => handleSelectTab('settings')}>
+                        <CreditCard size={15} />
+                        <span>KHQR Config</span>
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -1644,14 +1849,16 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
                     <div className="system-strip-dot online"></div>
                     <div>
                       <div className="system-strip-title">Laravel 12 API</div>
-                      <div className="system-strip-sub">REST Endpoints 127.0.0.1:8000</div>
+                      <div className="system-strip-sub">Cloud REST Endpoints Active</div>
                     </div>
                   </div>
                   <div className="system-strip-item">
-                    <div className="system-strip-dot online"></div>
+                    <div className={`system-strip-dot ${isDbConnected ? 'online' : 'offline'}`}></div>
                     <div>
-                      <div className="system-strip-title">SQLite Database</div>
-                      <div className="system-strip-sub">Local ACID storage synchronized</div>
+                      <div className="system-strip-title">{activeDbDriver} Cloud Database</div>
+                      <div className="system-strip-sub">
+                        {activeDbName}{activeDbLatency !== null ? ` • ${activeDbLatency} ms` : ' • Synchronized'}
+                      </div>
                     </div>
                   </div>
                   <div className="system-strip-item">
@@ -1664,8 +1871,8 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
                   <div className="system-strip-item">
                     <div className="system-strip-dot online"></div>
                     <div>
-                      <div className="system-strip-title">Currency Engines</div>
-                      <div className="system-strip-sub">USD ($) & KHR (áŸ›) Active</div>
+                      <div className="system-strip-title">Currency & Top-Up</div>
+                      <div className="system-strip-sub">USD ($) & KHR (៛) • FlashTopUp</div>
                     </div>
                   </div>
                 </div>
@@ -1674,10 +1881,10 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
                 <div className="admin-card-section mt-4">
                   <div className="card-section-header">
                     <div>
-                      <h3>Recent Transactions from Database</h3>
+                      <h3>Recent Transactions</h3>
                       <p className="card-section-sub">Latest customer purchases processed via Cambodia National KHQR.</p>
                     </div>
-                    <button className="btn btn-secondary btn-sm" onClick={() => setActiveTab('orders')}>
+                    <button className="btn btn-secondary btn-sm" onClick={() => handleSelectTab('orders')}>
                       <span>View All Orders</span>
                       <ArrowRight size={14} className="ml-1 inline" />
                     </button>
@@ -1696,7 +1903,7 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
                         </tr>
                       </thead>
                       <tbody>
-                        {orders.slice(0, 5).map(o => (
+                        {orders.slice(0, 6).map(o => (
                           <tr key={o.id}>
                             <td><code className="order-code-badge">{o.order_number || o.id}</code></td>
                             <td>
@@ -1713,7 +1920,7 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
                             <td><strong className="text-emerald">${Number(o.amount).toFixed(2)}</strong></td>
                             <td>
                               <span className="gateway-khqr-tag">
-                                Cambodia KHQR
+                                {o.payment_method || 'Cambodia KHQR'}
                               </span>
                             </td>
                             <td>

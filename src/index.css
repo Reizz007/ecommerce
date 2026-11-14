@@ -10857,5 +10857,440 @@ input:checked+.slider:before {
   border-top-color: rgba(15, 23, 42, 0.08) !important;
 }
 
+/* ========================================================
+   EXECUTIVE PRO ADMIN DASHBOARD UPGRADE
+======================================================== */
+.admin-top-nav {
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  background: rgba(11, 16, 27, 0.88);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.28);
+}
+
+.admin-nav-left {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.admin-mobile-menu-btn {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #f8fafc;
+  cursor: pointer;
+}
+
+.admin-title-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.admin-pro-badge {
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, rgba(6, 182, 212, 0.25), rgba(139, 92, 246, 0.25));
+  border: 1px solid rgba(6, 182, 212, 0.4);
+  color: #67e8f9;
+}
+
+.server-status-pill.offline {
+  background: rgba(239, 68, 68, 0.12);
+  border-color: rgba(239, 68, 68, 0.35);
+  color: #fca5a5;
+}
+
+.server-status-pill.offline .dot-pulse-green {
+  background: #ef4444;
+  box-shadow: 0 0 8px #ef4444;
+}
+
+/* Grouped Sidebar */
+.admin-sidebar {
+  background: linear-gradient(180deg, #090d16 0%, #070a12 100%);
+  padding: 1.25rem 0.9rem;
+  gap: 1.25rem;
+}
+
+.admin-sidebar-group-label {
+  font-size: 0.66rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #64748b;
+  padding: 0.75rem 0.85rem 0.3rem;
+}
+
+.admin-sidebar-group-label:first-child {
+  padding-top: 0.15rem;
+}
+
+.admin-menu-item {
+  position: relative;
+  padding: 0.68rem 0.9rem;
+  font-size: 0.88rem;
+  border: 1px solid transparent;
+}
+
+.admin-menu-item.active::before {
+  content: '';
+  position: absolute;
+  left: -1px;
+  top: 20%;
+  bottom: 20%;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: linear-gradient(180deg, #22d3ee, #8b5cf6);
+  box-shadow: 0 0 10px rgba(34, 211, 238, 0.6);
+}
+
+.admin-nav-count {
+  margin-left: auto;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  color: #94a3b8;
+  font-variant-numeric: tabular-nums;
+}
+
+.admin-menu-item.active .admin-nav-count {
+  background: rgba(34, 211, 238, 0.18);
+  color: #67e8f9;
+}
+
+/* Sidebar Live Health Card */
+.admin-sidebar-health {
+  background: rgba(15, 23, 42, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 0.85rem 0.95rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.admin-sidebar-health:hover {
+  border-color: rgba(6, 182, 212, 0.4);
+  background: rgba(15, 23, 42, 0.95);
+}
+
+.sidebar-health-top {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin-bottom: 0.45rem;
+}
+
+.sidebar-health-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.sidebar-health-dot.online {
+  background: #10b981;
+  box-shadow: 0 0 8px rgba(16, 185, 129, 0.7);
+}
+
+.sidebar-health-dot.offline {
+  background: #ef4444;
+  box-shadow: 0 0 8px rgba(239, 68, 68, 0.7);
+}
+
+.sidebar-health-title {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #e2e8f0;
+}
+
+.sidebar-health-driver {
+  margin-left: auto;
+  font-size: 0.65rem;
+  font-weight: 800;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: rgba(6, 182, 212, 0.15);
+  color: #22d3ee;
+}
+
+.sidebar-health-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.73rem;
+  color: #94a3b8;
+}
+
+.sidebar-health-meta strong {
+  color: #f8fafc;
+}
+
+/* Tabular Numbers for KPIs */
+.admin-metric-card .metric-val {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Analytics & Quick Actions Grid */
+.admin-analytics-grid {
+  display: grid;
+  grid-template-columns: 1.6fr 1fr;
+  gap: 1.5rem;
+  margin-bottom: 1.75rem;
+}
+
+.admin-chart-card {
+  background: linear-gradient(145deg, rgba(17, 24, 39, 0.85) 0%, rgba(11, 15, 26, 0.96) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 1.45rem 1.55rem;
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.45);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.admin-period-pill {
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0.25rem 0.65rem;
+  border-radius: 999px;
+  background: rgba(6, 182, 212, 0.12);
+  border: 1px solid rgba(6, 182, 212, 0.28);
+  color: #67e8f9;
+}
+
+.admin-chart-bars {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0.85rem;
+  height: 175px;
+  padding-top: 1.5rem;
+  align-items: end;
+}
+
+.admin-chart-col {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100%;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  cursor: pointer;
+}
+
+.admin-chart-bar-track {
+  width: 100%;
+  max-width: 36px;
+  flex: 1;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 8px;
+  display: flex;
+  align-items: flex-end;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.admin-chart-bar-fill {
+  width: 100%;
+  border-radius: 6px;
+  background: rgba(148, 163, 184, 0.22);
+  transition: height 0.35s cubic-bezier(0.16, 1, 0.3, 1), filter 0.2s ease;
+}
+
+.admin-chart-bar-fill.has-data {
+  background: linear-gradient(180deg, #22d3ee 0%, #6366f1 100%);
+  box-shadow: 0 0 16px rgba(34, 211, 238, 0.25);
+}
+
+.admin-chart-col.hovered .admin-chart-bar-fill {
+  filter: brightness(1.2);
+}
+
+.admin-chart-day {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #94a3b8;
+}
+
+.admin-chart-tooltip {
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #0f172a;
+  border: 1px solid rgba(34, 211, 238, 0.45);
+  border-radius: 8px;
+  padding: 0.35rem 0.6rem;
+  font-size: 0.7rem;
+  white-space: nowrap;
+  z-index: 20;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.55);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  pointer-events: none;
+}
+
+.admin-chart-tooltip strong {
+  color: #f8fafc;
+}
+
+.admin-chart-tooltip span {
+  color: #67e8f9;
+}
+
+/* Order Health Bars & Quick Actions */
+.admin-health-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  margin-bottom: 1.25rem;
+}
+
+.health-bar-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.78rem;
+  color: #cbd5e1;
+  margin-bottom: 0.32rem;
+}
+
+.health-bar-track {
+  height: 7px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  overflow: hidden;
+}
+
+.health-bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.4s ease;
+}
+
+.health-bar-fill.emerald {
+  background: linear-gradient(90deg, #10b981, #34d399);
+}
+
+.health-bar-fill.amber {
+  background: linear-gradient(90deg, #f59e0b, #fbbf24);
+}
+
+.health-bar-fill.cyan {
+  background: linear-gradient(90deg, #06b6d4, #38bdf8);
+}
+
+.admin-quick-actions-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.65rem;
+}
+
+.quick-action-tile {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  padding: 0.6rem 0.75rem;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #e2e8f0;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.quick-action-tile:hover {
+  background: rgba(6, 182, 212, 0.14);
+  border-color: rgba(6, 182, 212, 0.4);
+  color: #fff;
+  transform: translateY(-1px);
+}
+
+/* Table Header Polish */
+.admin-table thead th {
+  text-transform: uppercase;
+  font-size: 0.71rem;
+  letter-spacing: 0.06em;
+  color: #94a3b8;
+  background: rgba(15, 23, 42, 0.55);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.admin-table tbody tr {
+  transition: background 0.15s ease;
+}
+
+.admin-table tbody tr:hover {
+  background: rgba(255, 255, 255, 0.028);
+}
+
+.admin-drawer-backdrop {
+  display: none;
+}
+
+@media (max-width: 1120px) {
+  .admin-analytics-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 960px) {
+  .admin-layout-body {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-mobile-menu-btn {
+    display: flex;
+  }
+
+  .admin-sidebar {
+    position: fixed;
+    top: 64px;
+    left: 0;
+    bottom: 0;
+    width: 265px;
+    z-index: 60;
+    transform: translateX(-105%);
+    transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    overflow-y: auto;
+    box-shadow: 12px 0 36px rgba(0, 0, 0, 0.65);
+  }
+
+  .admin-sidebar.open {
+    transform: translateX(0);
+  }
+
+  .admin-drawer-backdrop {
+    display: block;
+    position: fixed;
+    inset: 64px 0 0 0;
+    background: rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(3px);
+    z-index: 55;
+  }
+
+  .server-status-pill,
+  .hide-sm {
+    display: none;
+  }
+}
+
+
 
 
