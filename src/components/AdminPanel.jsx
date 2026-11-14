@@ -68,16 +68,21 @@ import {
   Menu,
   Activity,
   BarChart3,
-  CreditCard
+  CreditCard,
+  Sun,
+  Moon,
+  FileSpreadsheet
 } from 'lucide-react';
 
 export default function AdminPanel({ onCloseAdmin, onLogout }) {
-  const { addToast, formatPrice, refreshTools, refreshCategories } = useApp();
+  const { addToast, formatPrice, refreshTools, refreshCategories, theme, toggleTheme } = useApp();
 
   const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'tools' | 'categories' | 'orders' | 'subscribers' | 'audit' | 'settings'
   const [loading, setLoading] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [hoveredChartIdx, setHoveredChartIdx] = useState(null);
+  const [chartRangeDays, setChartRangeDays] = useState(7); // 7 | 14 | 30
+  const [chartMetricMode, setChartMetricMode] = useState('revenue'); // 'revenue' | 'orders'
 
   // Data states from Laravel Backend
   const [stats, setStats] = useState({
@@ -1422,17 +1427,19 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
     };
   };
 
-  // Compute live 7-day order & revenue analytics from actual orders
-  const sevenDayMetrics = (() => {
+  // Compute live N-day order & revenue analytics from actual orders
+  const analyticsMetrics = (() => {
     const days = [];
     const now = new Date();
-    for (let i = 6; i >= 0; i--) {
+    for (let i = chartRangeDays - 1; i >= 0; i--) {
       const d = new Date(now);
       d.setDate(now.getDate() - i);
       const key = d.toISOString().slice(0, 10);
       days.push({
         key,
-        label: d.toLocaleDateString('en-US', { weekday: 'short' }),
+        label: chartRangeDays <= 7
+          ? d.toLocaleDateString('en-US', { weekday: 'short' })
+          : d.toLocaleDateString('en-US', { month: 'numeric', day: 'numeric' }),
         dateLabel: d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
         revenue: 0,
         count: 0,
@@ -1451,8 +1458,38 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
       }
     });
     const maxRev = Math.max(...days.map(d => d.revenue), 1);
-    return { days, maxRev };
+    const maxCount = Math.max(...days.map(d => d.count), 1);
+    return { days, maxRev, maxCount };
   })();
+
+  const handleExportOrdersCsv = () => {
+    if (!orders.length) {
+      addToast('No orders available to export.', 'info');
+      return;
+    }
+    const headers = ['Order Number', 'Customer Name', 'Email', 'Amount (USD)', 'Payment Method', 'Status', 'Date'];
+    const escapeCsv = (val) => `"${String(val ?? '').replace(/"/g, '""')}"`;
+    const rows = orders.map(o => [
+      o.order_number || o.id,
+      o.customer_name || o.customerName || 'Anonymous',
+      o.customer_email || o.customerEmail || '',
+      Number(o.amount || 0).toFixed(2),
+      o.payment_method || 'Cambodia KHQR',
+      o.status || '',
+      o.created_at || o.date || ''
+    ].map(escapeCsv).join(','));
+    const csvContent = [headers.join(','), ...rows].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `dyzzstore-orders-${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    addToast(`Exported ${orders.length} orders to CSV!`, 'success');
+  };
 
   const totalOrdersCount = orders.length;
   const paidOrdersCount = orders.filter(o => {
@@ -1508,6 +1545,17 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
                 {activeDbLatency !== null ? ` • ${activeDbLatency}ms` : ''}
               </span>
             </div>
+
+            <button
+              type="button"
+              className="btn-admin-refresh"
+              onClick={toggleTheme}
+              title={`Switch to ${theme === 'light' ? 'Dark' : 'Light'} Mode`}
+              aria-label="Toggle Theme"
+            >
+              {theme === 'light' ? <Moon size={14} /> : <Sun size={14} />}
+              <span className="hide-sm">{theme === 'light' ? 'Dark' : 'Light'}</span>
+            </button>
 
             <button
               className="btn-admin-refresh"
@@ -1677,13 +1725,38 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
                     <h2>Executive Overview & Telemetry</h2>
                     <p>Real-time commerce analytics, KHQR payments, and cloud infrastructure status.</p>
                   </div>
-                  <div className="tab-header-actions">
+                  <div className="tab-header-actions" style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap' }}>
+                    <button
+                      type="button"
+                      className="btn btn-secondary btn-sm"
+                      onClick={handleExportOrdersCsv}
+                      title="Download all orders as CSV spreadsheet"
+                    >
+                      <FileSpreadsheet size={14} />
+                      <span>Export CSV</span>
+                    </button>
                     <div className="db-indicator-chip" onClick={() => handleSelectTab('database')} style={{ cursor: 'pointer' }}>
                       <Database size={14} className="text-cyan inline mr-1" />
                       <span>Active DB: <strong>{activeDbDriver} / {activeDbName}</strong></span>
                     </div>
                   </div>
                 </div>
+
+                {pendingActivationCount > 0 && (
+                  <div className="admin-pending-alert-banner">
+                    <div className="pending-alert-left">
+                      <BellRing size={18} className="text-amber" />
+                      <div>
+                        <strong>{pendingActivationCount} Pending Order{pendingActivationCount > 1 ? 's' : ''} Awaiting Action</strong>
+                        <span>Review payment confirmation or push fulfillment manually.</span>
+                      </div>
+                    </div>
+                    <button type="button" className="btn btn-primary btn-sm" onClick={() => handleSelectTab('orders')}>
+                      <span>Review Orders</span>
+                      <ArrowRight size={14} />
+                    </button>
+                  </div>
+                )}
 
                 {/* KPI Metrics 4-Card Grid */}
                 <div className="admin-metrics-grid">
@@ -1738,23 +1811,58 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
 
                 {/* Analytics & Quick Actions Row */}
                 <div className="admin-analytics-grid">
-                  {/* 7-Day Revenue & Activity Chart */}
+                  {/* N-Day Revenue & Activity Chart */}
                   <div className="admin-chart-card">
-                    <div className="card-section-header" style={{ marginBottom: '1rem' }}>
+                    <div className="card-section-header" style={{ marginBottom: '1rem', flexWrap: 'wrap', gap: '0.75rem' }}>
                       <div>
                         <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                           <BarChart3 size={18} className="text-cyan" />
-                          <span>7-Day Revenue & Order Pulse</span>
+                          <span>{chartRangeDays}-Day {chartMetricMode === 'revenue' ? 'Revenue' : 'Orders'} Pulse</span>
                         </h3>
                         <p className="card-section-sub">Daily sales volume across store and game top-ups</p>
                       </div>
-                      <span className="admin-period-pill">Last 7 Days</span>
+                      <div className="admin-chart-controls">
+                        <div className="admin-segmented-group">
+                          <button
+                            type="button"
+                            className={`seg-btn ${chartMetricMode === 'revenue' ? 'active' : ''}`}
+                            onClick={() => setChartMetricMode('revenue')}
+                          >
+                            Revenue
+                          </button>
+                          <button
+                            type="button"
+                            className={`seg-btn ${chartMetricMode === 'orders' ? 'active' : ''}`}
+                            onClick={() => setChartMetricMode('orders')}
+                          >
+                            Orders
+                          </button>
+                        </div>
+                        <div className="admin-segmented-group">
+                          {[7, 14, 30].map(d => (
+                            <button
+                              key={d}
+                              type="button"
+                              className={`seg-btn ${chartRangeDays === d ? 'active' : ''}`}
+                              onClick={() => setChartRangeDays(d)}
+                            >
+                              {d}D
+                            </button>
+                          ))}
+                        </div>
+                      </div>
                     </div>
 
-                    <div className="admin-chart-bars">
-                      {sevenDayMetrics.days.map((day, idx) => {
-                        const heightPct = day.revenue > 0 ? Math.max(12, Math.round((day.revenue / sevenDayMetrics.maxRev) * 100)) : 6;
+                    <div
+                      className="admin-chart-bars"
+                      style={{ gridTemplateColumns: `repeat(${analyticsMetrics.days.length}, minmax(0, 1fr))` }}
+                    >
+                      {analyticsMetrics.days.map((day, idx) => {
+                        const val = chartMetricMode === 'revenue' ? day.revenue : day.count;
+                        const maxVal = chartMetricMode === 'revenue' ? analyticsMetrics.maxRev : analyticsMetrics.maxCount;
+                        const heightPct = val > 0 ? Math.max(12, Math.round((val / maxVal) * 100)) : 6;
                         const isHovered = hoveredChartIdx === idx;
+                        const showLabel = chartRangeDays <= 14 || idx % 5 === 0 || idx === analyticsMetrics.days.length - 1;
                         return (
                           <div
                             key={day.key}
@@ -1770,11 +1878,11 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
                             )}
                             <div className="admin-chart-bar-track">
                               <div
-                                className={`admin-chart-bar-fill ${day.revenue > 0 ? 'has-data' : ''}`}
+                                className={`admin-chart-bar-fill ${val > 0 ? 'has-data' : ''}`}
                                 style={{ height: `${heightPct}%` }}
                               />
                             </div>
-                            <span className="admin-chart-day">{day.label}</span>
+                            <span className="admin-chart-day">{showLabel ? day.label : ''}</span>
                           </div>
                         );
                       })}
@@ -1832,13 +1940,21 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
                         <Gamepad2 size={15} />
                         <span>Game Top-Up</span>
                       </button>
-                      <button type="button" className="quick-action-tile" onClick={() => handleSelectTab('database')}>
-                        <Database size={15} />
-                        <span>Cloud DB</span>
+                      <button type="button" className="quick-action-tile" onClick={handleTriggerBackup} disabled={backingUpDb}>
+                        <HardDrive size={15} />
+                        <span>{backingUpDb ? 'Backing up...' : 'Backup DB'}</span>
+                      </button>
+                      <button type="button" className="quick-action-tile" onClick={handleExportOrdersCsv}>
+                        <FileSpreadsheet size={15} />
+                        <span>Export CSV</span>
                       </button>
                       <button type="button" className="quick-action-tile" onClick={() => handleSelectTab('settings')}>
                         <CreditCard size={15} />
                         <span>KHQR Config</span>
+                      </button>
+                      <button type="button" className="quick-action-tile" onClick={() => handleSelectTab('audit')}>
+                        <ClipboardList size={15} />
+                        <span>Audit Log</span>
                       </button>
                     </div>
                   </div>
