@@ -314,8 +314,7 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
 
   useEffect(() => {
     loadBackendData();
-    fetchDbStatus();
-  }, [fetchDbStatus]);
+  }, []);
 
   // Strict Single Device Protection: Auto-redirect away from settings if accessed on unauthorized device
   useEffect(() => {
@@ -914,7 +913,7 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
   }, []);
 
   useEffect(() => {
-    if (activeTab === 'database') {
+    if (activeTab === 'database' || activeTab === 'overview') {
       fetchDbStatus();
     }
   }, [activeTab, fetchDbStatus]);
@@ -1443,7 +1442,9 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
     orders.forEach(o => {
       const rawDate = o.created_at || o.date;
       if (!rawDate) return;
-      const iso = new Date(rawDate).toISOString().slice(0, 10);
+      const parsed = new Date(rawDate);
+      if (Number.isNaN(parsed.getTime())) return;
+      const iso = parsed.toISOString().slice(0, 10);
       if (dayMap[iso]) {
         dayMap[iso].revenue += Number(o.amount || 0);
         dayMap[iso].count += 1;
