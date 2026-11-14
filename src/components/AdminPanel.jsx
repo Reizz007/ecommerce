@@ -83,6 +83,10 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
   const [hoveredChartIdx, setHoveredChartIdx] = useState(null);
   const [chartRangeDays, setChartRangeDays] = useState(7); // 7 | 14 | 30
   const [chartMetricMode, setChartMetricMode] = useState('revenue'); // 'revenue' | 'orders'
+  const [autoSync, setAutoSync] = useState(false);
+  const [txFilterStatus, setTxFilterStatus] = useState('all'); // 'all' | 'paid' | 'pending'
+  const [txSearchQuery, setTxSearchQuery] = useState('');
+  const [togglingSettingKey, setTogglingSettingKey] = useState(null);
 
   // Data states from Laravel Backend
   const [stats, setStats] = useState({
@@ -320,6 +324,46 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
   useEffect(() => {
     loadBackendData();
   }, []);
+
+  useEffect(() => {
+    if (!autoSync) return;
+    const timer = setInterval(() => {
+      loadBackendData();
+      fetchDbStatus();
+    }, 30000);
+    return () => clearInterval(timer);
+  }, [autoSync, fetchDbStatus]);
+
+  const handleQuickSettingToggle = async (key, label) => {
+    if (togglingSettingKey) return;
+    const prevVal = Boolean(settings[key]);
+    const nextVal = !prevVal;
+    setSettings(prev => ({ ...prev, [key]: nextVal }));
+    setTogglingSettingKey(key);
+    try {
+      const res = await fetch(apiUrl('/api/settings'), {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          ...getDeviceHeaders()
+        },
+        body: JSON.stringify({ [key]: nextVal })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setSettings(prev => ({ ...prev, ...data.settings, [key]: nextVal }));
+        addToast(`${label} ${nextVal ? 'enabled' : 'disabled'}!`, 'success');
+      } else {
+        setSettings(prev => ({ ...prev, [key]: prevVal }));
+        addToast(data.message || `Failed to update ${label}`, 'error');
+      }
+    } catch {
+      setSettings(prev => ({ ...prev, [key]: prevVal }));
+      addToast('Network error updating setting', 'error');
+    } finally {
+      setTogglingSettingKey(null);
+    }
+  };
 
   // Strict Single Device Protection: Auto-redirect away from settings if accessed on unauthorized device
   useEffect(() => {
@@ -1548,6 +1592,16 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
 
             <button
               type="button"
+              className={`btn-admin-refresh ${autoSync ? 'active-sync' : ''}`}
+              onClick={() => setAutoSync(prev => !prev)}
+              title="Toggle 30-second live auto-refresh"
+            >
+              <Activity size={14} className={autoSync ? 'text-emerald' : ''} />
+              <span className="hide-sm">{autoSync ? 'Live 30s' : 'Auto-Sync'}</span>
+            </button>
+
+            <button
+              type="button"
               className="btn-admin-refresh"
               onClick={toggleTheme}
               title={`Switch to ${theme === 'light' ? 'Dark' : 'Light'} Mode`}
@@ -1960,6 +2014,57 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
                   </div>
                 </div>
 
+                {/* Live Storefront Quick Controls */}
+                <div className="admin-store-controls-strip">
+                  <div className="store-control-item">
+                    <div>
+                      <div className="store-control-title">Maintenance Mode</div>
+                      <div className="store-control-sub">Temporarily pause public checkout</div>
+                    </div>
+                    <button
+                      type="button"
+                      className={`admin-toggle-switch ${settings.maintenanceMode ? 'on' : ''}`}
+                      onClick={() => handleQuickSettingToggle('maintenanceMode', 'Maintenance Mode')}
+                      disabled={togglingSettingKey === 'maintenanceMode'}
+                      aria-label="Toggle Maintenance Mode"
+                    >
+                      <span className="switch-knob" />
+                    </button>
+                  </div>
+
+                  <div className="store-control-item">
+                    <div>
+                      <div className="store-control-title">Auto-Fulfill Game Top-Up</div>
+                      <div className="store-control-sub">Instant FlashTopUp diamond delivery</div>
+                    </div>
+                    <button
+                      type="button"
+                      className={`admin-toggle-switch ${settings.topupAutoFulfill ? 'on' : ''}`}
+                      onClick={() => handleQuickSettingToggle('topupAutoFulfill', 'Auto-Fulfill Top-Up')}
+                      disabled={togglingSettingKey === 'topupAutoFulfill'}
+                      aria-label="Toggle Auto-Fulfill Top-Up"
+                    >
+                      <span className="switch-knob" />
+                    </button>
+                  </div>
+
+                  <div className="store-control-item">
+                    <div>
+                      <div className="store-control-title">Telegram Order Alerts</div>
+                      <div className="store-control-sub">Real-time bot notifications on pay</div>
+                    </div>
+                    <button
+                      type="button"
+                      className={`admin-toggle-switch ${settings.telegramEnabled ? 'on' : ''}`}
+                      onClick={() => handleQuickSettingToggle('telegramEnabled', 'Telegram Order Alerts')}
+                      disabled={togglingSettingKey === 'telegramEnabled'}
+                      aria-label="Toggle Telegram Order Alerts"
+                    >
+                      <span className="switch-knob" />
+                    </button>
+                  </div>
+                </div>
+
                 {/* System Architecture Strip */}
                 <div className="admin-system-strip">
                   <div className="system-strip-item">
@@ -1996,15 +2101,42 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
 
                 {/* Recent Orders Overview */}
                 <div className="admin-card-section mt-4">
-                  <div className="card-section-header">
+                  <div className="card-section-header" style={{ flexWrap: 'wrap', gap: '0.85rem' }}>
                     <div>
                       <h3>Recent Transactions</h3>
                       <p className="card-section-sub">Latest customer purchases processed via Cambodia National KHQR.</p>
                     </div>
-                    <button className="btn btn-secondary btn-sm" onClick={() => handleSelectTab('orders')}>
-                      <span>View All Orders</span>
-                      <ArrowRight size={14} className="ml-1 inline" />
-                    </button>
+                    <div className="admin-tx-toolbar">
+                      <div className="admin-tx-search">
+                        <Search size={14} />
+                        <input
+                          type="text"
+                          placeholder="Order # or customer..."
+                          value={txSearchQuery}
+                          onChange={e => setTxSearchQuery(e.target.value)}
+                        />
+                      </div>
+                      <div className="admin-segmented-group">
+                        {[
+                          { key: 'all', label: 'All' },
+                          { key: 'paid', label: 'Paid' },
+                          { key: 'pending', label: 'Pending' }
+                        ].map(f => (
+                          <button
+                            key={f.key}
+                            type="button"
+                            className={`seg-btn ${txFilterStatus === f.key ? 'active' : ''}`}
+                            onClick={() => setTxFilterStatus(f.key)}
+                          >
+                            {f.label}
+                          </button>
+                        ))}
+                      </div>
+                      <button className="btn btn-secondary btn-sm" onClick={() => handleSelectTab('orders')}>
+                        <span>View All</span>
+                        <ArrowRight size={14} className="ml-1 inline" />
+                      </button>
+                    </div>
                   </div>
 
                   <div className="admin-table-responsive">
@@ -2020,7 +2152,20 @@ export default function AdminPanel({ onCloseAdmin, onLogout }) {
                         </tr>
                       </thead>
                       <tbody>
-                        {orders.slice(0, 6).map(o => (
+                        {orders
+                          .filter(o => {
+                            const s = String(o.status || '').toLowerCase();
+                            if (txFilterStatus === 'paid' && !(s.includes('paid') || s.includes('completed') || s.includes('active') || s.includes('success'))) return false;
+                            if (txFilterStatus === 'pending' && !s.includes('pending')) return false;
+                            if (txSearchQuery.trim()) {
+                              const q = txSearchQuery.toLowerCase();
+                              const hay = `${o.order_number || o.id} ${o.customer_name || o.customerName || ''} ${o.customer_email || o.customerEmail || ''}`.toLowerCase();
+                              if (!hay.includes(q)) return false;
+                            }
+                            return true;
+                          })
+                          .slice(0, 8)
+                          .map(o => (
                           <tr key={o.id}>
                             <td><code className="order-code-badge">{o.order_number || o.id}</code></td>
                             <td>
